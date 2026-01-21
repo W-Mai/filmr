@@ -1,5 +1,5 @@
 use eframe::{egui, App, Frame};
-use egui::{ColorImage, TextureHandle};
+use egui::{ColorImage, TextureHandle, Vec2, Rect, Pos2, Sense};
 use filmr::{process_image, FilmStock, GrainModel, OutputMode, SimulationConfig};
 use image::DynamicImage;
 
@@ -22,6 +22,10 @@ struct FilmrApp {
     original_image: Option<DynamicImage>,
     processed_texture: Option<TextureHandle>,
     
+    // View State
+    zoom: f32,
+    offset: Vec2,
+    
     // Parameters
     exposure_time: f32,
     grain_alpha: f32,
@@ -38,6 +42,8 @@ impl FilmrApp {
         Self {
             original_image: None,
             processed_texture: None,
+            zoom: 1.0,
+            offset: Vec2::ZERO,
             exposure_time: 1.0,
             grain_alpha: 0.05,
             grain_sigma: 0.01,
@@ -93,6 +99,9 @@ impl App for FilmrApp {
                         Ok(img) => {
                             self.original_image = Some(img);
                             self.status_msg = format!("Loaded: {:?}", path.file_name().unwrap());
+                            // Reset view
+                            self.zoom = 1.0;
+                            self.offset = Vec2::ZERO;
                             self.process_and_update_texture(ctx);
                         }
                         Err(err) => {
@@ -146,6 +155,13 @@ impl App for FilmrApp {
             
             ui.separator();
             ui.label(&self.status_msg);
+            
+            ui.separator();
+            ui.small("Instructions:");
+            ui.label("- Drag & Drop image");
+            ui.label("- Scroll/Pinch to Zoom");
+            ui.label("- Drag to Pan");
+            ui.label("- Double Click to Reset View");
 
             if changed {
                 self.process_and_update_texture(ctx);
@@ -155,8 +171,83 @@ impl App for FilmrApp {
         // Main Central Panel for Image
         egui::CentralPanel::default().show(ctx, |ui| {
             if let Some(texture) = &self.processed_texture {
-                // Show image scaled to fit
-                ui.image((texture.id(), texture.size_vec2()));
+                // Interactive Area
+                // We use ui.available_rect_before_wrap() to get the full area
+                let rect = ui.available_rect_before_wrap();
+                let response = ui.interact(rect, ui.id().with("image_area"), Sense::click_and_drag());
+                
+                // 1. Handle Zoom (Pinch or Ctrl+Scroll)
+                // ctx.input(|i| i.zoom_delta()) handles both pinch gestures and ctrl+scroll
+                let zoom_delta = ctx.input(|i| i.zoom_delta());
+                if zoom_delta != 1.0 {
+                    // Zoom towards mouse pointer
+                    if let Some(pointer_pos) = ctx.input(|i| i.pointer.hover_pos()) {
+                        // Pointer position relative to center of screen (or current offset)
+                        // Actually easier:
+                        // NewOffset = Pointer - (Pointer - OldOffset) * scale_factor
+                        // But here offset is "translation of image center from screen center".
+                        
+                        // Let's model it as:
+                        // ImagePos = ScreenCenter + Offset
+                        // PointOnImage = (Pointer - ImagePos) / Zoom
+                        // We want PointOnImage to stay at Pointer after Zoom changes.
+                        
+                        // A standard approach:
+                        // Offset -= (Pointer - Center - Offset) * (zoom_delta - 1.0)
+                        let center = rect.center();
+                        let pointer_in_layer = pointer_pos - center;
+                        let offset_to_pointer = pointer_in_layer - self.offset;
+                        
+                        self.offset -= offset_to_pointer * (zoom_delta - 1.0);
+                        self.zoom *= zoom_delta;
+                    } else {
+                        // Just zoom center if no pointer
+                        self.zoom *= zoom_delta;
+                    }
+                }
+                
+                // 2. Handle Pan (Drag)
+                if response.dragged() {
+                    self.offset += response.drag_delta();
+                }
+                
+                // 3. Double Click to Reset
+                if response.double_clicked() {
+                    self.zoom = 1.0;
+                    self.offset = Vec2::ZERO;
+                }
+                
+                // 4. Draw Image
+                // Calculate size and position
+                let image_size = texture.size_vec2();
+                // Fit to screen initially if zoom is 1.0? 
+                // Let's say zoom=1.0 means "fit to view" or "100%"?
+                // Usually for photo viewers, initial is "fit".
+                // Let's check aspect ratios.
+                let aspect = image_size.x / image_size.y;
+                let view_aspect = rect.width() / rect.height();
+                
+                let base_scale = if aspect > view_aspect {
+                    rect.width() / image_size.x
+                } else {
+                    rect.height() / image_size.y
+                };
+                
+                let current_scale = base_scale * self.zoom;
+                let displayed_size = image_size * current_scale;
+                
+                let center = rect.center() + self.offset;
+                let image_rect = Rect::from_center_size(center, displayed_size);
+                
+                // Draw
+                let painter = ui.painter_at(rect);
+                painter.image(
+                    texture.id(),
+                    image_rect,
+                    Rect::from_min_max(Pos2::new(0.0, 0.0), Pos2::new(1.0, 1.0)),
+                    egui::Color32::WHITE,
+                );
+                
             } else {
                 ui.centered_and_justified(|ui| {
                     ui.label("Drag and drop an image file here");
