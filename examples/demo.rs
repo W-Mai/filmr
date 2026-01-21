@@ -1,0 +1,45 @@
+use filmr::{process_image, FilmStock, GrainModel, SimulationConfig, OutputMode};
+use image::{RgbImage, Rgb};
+
+fn main() {
+    // 1. Create a test image: Horizontal Gradient Black to White
+    let width = 512;
+    let height = 256;
+    let mut img = RgbImage::new(width, height);
+
+    for x in 0..width {
+        for y in 0..height {
+            let val = (x as f32 / width as f32 * 255.0) as u8;
+            img.put_pixel(x, y, Rgb([val, val, val]));
+        }
+    }
+
+    println!("Generated input gradient image.");
+
+    // 2. Setup Film Simulation
+    let film = FilmStock::new_standard_daylight();
+    let grain = GrainModel::medium_grain();
+    let config = SimulationConfig {
+        exposure_time: 1.0,
+        enable_grain: true,
+        output_mode: OutputMode::Positive, // Generate a positive image
+    };
+
+    println!("Starting simulation (Positive Mode)...");
+    let output = process_image(&img, &film, &grain, &config);
+    println!("Simulation finished.");
+
+    // 3. Save output
+    output.save("output_film.png").unwrap();
+    println!("Saved output_film.png");
+    
+    // Check some pixel values
+    let p_black = output.get_pixel(0, 128);
+    let p_mid = output.get_pixel(256, 128);
+    let p_white = output.get_pixel(511, 128);
+    
+    // For Positive: Black Input -> Dark Output. White Input -> Bright Output.
+    println!("Black Input -> Output: {:?}", p_black);
+    println!("Mid Input   -> Output: {:?}", p_mid);
+    println!("White Input -> Output: {:?}", p_white);
+}
