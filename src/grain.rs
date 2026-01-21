@@ -5,9 +5,10 @@
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
+#[derive(Debug, Clone, Copy)]
 pub struct GrainModel {
-    pub alpha: f32,      // Shot noise coefficient (scales with density)
-    pub sigma_read: f32, // Base noise (fog/scanner noise)
+    pub alpha: f32,       // Shot noise coefficient (scales with density)
+    pub sigma_read: f32,  // Base noise (fog/scanner noise)
 }
 
 impl GrainModel {

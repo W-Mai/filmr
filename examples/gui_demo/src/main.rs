@@ -36,10 +36,8 @@ struct FilmrApp {
 
     // Parameters
     exposure_time: f32,
-    grain_alpha: f32,
-    grain_sigma: f32,
     gamma_boost: f32,
-
+    
     // Halation Parameters
     halation_strength: f32,
     halation_threshold: f32,
@@ -61,8 +59,6 @@ impl FilmrApp {
             zoom: 1.0,
             offset: Vec2::ZERO,
             exposure_time: 1.0,
-            grain_alpha: 0.05,
-            grain_sigma: 0.01,
             gamma_boost: 1.0,
 
             // Default Halation params
@@ -99,22 +95,41 @@ impl FilmrApp {
 
             // Construct params
             // Use preset as base and modify
-            let mut film = presets::STANDARD_DAYLIGHT.with_halation(self.halation_strength);
+            let base_film = match self.selected_preset {
+                FilmPreset::StandardDaylight => presets::STANDARD_DAYLIGHT,
+                FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400,
+                FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50,
+                FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS,
+            };
+
+            let mut film = FilmStock::new(
+                base_film.iso,
+                base_film.r_curve,
+                base_film.g_curve,
+                base_film.b_curve,
+                base_film.color_matrix,
+                base_film.grain_model,
+                base_film.resolution_lp_mm,
+                base_film.reciprocity_exponent,
+                self.halation_strength,
+                self.halation_threshold,
+                self.halation_sigma,
+                base_film.halation_tint, // Keep tint from preset for now, or add color picker later
+            );
 
             // Apply gamma boost to all channels
             film.r_curve.gamma *= self.gamma_boost;
             film.g_curve.gamma *= self.gamma_boost;
             film.b_curve.gamma *= self.gamma_boost;
 
-            let grain = GrainModel::new(self.grain_alpha, self.grain_sigma);
             let config = SimulationConfig {
                 exposure_time: self.exposure_time,
-                enable_grain: self.grain_alpha > 0.0 || self.grain_sigma > 0.0,
+                enable_grain: true, // Always enable if we want grain, control via film params
                 output_mode: self.output_mode,
             };
 
             // Process (this might be slow on main thread for large images, but okay for example)
-            let processed = process_image(&rgb_img, &film, &grain, &config);
+            let processed = process_image(&rgb_img, &film, &config);
 
             // Convert to egui texture
             let size = [processed.width() as _, processed.height() as _];
@@ -236,25 +251,19 @@ impl App for FilmrApp {
             });
 
             ui.group(|ui| {
-                ui.label("Grain");
-                if ui
-                    .add(
-                        egui::Slider::new(&mut self.grain_alpha, 0.0..=0.5)
-                            .text("Alpha (Shot Noise)"),
-                    )
-                    .changed()
-                {
-                    changed = true;
-                }
-                if ui
-                    .add(
-                        egui::Slider::new(&mut self.grain_sigma, 0.0..=0.2)
-                            .text("Sigma (Read Noise)"),
-                    )
-                    .changed()
-                {
-                    changed = true;
-                }
+                ui.label("Grain (From Preset)");
+                ui.label(format!("Alpha: {:.3}", match self.selected_preset {
+                    FilmPreset::StandardDaylight => presets::STANDARD_DAYLIGHT.grain_model.alpha,
+                    FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400.grain_model.alpha,
+                    FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50.grain_model.alpha,
+                    FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS.grain_model.alpha,
+                }));
+                 ui.label(format!("Sigma: {:.3}", match self.selected_preset {
+                    FilmPreset::StandardDaylight => presets::STANDARD_DAYLIGHT.grain_model.sigma_read,
+                    FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400.grain_model.sigma_read,
+                    FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50.grain_model.sigma_read,
+                    FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS.grain_model.sigma_read,
+                }));
             });
 
             ui.group(|ui| {

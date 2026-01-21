@@ -1,5 +1,4 @@
 use crate::film::FilmStock;
-use crate::grain::GrainModel;
 use crate::physics;
 use image::{ImageBuffer, Rgb, RgbImage};
 use rayon::prelude::*;
@@ -249,7 +248,6 @@ fn apply_gaussian_blur(image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, sigma: f32) 
 pub fn process_image(
     input: &RgbImage,
     film: &FilmStock,
-    grain: &GrainModel,
     config: &SimulationConfig,
 ) -> RgbImage {
     let width = input.width();
@@ -278,9 +276,9 @@ pub fn process_image(
     if film.halation_strength > 0.0 {
         // Create a map of high-intensity areas that will scatter
         // Thresholding: Only bright lights cause significant halation
-        let threshold = 0.8; // Linear light threshold
+        let threshold = film.halation_threshold; // Linear light threshold
         let mut halation_map = linear_image.clone();
-
+        
         // Apply threshold
         halation_map.pixels_mut().for_each(|p| {
             // Luminance approx
@@ -300,14 +298,14 @@ pub fn process_image(
         });
 
         // Blur the map to simulate scattering in the base
-        // Sigma depends on base thickness. Fixed for now or could be parameter.
-        let blur_sigma = width as f32 * 0.02; // 2% of width dispersion
+        // Sigma depends on base thickness.
+        let blur_sigma = width as f32 * film.halation_sigma; // % of width dispersion
         apply_gaussian_blur(&mut halation_map, blur_sigma);
 
         // Add back to linear image
         // Halation is usually reddish because red light penetrates deepest and reflects back.
         // We tint the scattered light.
-        let tint = [1.0, 0.4, 0.2]; // Red-Orange tint
+        let tint = film.halation_tint; // Tint color
 
         linear_image
             .pixels_mut()
@@ -331,10 +329,19 @@ pub fn process_image(
         let lin_pixel = linear_image.get_pixel(x, y).0;
 
         // Apply Exposure
-        let r_exp = physics::calculate_exposure(lin_pixel[0], config.exposure_time);
-        let g_exp = physics::calculate_exposure(lin_pixel[1], config.exposure_time);
-        let b_exp = physics::calculate_exposure(lin_pixel[2], config.exposure_time);
-
+        // E = I * t. 
+        // Reciprocity Failure: Effective Time t_eff = t^p (for t > 1.0s usually, but let's apply globally or with threshold)
+        // Simple Schwarzschild model: t_eff = t.powf(film.reciprocity_exponent)
+        let t_eff = if config.exposure_time > 1.0 {
+            config.exposure_time.powf(film.reciprocity_exponent)
+        } else {
+            config.exposure_time
+        };
+        
+        let r_exp = physics::calculate_exposure(lin_pixel[0], t_eff);
+        let g_exp = physics::calculate_exposure(lin_pixel[1], t_eff);
+        let b_exp = physics::calculate_exposure(lin_pixel[2], t_eff);
+        
         // Avoid log(0)
         let epsilon = 1e-6;
         let log_e = [
@@ -346,13 +353,14 @@ pub fn process_image(
         // Film Response
         let densities = film.map_log_exposure(log_e);
 
-        // Add Grain
+        // Add Grain (Using Film's Grain Model)
         let final_densities = if config.enable_grain {
             let mut rng = rand::thread_rng();
+            // Use film.grain_model instead of passed-in grain
             [
-                grain.add_grain(densities[0], &mut rng),
-                grain.add_grain(densities[1], &mut rng),
-                grain.add_grain(densities[2], &mut rng),
+                film.grain_model.add_grain(densities[0], &mut rng),
+                film.grain_model.add_grain(densities[1], &mut rng),
+                film.grain_model.add_grain(densities[2], &mut rng),
             ]
         } else {
             densities
