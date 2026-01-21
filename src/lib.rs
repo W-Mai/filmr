@@ -1,6 +1,7 @@
 pub mod film;
 pub mod grain;
 pub mod physics;
+pub mod presets;
 pub mod processor;
 
 pub use film::FilmStock;

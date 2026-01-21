@@ -1,4 +1,4 @@
-use filmr::{process_image, FilmStock, GrainModel, OutputMode, SimulationConfig};
+use filmr::{process_image, FilmStock, GrainModel, OutputMode, SimulationConfig, presets};
 use image::{Rgb, RgbImage};
 
 fn main() {
@@ -17,7 +17,8 @@ fn main() {
     println!("Generated input gradient image.");
 
     // 2. Setup Film Simulation
-    let film = FilmStock::new_standard_daylight();
+    // Use preset
+    let film = presets::STANDARD_DAYLIGHT;
     let grain = GrainModel::medium_grain();
     let config = SimulationConfig {
         exposure_time: 1.0,

@@ -1,6 +1,6 @@
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, Pos2, Rect, Sense, TextureHandle, Vec2};
-use filmr::{process_image, FilmStock, GrainModel, OutputMode, SimulationConfig};
+use filmr::{presets, process_image, FilmStock, GrainModel, OutputMode, SimulationConfig};
 use image::DynamicImage;
 
 fn main() -> eframe::Result<()> {
@@ -60,7 +60,8 @@ impl FilmrApp {
             let rgb_img = img.to_rgb8();
 
             // Construct params
-            let mut film = FilmStock::new_standard_daylight().with_halation(self.halation_strength);
+            // Use preset as base and modify
+            let mut film = presets::STANDARD_DAYLIGHT.with_halation(self.halation_strength);
 
             // Apply gamma boost to all channels
             film.r_curve.gamma *= self.gamma_boost;

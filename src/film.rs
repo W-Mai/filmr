@@ -115,36 +115,50 @@ pub struct FilmStock {
     /// Simulates light reflecting off the film base back into the emulsion.
     /// Primarily affects the Red layer (bottom layer) and spreads out (blur).
     pub halation_strength: f32,
+    
+    /// Linear light threshold for halation (0.0 to 1.0).
+    /// Only highlights above this threshold trigger halation.
+    pub halation_threshold: f32,
+    
+    /// Blur radius for halation as a fraction of image width (e.g. 0.02).
+    /// Controls the spread of the glow.
+    pub halation_sigma: f32,
+    
+    /// Tint color for the halation glow (RGB).
+    /// Usually reddish-orange [1.0, 0.4, 0.2] due to base reflection.
+    pub halation_tint: [f32; 3],
 }
 
 impl FilmStock {
-    pub fn new_standard_daylight() -> Self {
-        let _base_curve = SegmentedCurve::new(0.1, 3.0, 1.8, 0.18); // D_min=0.1, D_max=3.0, Gamma=1.8 (high contrast), ISO base
-
-        // Slight variations per channel to mimic film look (warm shadows, cool highlights etc)
-        let r_curve = SegmentedCurve::new(0.12, 2.9, 1.8, 0.18);
-        let g_curve = SegmentedCurve::new(0.10, 3.0, 1.8, 0.18);
-        let b_curve = SegmentedCurve::new(0.11, 2.8, 1.7, 0.18);
-
-        // Crosstalk matrix (Diagonal = 1.0 means no extra mixing if applied after curve)
-        // Real film has some subtractive interaction.
-        // Let's assume a small amount of crosstalk.
-        let matrix = [[1.00, 0.05, 0.02], [0.04, 1.00, 0.04], [0.01, 0.05, 1.00]];
-
+    /// Create a custom film stock
+    pub fn new(
+        r_curve: SegmentedCurve,
+        g_curve: SegmentedCurve,
+        b_curve: SegmentedCurve,
+        color_matrix: [[f32; 3]; 3],
+        halation_strength: f32,
+        halation_threshold: f32,
+        halation_sigma: f32,
+        halation_tint: [f32; 3],
+    ) -> Self {
         Self {
             r_curve,
             g_curve,
             b_curve,
-            color_matrix: matrix,
-            halation_strength: 0.0, // Default off for now, enable explicitly
+            color_matrix,
+            halation_strength,
+            halation_threshold,
+            halation_sigma,
+            halation_tint,
         }
     }
 
+    /// Helper to modify halation strength (common operation)
     pub fn with_halation(mut self, strength: f32) -> Self {
         self.halation_strength = strength;
         self
     }
-
+    
     /// Apply the film simulation to RGB log-exposures
     pub fn map_log_exposure(&self, log_e: [f32; 3]) -> [f32; 3] {
         // 1. Map each channel through its curve (Simulates Section 3)
