@@ -1,6 +1,6 @@
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, Pos2, Rect, Sense, TextureHandle, Vec2};
-use filmr::{presets, process_image, FilmStock, GrainModel, OutputMode, SimulationConfig};
+use filmr::{presets, process_image, FilmStock, OutputMode, SimulationConfig};
 use image::DynamicImage;
 
 fn main() -> eframe::Result<()> {

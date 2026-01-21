@@ -18,7 +18,7 @@ pub const STANDARD_DAYLIGHT: FilmStock = FilmStock {
         [0.04, 1.00, 0.04],
         [0.01, 0.05, 1.00],
     ],
-    grain_model: GrainModel { alpha: 0.05, sigma_read: 0.01 },
+    grain_model: GrainModel { alpha: 0.05, sigma_read: 0.01, monochrome: false },
     resolution_lp_mm: 80.0,
     reciprocity_exponent: 0.85,
     halation_strength: 0.0,
@@ -51,7 +51,7 @@ pub const KODAK_TRI_X_400: FilmStock = FilmStock {
         [0.30, 0.59, 0.11],
         [0.30, 0.59, 0.11],
     ],
-    grain_model: GrainModel { alpha: 0.08, sigma_read: 0.02 }, // RMS 17
+    grain_model: GrainModel { alpha: 0.08, sigma_read: 0.02, monochrome: true }, // RMS 17
     resolution_lp_mm: 100.0,
     reciprocity_exponent: 0.70,
     halation_strength: 0.2,
@@ -84,7 +84,7 @@ pub const FUJIFILM_VELVIA_50: FilmStock = FilmStock {
         [-0.05, 1.1, -0.05],
         [-0.05, -0.05, 1.1],
     ],
-    grain_model: GrainModel { alpha: 0.02, sigma_read: 0.005 }, // RMS 9
+    grain_model: GrainModel { alpha: 0.02, sigma_read: 0.005, monochrome: false }, // RMS 9
     resolution_lp_mm: 160.0,
     reciprocity_exponent: 0.95,
     halation_strength: 0.1,
@@ -117,7 +117,7 @@ pub const ILFORD_HP5_PLUS: FilmStock = FilmStock {
         [0.30, 0.59, 0.11],
         [0.30, 0.59, 0.11],
     ],
-    grain_model: GrainModel { alpha: 0.075, sigma_read: 0.02 }, // RMS 16
+    grain_model: GrainModel { alpha: 0.075, sigma_read: 0.02, monochrome: true }, // RMS 16
     resolution_lp_mm: 95.0,
     reciprocity_exponent: 0.80,
     halation_strength: 0.25,

@@ -356,12 +356,26 @@ pub fn process_image(
         // Add Grain (Using Film's Grain Model)
         let final_densities = if config.enable_grain {
             let mut rng = rand::thread_rng();
-            // Use film.grain_model instead of passed-in grain
-            [
-                film.grain_model.add_grain(densities[0], &mut rng),
-                film.grain_model.add_grain(densities[1], &mut rng),
-                film.grain_model.add_grain(densities[2], &mut rng),
-            ]
+            
+            if film.grain_model.monochrome {
+                // For B&W, generate one noise sample based on luminance (or Green channel)
+                // and apply it to all channels to ensure neutral grain.
+                // Since B&W film produces equal densities for R,G,B, any channel works.
+                let d = densities[1]; // Use Green
+                let noise = film.grain_model.sample_noise(d, &mut rng);
+                [
+                    (densities[0] + noise).max(0.0),
+                    (densities[1] + noise).max(0.0),
+                    (densities[2] + noise).max(0.0),
+                ]
+            } else {
+                // For Color, independent noise per channel
+                [
+                    film.grain_model.add_grain(densities[0], &mut rng),
+                    film.grain_model.add_grain(densities[1], &mut rng),
+                    film.grain_model.add_grain(densities[2], &mut rng),
+                ]
+            }
         } else {
             densities
         };

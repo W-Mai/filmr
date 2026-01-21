@@ -9,11 +9,12 @@ use rand_distr::{Distribution, Normal};
 pub struct GrainModel {
     pub alpha: f32,       // Shot noise coefficient (scales with density)
     pub sigma_read: f32,  // Base noise (fog/scanner noise)
+    pub monochrome: bool, // Whether the grain affects all channels equally (B&W)
 }
 
 impl GrainModel {
-    pub fn new(alpha: f32, sigma_read: f32) -> Self {
-        Self { alpha, sigma_read }
+    pub fn new(alpha: f32, sigma_read: f32, monochrome: bool) -> Self {
+        Self { alpha, sigma_read, monochrome }
     }
 
     /// Default parameters for a medium-grained film
@@ -21,22 +22,27 @@ impl GrainModel {
         Self {
             alpha: 0.05,
             sigma_read: 0.01,
+            monochrome: false,
+        }
+    }
+
+    /// Generates a noise sample for a given density
+    pub fn sample_noise<R: Rng>(&self, d: f32, rng: &mut R) -> f32 {
+        let variance = self.alpha * d + self.sigma_read.powi(2);
+        let std_dev = variance.sqrt().max(0.0);
+
+        if std_dev > 0.0 {
+            let normal = Normal::new(0.0, std_dev).unwrap();
+            normal.sample(rng)
+        } else {
+            0.0
         }
     }
 
     /// Adds grain noise to a density value D.
     /// Returns the noisy density.
     pub fn add_grain<R: Rng>(&self, d: f32, rng: &mut R) -> f32 {
-        // Var(D) = alpha * D + sigma_read^2
-        let variance = self.alpha * d + self.sigma_read.powi(2);
-        let std_dev = variance.sqrt().max(0.0);
-
-        if std_dev > 0.0 {
-            let normal = Normal::new(0.0, std_dev).unwrap();
-            let noise = normal.sample(rng);
-            (d + noise).max(0.0)
-        } else {
-            d
-        }
+        let noise = self.sample_noise(d, rng);
+        (d + noise).max(0.0)
     }
 }
