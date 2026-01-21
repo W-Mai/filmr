@@ -17,6 +17,14 @@ fn main() -> eframe::Result<()> {
     )
 }
 
+#[derive(PartialEq, Clone, Copy)]
+enum FilmPreset {
+    StandardDaylight,
+    KodakTriX400,
+    FujifilmVelvia50,
+    IlfordHp5Plus,
+}
+
 struct FilmrApp {
     // State
     original_image: Option<DynamicImage>,
@@ -31,7 +39,14 @@ struct FilmrApp {
     grain_alpha: f32,
     grain_sigma: f32,
     gamma_boost: f32,
+
+    // Halation Parameters
     halation_strength: f32,
+    halation_threshold: f32,
+    halation_sigma: f32,
+
+    // Selection
+    selected_preset: FilmPreset,
     output_mode: OutputMode,
 
     // Status
@@ -49,10 +64,33 @@ impl FilmrApp {
             grain_alpha: 0.05,
             grain_sigma: 0.01,
             gamma_boost: 1.0,
+
+            // Default Halation params
             halation_strength: 0.0,
+            halation_threshold: 0.8,
+            halation_sigma: 0.02,
+
+            selected_preset: FilmPreset::StandardDaylight,
             output_mode: OutputMode::Positive,
             status_msg: "Drag and drop an image here to start.".to_owned(),
         }
+    }
+
+    // Helper to load preset values into sliders when preset changes
+    fn load_preset_values(&mut self) {
+        let preset = match self.selected_preset {
+            FilmPreset::StandardDaylight => presets::STANDARD_DAYLIGHT,
+            FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400,
+            FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50,
+            FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS,
+        };
+
+        self.halation_strength = preset.halation_strength;
+        self.halation_threshold = preset.halation_threshold;
+        self.halation_sigma = preset.halation_sigma;
+
+        // Grain defaults could also be tied to presets if we wanted, 
+        // but currently they are separate in the struct logic.
     }
 
     fn process_and_update_texture(&mut self, ctx: &egui::Context) {
@@ -136,16 +174,60 @@ impl App for FilmrApp {
                 }
 
                 ui.label("Film Stock");
+                
+                // Preset ComboBox
+                egui::ComboBox::from_label("Preset")
+                    .selected_text(match self.selected_preset {
+                        FilmPreset::StandardDaylight => "Standard Daylight",
+                        FilmPreset::KodakTriX400 => "Kodak Tri-X 400",
+                        FilmPreset::FujifilmVelvia50 => "Fujifilm Velvia 50",
+                        FilmPreset::IlfordHp5Plus => "Ilford HP5 Plus",
+                    })
+                    .show_ui(ui, |ui| {
+                        let mut preset_changed = false;
+                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::StandardDaylight, "Standard Daylight").clicked() { preset_changed = true; }
+                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::KodakTriX400, "Kodak Tri-X 400").clicked() { preset_changed = true; }
+                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::FujifilmVelvia50, "Fujifilm Velvia 50").clicked() { preset_changed = true; }
+                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::IlfordHp5Plus, "Ilford HP5 Plus").clicked() { preset_changed = true; }
+                        
+                        if preset_changed {
+                            self.load_preset_values();
+                            changed = true;
+                        }
+                    });
+
+                ui.separator();
+
                 if ui
                     .add(egui::Slider::new(&mut self.gamma_boost, 0.5..=2.0).text("Gamma Boost"))
                     .changed()
                 {
                     changed = true;
                 }
+                
+                ui.label("Halation");
                 if ui
                     .add(
                         egui::Slider::new(&mut self.halation_strength, 0.0..=2.0)
-                            .text("Halation (Glow)"),
+                            .text("Strength (Glow)"),
+                    )
+                    .changed()
+                {
+                    changed = true;
+                }
+                if ui
+                    .add(
+                        egui::Slider::new(&mut self.halation_threshold, 0.0..=1.0)
+                            .text("Threshold"),
+                    )
+                    .changed()
+                {
+                    changed = true;
+                }
+                if ui
+                    .add(
+                        egui::Slider::new(&mut self.halation_sigma, 0.0..=0.1)
+                            .text("Sigma (Spread)"),
                     )
                     .changed()
                 {
