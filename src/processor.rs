@@ -55,10 +55,41 @@ pub fn process_image(
         let g_lin = physics::srgb_to_linear(rgb[1] as f32 / 255.0);
         let b_lin = physics::srgb_to_linear(rgb[2] as f32 / 255.0);
         
-        // 2. Apply Exposure (E = I * t)
+        // 2. Apply Exposure (E = I * t) and Simulate Layer Attenuation
+        // 
+        // Physical Layer Structure:
+        // Top: Blue Sensitive Layer (Blocks Blue)
+        // Middle: Green Sensitive Layer (Blocks Green)
+        // Bottom: Red Sensitive Layer (Blocks Red)
+        //
+        // Light reaching the lower layers is attenuated by the upper layers.
+        // E_blue = I_blue * t
+        // E_green = I_green * t * T_blue_layer
+        // E_red = I_red * t * T_blue_layer * T_green_layer
+        
+        // However, the "Transmission" T here is not the final developed transmission,
+        // but the transmission of the *undeveloped* emulsion.
+        // Undeveloped AgX crystals scatter light, but absorption is relatively low compared to developed dye.
+        // But critically, the *Blue Sensitive Layer* often has a Yellow Filter below it 
+        // to block Blue light from reaching Green/Red layers (which are naturally blue-sensitive).
+        
+        // Simplified Physical Model:
+        // We assume perfect spectral separation for simplicity in the basic model,
+        // OR we can introduce a "Layer Transmission Factor".
+        // Let's assume the unexposed emulsion absorbs some light.
+        
         let r_exp = physics::calculate_exposure(r_lin, config.exposure_time);
         let g_exp = physics::calculate_exposure(g_lin, config.exposure_time);
         let b_exp = physics::calculate_exposure(b_lin, config.exposure_time);
+        
+        // Note: Real layer attenuation is complex because it changes *during* exposure if the latent image absorbs light (it usually doesn't much).
+        // But the Yellow Filter layer (between Blue and Green) is static.
+        // It blocks Blue light from Green/Red layers. 
+        // Since our inputs are R, G, B channels, we assume they are already spectrally separated incident light.
+        // So R_in is the Red light hitting the film. The Blue layer is transparent to Red.
+        // So R_exp doesn't need attenuation from Blue layer *absorption*, only scattering.
+        // We will keep the exposure calculation independent for now as per standard color science models,
+        // unless we want to simulate specific "filter layer" effects.
         
         // Avoid log(0)
         let epsilon = 1e-6;

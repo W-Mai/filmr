@@ -82,9 +82,27 @@ impl SegmentedCurve {
 }
 
 /// Represents a specific film stock with 3 curves and a color matrix.
+/// 
+/// # Physics of Film Structure
+/// Analog color film consists of three main emulsion layers stacked on top of each other:
+/// 
+/// 1. **Top Layer (Blue Sensitive)**: Forms **Yellow** dye after development. 
+///    - Controls the absorption of **Blue** light ($D_B$).
+/// 2. **Filter Layer**: A yellow filter blocks blue light from reaching lower layers.
+/// 3. **Middle Layer (Green Sensitive)**: Forms **Magenta** dye after development.
+///    - Controls the absorption of **Green** light ($D_G$).
+/// 4. **Bottom Layer (Red Sensitive)**: Forms **Cyan** dye after development.
+///    - Controls the absorption of **Red** light ($D_R$).
+/// 
+/// The `color_matrix` below simulates the **Spectral Dye Density Curves** overlap (crosstalk).
+/// For example, the Magenta dye (Green layer) ideally only blocks Green light, but in reality,
+/// it also blocks a small amount of Blue and Red light (Unwanted Absorption).
 pub struct FilmStock {
+    /// Response of the Red-sensitive layer (Bottom Layer -> Cyan Dye)
     pub r_curve: SegmentedCurve,
+    /// Response of the Green-sensitive layer (Middle Layer -> Magenta Dye)
     pub g_curve: SegmentedCurve,
+    /// Response of the Blue-sensitive layer (Top Layer -> Yellow Dye)
     pub b_curve: SegmentedCurve,
     
     // 3x3 Matrix for crosstalk. Rows: R_out, G_out, B_out. Cols: R_in, G_in, B_in.
