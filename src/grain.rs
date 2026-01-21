@@ -1,14 +1,13 @@
 /// Grain and Noise Simulation Module
-/// 
+///
 /// Section 7: Grain Statistics Model.
 /// Var(D) = alpha * D + sigma_read^2
-
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
 pub struct GrainModel {
-    pub alpha: f32,       // Shot noise coefficient (scales with density)
-    pub sigma_read: f32,  // Base noise (fog/scanner noise)
+    pub alpha: f32,      // Shot noise coefficient (scales with density)
+    pub sigma_read: f32, // Base noise (fog/scanner noise)
 }
 
 impl GrainModel {
@@ -30,7 +29,7 @@ impl GrainModel {
         // Var(D) = alpha * D + sigma_read^2
         let variance = self.alpha * d + self.sigma_read.powi(2);
         let std_dev = variance.sqrt().max(0.0);
-        
+
         if std_dev > 0.0 {
             let normal = Normal::new(0.0, std_dev).unwrap();
             let noise = normal.sample(rng);

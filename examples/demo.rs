@@ -1,5 +1,5 @@
-use filmr::{process_image, FilmStock, GrainModel, SimulationConfig, OutputMode};
-use image::{RgbImage, Rgb};
+use filmr::{process_image, FilmStock, GrainModel, OutputMode, SimulationConfig};
+use image::{Rgb, RgbImage};
 
 fn main() {
     // 1. Create a test image: Horizontal Gradient Black to White
@@ -32,12 +32,12 @@ fn main() {
     // 3. Save output
     output.save("output_film.png").unwrap();
     println!("Saved output_film.png");
-    
+
     // Check some pixel values
     let p_black = output.get_pixel(0, 128);
     let p_mid = output.get_pixel(256, 128);
     let p_white = output.get_pixel(511, 128);
-    
+
     // For Positive: Black Input -> Dark Output. White Input -> Bright Output.
     println!("Black Input -> Output: {:?}", p_black);
     println!("Mid Input   -> Output: {:?}", p_mid);

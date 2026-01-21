@@ -1,7 +1,7 @@
-/// Physics module for Film Simulation
-/// 
-/// Handles basic physical quantities and conversions described in the technical document.
-/// Section 2: Exposure and Density Mapping.
+//! Physics module for Film Simulation
+//!
+//! Handles basic physical quantities and conversions described in the technical document.
+//! Section 2: Exposure and Density Mapping.
 
 /// Calculates Exposure (E) from Irradiance (I) and Time (t).
 /// E = I * t
@@ -16,7 +16,7 @@ pub fn calculate_exposure(irradiance: f32, time: f32) -> f32 {
 pub fn transmission_to_density(transmission: f32) -> f32 {
     if transmission <= 0.0 {
         // Handle effectively 0 transmission (infinite density) with a high cap
-        return 5.0; 
+        return 5.0;
     }
     -transmission.log10()
 }
