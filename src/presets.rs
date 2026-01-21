@@ -47,9 +47,9 @@ pub const KODAK_TRI_X_400: FilmStock = FilmStock {
         d_min: 0.10, d_max: 2.4, gamma: 0.70, exposure_offset: 0.0025,
     },
     color_matrix: [
-        [1.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0],
-        [0.0, 0.0, 1.0],
+        [0.30, 0.59, 0.11],
+        [0.30, 0.59, 0.11],
+        [0.30, 0.59, 0.11],
     ],
     grain_model: GrainModel { alpha: 0.08, sigma_read: 0.02 }, // RMS 17
     resolution_lp_mm: 100.0,
@@ -113,9 +113,9 @@ pub const ILFORD_HP5_PLUS: FilmStock = FilmStock {
         d_min: 0.08, d_max: 2.3, gamma: 0.70, exposure_offset: 0.0025,
     },
     color_matrix: [
-        [1.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0],
-        [0.0, 0.0, 1.0],
+        [0.30, 0.59, 0.11],
+        [0.30, 0.59, 0.11],
+        [0.30, 0.59, 0.11],
     ],
     grain_model: GrainModel { alpha: 0.075, sigma_read: 0.02 }, // RMS 16
     resolution_lp_mm: 95.0,
