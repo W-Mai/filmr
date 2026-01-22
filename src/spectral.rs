@@ -81,11 +81,25 @@ impl CameraSensitivities {
     pub fn srgb() -> Self {
         // Approximate sRGB / Rec.709 primaries peaks
         // Blue: ~450nm, Green: ~540nm, Red: ~610nm
-        // Widths are approximated.
+        //
+        // NOTE ON YELLOW TINT / WHITE BALANCE:
+        // A simple gaussian with peak=1.0 will have Area ~= sigma * sqrt(2*pi).
+        // Blue sigma (25) is smaller than Red/Green (30), so total Blue energy is lower.
+        // This causes white light (1,1,1) to appear yellow (deficiency of blue).
+        // We must normalize the peak heights so that the integral of each curve is roughly equal,
+        // or matches the D65 white point balance.
+        //
+        // Target: Equal Area.
+        // Area_B = Area_G = Area_R
+        // Peak_B * Sigma_B = Peak_G * Sigma_G = Peak_R * Sigma_R
+        // If Peak_G = 1.0, Sigma_G = 30.0 -> Product = 30.0
+        // Peak_B = 30.0 / 25.0 = 1.2
+        // Peak_R = 30.0 / 30.0 = 1.0
+        
         Self {
-            r_curve: Spectrum::new_gaussian(610.0, 30.0), // Red
-            g_curve: Spectrum::new_gaussian(540.0, 30.0), // Green
-            b_curve: Spectrum::new_gaussian(450.0, 25.0), // Blue
+            r_curve: Spectrum::new_gaussian(610.0, 30.0),      // Red, Peak 1.0
+            g_curve: Spectrum::new_gaussian(540.0, 30.0),      // Green, Peak 1.0
+            b_curve: Spectrum::new_gaussian(450.0, 25.0) * 1.3, // Blue, Peak 1.3 (Boosted to compensate narrow width + lens absorption)
         }
     }
 

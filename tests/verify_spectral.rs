@@ -206,10 +206,10 @@ mod tests {
         let max_resp = r_response.max(g_response).max(b_response);
         let min_resp = r_response.min(g_response).min(b_response);
         
-        // Allow some variance (e.g. 20%)
+        // Allow some variance (e.g. 15%) - Tighter constraint
         let ratio = min_resp / max_resp;
         println!("Min/Max Ratio: {:.2}", ratio);
         
-        assert!(ratio > 0.7, "Film response to white light should be balanced (within 30%)");
+        assert!(ratio > 0.85, "Film response to white light should be very balanced (within 15%)");
     }
 }
