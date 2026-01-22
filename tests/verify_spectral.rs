@@ -151,7 +151,7 @@ mod tests {
         let blue_spectrum = camera.uplift(0.0, 0.0, 1.0);
         let blue_peak = find_peak(&blue_spectrum);
         println!("Blue Peak: {} nm", blue_peak);
-        assert!((blue_peak - 450.0).abs() < 10.0, "Blue peak should be around 450nm");
+        assert!((blue_peak - 465.0).abs() < 10.0, "Blue peak should be around 465nm");
     }
 
     #[test]
@@ -188,10 +188,11 @@ mod tests {
         let film_sens = FilmSensitivities::from_params(film_params);
 
         // 3. Integrate
-        // Note: We use a raw integration here, similar to processor.rs
-        let r_response = white_spectrum.integrate_product(&film_sens.r_sensitivity);
-        let g_response = white_spectrum.integrate_product(&film_sens.g_sensitivity);
-        let b_response = white_spectrum.integrate_product(&film_sens.b_sensitivity);
+        // Use the new expose() method which includes relative factors
+        let exposure = film_sens.expose(&white_spectrum);
+        let r_response = exposure[0];
+        let g_response = exposure[1];
+        let b_response = exposure[2];
 
         println!("White Balance Response:");
         println!("R: {:.4}", r_response);

@@ -336,9 +336,10 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         let scene_spectrum = camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]);
 
         // Integrate with Film Sensitivities
-        let r_in = (scene_spectrum.integrate_product(&film_sens.r_sensitivity) * SPECTRAL_NORM).max(0.0);
-        let g_in = (scene_spectrum.integrate_product(&film_sens.g_sensitivity) * SPECTRAL_NORM).max(0.0);
-        let b_in = (scene_spectrum.integrate_product(&film_sens.b_sensitivity) * SPECTRAL_NORM).max(0.0);
+        let exposure_vals = film_sens.expose(&scene_spectrum);
+        let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
+        let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
+        let b_in = (exposure_vals[2] * SPECTRAL_NORM).max(0.0);
 
         // Apply Exposure
         // E = I * t.
