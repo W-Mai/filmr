@@ -1,5 +1,6 @@
 use crate::film::{FilmStock, SegmentedCurve};
 use crate::grain::GrainModel;
+use crate::spectral::FilmSpectralParams;
 
 /// Standard Daylight Film (Generic)
 pub const STANDARD_DAYLIGHT: FilmStock = FilmStock {
@@ -23,7 +24,7 @@ pub const STANDARD_DAYLIGHT: FilmStock = FilmStock {
         exposure_offset: 0.18,
     },
     color_matrix: [[1.00, 0.05, 0.02], [0.04, 1.00, 0.04], [0.01, 0.05, 1.00]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.05,
         sigma_read: 0.01,
@@ -66,7 +67,7 @@ pub const KODAK_TRI_X_400: FilmStock = FilmStock {
         exposure_offset: 0.0025,
     },
     color_matrix: [[0.30, 0.59, 0.11], [0.30, 0.59, 0.11], [0.30, 0.59, 0.11]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0289,
         sigma_read: 0.02,
@@ -114,7 +115,7 @@ pub const FUJIFILM_VELVIA_50: FilmStock = FilmStock {
         [-0.05, 1.1, -0.05],
         [-0.05, -0.05, 1.1],
     ],
-    spectral_sensitivity: [[1.1, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0081,
         sigma_read: 0.005,
@@ -158,7 +159,7 @@ pub const ILFORD_HP5_PLUS: FilmStock = FilmStock {
         exposure_offset: 0.0025,
     },
     color_matrix: [[0.30, 0.59, 0.11], [0.30, 0.59, 0.11], [0.30, 0.59, 0.11]],
-    spectral_sensitivity: [[0.9, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0256,
         sigma_read: 0.02,
@@ -206,7 +207,7 @@ pub const KODAK_PORTRA_400: FilmStock = FilmStock {
         [-0.1, -0.05, 1.15],
     ],
     // Simulating slight spectral overlap (Red sees some Green, Green sees some Blue)
-    spectral_sensitivity: [[0.95, 0.05, 0.0], [0.05, 0.90, 0.05], [0.0, 0.05, 0.95]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0121,
         sigma_read: 0.005,
@@ -254,7 +255,7 @@ pub const KODAK_EKTAR_100: FilmStock = FilmStock {
         [-0.15, -0.10, 1.25],
     ],
     // Ektar has high color separation (enhanced saturation)
-    spectral_sensitivity: [[1.05, -0.05, 0.0], [-0.05, 1.05, -0.05], [0.0, -0.05, 1.05]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.003,
@@ -298,7 +299,7 @@ pub const KODAK_T_MAX_3200: FilmStock = FilmStock {
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
     // Standard Panchromatic response
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0324,
         sigma_read: 0.03,
@@ -342,7 +343,7 @@ pub const ILFORD_DELTA_100: FilmStock = FilmStock {
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
     // Standard Panchromatic response
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0049,
         sigma_read: 0.005,
@@ -390,7 +391,7 @@ pub const FUJIFILM_PRO_400H: FilmStock = FilmStock {
         [-0.05, 0.0, 1.05],
     ],
     // Fuji colors: distinct Green/Blue handling
-    spectral_sensitivity: [[0.95, 0.05, 0.0], [0.0, 1.0, 0.1], [0.0, 0.1, 0.95]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0144,
         sigma_read: 0.008,
@@ -436,7 +437,7 @@ pub const FUJIFILM_VELVIA_100F: FilmStock = FilmStock {
         [-0.05, 1.15, -0.1],
         [-0.1, -0.05, 1.15],
     ],
-    spectral_sensitivity: [[1.1, 0.0, 0.0], [0.0, 1.05, 0.0], [0.0, 0.0, 1.05]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.005,
@@ -478,7 +479,7 @@ pub const FUJIFILM_VELVIA_100: FilmStock = FilmStock {
         exposure_offset: 0.01,
     },
     color_matrix: [[1.2, -0.1, -0.1], [-0.1, 1.2, -0.1], [-0.1, -0.1, 1.2]],
-    spectral_sensitivity: [[1.15, 0.0, 0.0], [0.0, 1.1, 0.0], [0.0, 0.0, 1.05]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0081,
         sigma_read: 0.005,
@@ -520,7 +521,7 @@ pub const FUJIFILM_PROVIA_100F: FilmStock = FilmStock {
         exposure_offset: 0.01,
     },
     color_matrix: [[1.05, 0.0, -0.05], [0.0, 1.05, -0.05], [-0.05, 0.0, 1.05]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.005,
@@ -562,7 +563,7 @@ pub const FUJIFILM_ASTIA_100F: FilmStock = FilmStock {
         exposure_offset: 0.01,
     },
     color_matrix: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], // Very neutral
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.004,
@@ -608,7 +609,7 @@ pub const FUJIFILM_PROVIA_400X: FilmStock = FilmStock {
         [-0.05, 1.1, -0.05],
         [-0.05, -0.05, 1.1],
     ],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0121,
         sigma_read: 0.006,
@@ -650,7 +651,7 @@ pub const FUJIFILM_TREBI_400: FilmStock = FilmStock {
         exposure_offset: 0.005,
     },
     color_matrix: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0121,
         sigma_read: 0.006,
@@ -696,7 +697,7 @@ pub const FUJIFILM_PRO_160NS: FilmStock = FilmStock {
         [-0.02, 1.05, -0.03],
         [-0.03, -0.02, 1.05],
     ],
-    spectral_sensitivity: [[0.98, 0.02, 0.0], [0.0, 1.0, 0.0], [0.0, 0.02, 0.98]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.004,
@@ -738,7 +739,7 @@ pub const FUJIFILM_PRO_160NC: FilmStock = FilmStock {
         exposure_offset: 0.008,
     },
     color_matrix: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.004,
@@ -784,7 +785,7 @@ pub const FUJIFILM_SUPERIA_200: FilmStock = FilmStock {
         [-0.05, 1.1, -0.05],
         [-0.05, -0.05, 1.1],
     ],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0121,
         sigma_read: 0.005,
@@ -826,7 +827,7 @@ pub const FUJIFILM_SUPERIA_X_TRA_800: FilmStock = FilmStock {
         exposure_offset: 0.001,
     },
     color_matrix: [[1.05, -0.05, 0.0], [-0.05, 1.05, 0.0], [0.0, 0.0, 1.05]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0169,
         sigma_read: 0.008,
@@ -868,7 +869,7 @@ pub const KODAK_T_MAX_400: FilmStock = FilmStock {
         exposure_offset: 0.0025,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0100,
         sigma_read: 0.005,
@@ -910,7 +911,7 @@ pub const KODAK_T_MAX_100: FilmStock = FilmStock {
         exposure_offset: 0.01,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0064,
         sigma_read: 0.004,
@@ -952,7 +953,7 @@ pub const KODAK_PLUS_X_125: FilmStock = FilmStock {
         exposure_offset: 0.008,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0169,
         sigma_read: 0.006,
@@ -994,7 +995,7 @@ pub const ILFORD_FP4_PLUS: FilmStock = FilmStock {
         exposure_offset: 0.008,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0121,
         sigma_read: 0.005,
@@ -1036,7 +1037,7 @@ pub const ILFORD_DELTA_400: FilmStock = FilmStock {
         exposure_offset: 0.0025,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0121,
         sigma_read: 0.006,
@@ -1078,7 +1079,7 @@ pub const ILFORD_PAN_F_PLUS: FilmStock = FilmStock {
         exposure_offset: 0.02,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0025,
         sigma_read: 0.003,
@@ -1121,7 +1122,7 @@ pub const ILFORD_SFX_200: FilmStock = FilmStock {
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
     // Enhanced Red Sensitivity (Infrared-like)
-    spectral_sensitivity: [[1.5, 0.0, 0.0], [0.0, 0.8, 0.0], [0.0, 0.0, 0.7]],
+    spectral_params: FilmSpectralParams::new_infrared(),
     grain_model: GrainModel {
         alpha: 0.0196,
         sigma_read: 0.008,
@@ -1167,7 +1168,7 @@ pub const KODAK_PORTRA_160: FilmStock = FilmStock {
         [-0.05, 1.1, -0.05],
         [-0.05, -0.05, 1.1],
     ],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0081,
         sigma_read: 0.005,
@@ -1209,7 +1210,7 @@ pub const KODAK_GOLD_200: FilmStock = FilmStock {
         exposure_offset: 0.007,
     },
     color_matrix: [[1.15, -0.1, 0.0], [-0.05, 1.1, -0.05], [0.0, -0.05, 1.05]], // Warm tone
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0144,
         sigma_read: 0.006,
@@ -1251,7 +1252,7 @@ pub const KODACHROME_25: FilmStock = FilmStock {
         exposure_offset: 0.04,
     },
     color_matrix: [[1.2, -0.1, -0.1], [-0.1, 1.2, -0.1], [-0.1, -0.1, 1.2]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0025,
         sigma_read: 0.003,
@@ -1297,7 +1298,7 @@ pub const KODACHROME_64: FilmStock = FilmStock {
         [-0.07, 1.15, -0.08],
         [-0.08, -0.07, 1.15],
     ],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0049,
         sigma_read: 0.004,
@@ -1343,7 +1344,7 @@ pub const KODAK_EKTACHROME_100VS: FilmStock = FilmStock {
         [-0.1, 1.25, -0.15],
         [-0.15, -0.1, 1.25],
     ], // Vivid Saturation
-    spectral_sensitivity: [[1.05, 0.0, 0.0], [0.0, 1.05, 0.0], [0.0, 0.0, 1.05]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0081,
         sigma_read: 0.005,
@@ -1385,7 +1386,7 @@ pub const FUJIFILM_NEOPAN_ACROS_100: FilmStock = FilmStock {
         exposure_offset: 0.01,
     },
     color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.0049,
         sigma_read: 0.004,
@@ -1425,7 +1426,7 @@ pub const POLAROID_SX_70: FilmStock = FilmStock {
         exposure_offset: 0.008,
     },
     color_matrix: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], // Muted colors
-    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    spectral_params: FilmSpectralParams::new_panchromatic(),
     grain_model: GrainModel {
         alpha: 0.01,
         sigma_read: 0.005,

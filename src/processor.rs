@@ -1,5 +1,6 @@
 use crate::film::FilmStock;
 use crate::physics;
+use crate::spectral::CameraSensitivities;
 use image::{ImageBuffer, Rgb, RgbImage};
 use rayon::prelude::*;
 
@@ -318,25 +319,26 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     let mut pixels: Vec<u8> = vec![0; (width * height * 3) as usize];
 
     // 3. Process Exposure -> Density -> Output
+    let camera_sens = CameraSensitivities::srgb();
+    let film_sens = film.get_spectral_sensitivities();
+    // Normalization factor to keep exposure values in a reasonable range
+    // relative to the old RGB implementation.
+    // tuned to approx 1/Integral(Gaussian^2) where width ~30nm
+    const SPECTRAL_NORM: f32 = 0.008;
+
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
         let x = (i as u32) % width;
         let y = (i as u32) / width;
 
         let lin_pixel = linear_image.get_pixel(x, y).0;
 
-        // Apply Spectral Sensitivity
-        let r_in = (film.spectral_sensitivity[0][0] * lin_pixel[0]
-            + film.spectral_sensitivity[0][1] * lin_pixel[1]
-            + film.spectral_sensitivity[0][2] * lin_pixel[2])
-            .max(0.0);
-        let g_in = (film.spectral_sensitivity[1][0] * lin_pixel[0]
-            + film.spectral_sensitivity[1][1] * lin_pixel[1]
-            + film.spectral_sensitivity[1][2] * lin_pixel[2])
-            .max(0.0);
-        let b_in = (film.spectral_sensitivity[2][0] * lin_pixel[0]
-            + film.spectral_sensitivity[2][1] * lin_pixel[1]
-            + film.spectral_sensitivity[2][2] * lin_pixel[2])
-            .max(0.0);
+        // Uplift RGB to Spectrum
+        let scene_spectrum = camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]);
+
+        // Integrate with Film Sensitivities
+        let r_in = (scene_spectrum.integrate_product(&film_sens.r_sensitivity) * SPECTRAL_NORM).max(0.0);
+        let g_in = (scene_spectrum.integrate_product(&film_sens.g_sensitivity) * SPECTRAL_NORM).max(0.0);
+        let b_in = (scene_spectrum.integrate_product(&film_sens.b_sensitivity) * SPECTRAL_NORM).max(0.0);
 
         // Apply Exposure
         // E = I * t.

@@ -177,7 +177,7 @@ impl FilmrApp {
                 base_film.g_curve,
                 base_film.b_curve,
                 base_film.color_matrix,
-                base_film.spectral_sensitivity,
+                base_film.spectral_params,
                 base_film.grain_model,
                 base_film.resolution_lp_mm,
                 base_film.reciprocity_exponent,

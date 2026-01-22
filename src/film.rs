@@ -1,4 +1,5 @@
 use crate::grain::GrainModel;
+use crate::spectral::{FilmSensitivities, FilmSpectralParams};
 
 /// Film Modeling Module
 ///
@@ -102,11 +103,9 @@ pub struct FilmStock {
     // D_out = Matrix * D_in
     pub color_matrix: [[f32; 3]; 3],
 
-    /// Spectral Sensitivity Matrix (Input Mixing).
-    /// Maps Linear RGB (Scene) to Layer Sensitivities (R, G, B layers).
-    /// Layer_Exposure = Sensitivity_Matrix * Linear_RGB
-    /// Used to simulate Orthochromatic vs Panchromatic response, or color shifts.
-    pub spectral_sensitivity: [[f32; 3]; 3],
+    /// Spectral Sensitivity Parameters.
+    /// Used to generate the spectral response curves at runtime.
+    pub spectral_params: FilmSpectralParams,
 
     /// Grain parameters derived from RMS Granularity.
     pub grain_model: GrainModel,
@@ -147,7 +146,7 @@ impl FilmStock {
         g_curve: SegmentedCurve,
         b_curve: SegmentedCurve,
         color_matrix: [[f32; 3]; 3],
-        spectral_sensitivity: [[f32; 3]; 3],
+        spectral_params: FilmSpectralParams,
         grain_model: GrainModel,
         resolution_lp_mm: f32,
         reciprocity_exponent: f32,
@@ -161,7 +160,7 @@ impl FilmStock {
             r_curve,
             g_curve,
             b_curve,
-            spectral_sensitivity,
+            spectral_params,
             color_matrix,
             grain_model,
             resolution_lp_mm,
@@ -171,6 +170,11 @@ impl FilmStock {
             halation_sigma,
             halation_tint,
         }
+    }
+
+    /// Generate spectral sensitivities from parameters
+    pub fn get_spectral_sensitivities(&self) -> FilmSensitivities {
+        FilmSensitivities::from_params(self.spectral_params)
     }
 
     /// Helper to modify halation strength (common operation)

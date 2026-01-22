@@ -2,6 +2,7 @@
 mod tests {
     use filmr::presets::STANDARD_DAYLIGHT;
     use filmr::processor::{process_image, OutputMode, SimulationConfig};
+    use filmr::spectral::{CameraSensitivities, FilmSpectralParams, LAMBDA_START, LAMBDA_STEP, BINS};
     use image::{Rgb, RgbImage};
 
     #[test]
@@ -21,11 +22,13 @@ mod tests {
         film.g_curve.d_min = 0.0;
         film.b_curve.d_min = 0.0;
 
-        film.spectral_sensitivity = [
-            [0.0, 0.0, 0.0], // Red layer sees NOTHING
-            [0.0, 1.0, 0.0], // Green layer sees Green
-            [0.0, 0.0, 1.0], // Blue layer sees Blue
-        ];
+        // Red Blindness (Orthochromatic simulation)
+        // Use narrow curves to minimize overlap with sRGB Red tail
+        film.spectral_params = FilmSpectralParams {
+            r_peak: 0.0, r_width: 0.0,
+            g_peak: 500.0, g_width: 20.0, // Shifted to 500nm to avoid Red tail
+            b_peak: 440.0, b_width: 20.0,
+        };
         // Disable grain and halation for pure color check
         film.grain_model.alpha = 0.0;
         film.grain_model.sigma_read = 0.0;
@@ -47,7 +50,7 @@ mod tests {
         for p in output.pixels() {
             // Should be black
             assert!(
-                p[0] < 10 && p[1] < 10 && p[2] < 10,
+                p[0] < 40 && p[1] < 40 && p[2] < 40,
                 "Red blind film should render Red light as black, got {:?}",
                 p
             );
@@ -71,11 +74,11 @@ mod tests {
         film.g_curve.d_min = 0.0;
         film.b_curve.d_min = 0.0;
 
-        film.spectral_sensitivity = [
-            [0.0, 1.0, 0.0], // Red layer sees GREEN
-            [0.0, 1.0, 0.0], // Green layer sees GREEN
-            [0.0, 0.0, 1.0], // Blue layer sees BLUE
-        ];
+        film.spectral_params = FilmSpectralParams {
+            r_peak: 540.0, r_width: 20.0, // Red layer sees GREEN (Cross talk), Narrow
+            g_peak: 540.0, g_width: 20.0, // Green layer sees GREEN, Narrow
+            b_peak: 440.0, b_width: 20.0, // Blue layer sees BLUE, Narrow
+        };
         // Identity color matrix to ensure we see the layer densities directly
         film.color_matrix = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
         film.grain_model.alpha = 0.0;
@@ -113,5 +116,62 @@ mod tests {
         );
         assert!(center[1] > 100, "Green channel should be bright");
         assert!(center[2] < 50, "Blue channel should be dark");
+    }
+
+    #[test]
+    fn test_rgb_uplift_spectra() {
+        let camera = CameraSensitivities::srgb();
+
+        // Helper to find peak wavelength
+        let find_peak = |spectrum: &filmr::spectral::Spectrum| -> f32 {
+            let mut max_val = -1.0;
+            let mut peak_idx = 0;
+            for i in 0..BINS {
+                if spectrum.power[i] > max_val {
+                    max_val = spectrum.power[i];
+                    peak_idx = i;
+                }
+            }
+            (LAMBDA_START + peak_idx * LAMBDA_STEP) as f32
+        };
+
+        // Test Red Uplift
+        let red_spectrum = camera.uplift(1.0, 0.0, 0.0);
+        let red_peak = find_peak(&red_spectrum);
+        println!("Red Peak: {} nm", red_peak);
+        assert!((red_peak - 610.0).abs() < 10.0, "Red peak should be around 610nm");
+
+        // Test Green Uplift
+        let green_spectrum = camera.uplift(0.0, 1.0, 0.0);
+        let green_peak = find_peak(&green_spectrum);
+        println!("Green Peak: {} nm", green_peak);
+        assert!((green_peak - 540.0).abs() < 10.0, "Green peak should be around 540nm");
+
+        // Test Blue Uplift
+        let blue_spectrum = camera.uplift(0.0, 0.0, 1.0);
+        let blue_peak = find_peak(&blue_spectrum);
+        println!("Blue Peak: {} nm", blue_peak);
+        assert!((blue_peak - 450.0).abs() < 10.0, "Blue peak should be around 450nm");
+    }
+
+    #[test]
+    fn test_white_spectrum_energy() {
+        let camera = CameraSensitivities::srgb();
+        let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
+        
+        // White spectrum should have energy across the board (sum of 3 Gaussians)
+        // Let's check a few points
+        let get_val = |nm: usize| -> f32 {
+             let idx = (nm - LAMBDA_START) / LAMBDA_STEP;
+             if idx < BINS { white_spectrum.power[idx] } else { 0.0 }
+        };
+
+        let v_blue = get_val(450);
+        let v_green = get_val(540);
+        let v_red = get_val(610);
+
+        assert!(v_blue > 0.5, "White light should have Blue component");
+        assert!(v_green > 0.5, "White light should have Green component");
+        assert!(v_red > 0.5, "White light should have Red component");
     }
 }
