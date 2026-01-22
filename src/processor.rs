@@ -372,6 +372,30 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     };
     let white_balance_gray = compute_white_balance(0.18);
     let white_balance_white = compute_white_balance(1.0);
+    let auto_wb = {
+        let mut sum = [0.0f32; 3];
+        let mut count = 0.0f32;
+        for p in linear_image.pixels() {
+            sum[0] += p[0];
+            sum[1] += p[1];
+            sum[2] += p[2];
+            count += 1.0;
+        }
+        let avg = [sum[0] / count, sum[1] / count, sum[2] / count];
+        let avg_all = (avg[0] + avg[1] + avg[2]) / 3.0;
+        let epsilon = 1e-6;
+        let raw = [
+            avg_all / avg[0].max(epsilon),
+            avg_all / avg[1].max(epsilon),
+            avg_all / avg[2].max(epsilon),
+        ];
+        let strength = 0.6;
+        [
+            1.0 + (raw[0] - 1.0) * strength,
+            1.0 + (raw[1] - 1.0) * strength,
+            1.0 + (raw[2] - 1.0) * strength,
+        ]
+    };
 
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
         let x = (i as u32) % width;
@@ -465,9 +489,9 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         let lum = 0.2126 * lin_pixel[0] + 0.7152 * lin_pixel[1] + 0.0722 * lin_pixel[2];
         let t = lum.clamp(0.0, 1.0);
         let white_balance = [
-            white_balance_gray[0] * (1.0 - t) + white_balance_white[0] * t,
-            white_balance_gray[1] * (1.0 - t) + white_balance_white[1] * t,
-            white_balance_gray[2] * (1.0 - t) + white_balance_white[2] * t,
+            (white_balance_gray[0] * (1.0 - t) + white_balance_white[0] * t) * auto_wb[0],
+            (white_balance_gray[1] * (1.0 - t) + white_balance_white[1] * t) * auto_wb[1],
+            (white_balance_gray[2] * (1.0 - t) + white_balance_white[2] * t) * auto_wb[2],
         ];
         let r_out = physics::linear_to_srgb((r_lin * white_balance[0]).clamp(0.0, 1.0));
         let g_out = physics::linear_to_srgb((g_lin * white_balance[1]).clamp(0.0, 1.0));
