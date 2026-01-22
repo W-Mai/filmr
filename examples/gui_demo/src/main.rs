@@ -254,102 +254,122 @@ impl App for FilmrApp {
 
                 ui.label("Film Stock");
 
-                // Preset ComboBox
-                egui::ComboBox::from_label("Preset")
-                    .selected_text(match self.selected_preset {
-                        FilmPreset::StandardDaylight => "Standard Daylight",
-                        FilmPreset::FujifilmVelvia50 => "Fuji Velvia 50",
-                        FilmPreset::FujifilmVelvia100F => "Fuji Velvia 100F",
-                        FilmPreset::FujifilmVelvia100 => "Fuji Velvia 100",
-                        FilmPreset::FujifilmProvia100F => "Fuji Provia 100F",
-                        FilmPreset::FujifilmAstia100F => "Fuji Astia 100F",
-                        FilmPreset::FujifilmProvia400X => "Fuji Provia 400X",
-                        FilmPreset::FujifilmTrebi400 => "Fuji TREBI 400",
-                        FilmPreset::FujifilmPro400H => "Fuji Pro 400H",
-                        FilmPreset::FujifilmPro160NS => "Fuji Pro 160NS",
-                        FilmPreset::FujifilmPro160NC => "Fuji Pro 160NC",
-                        FilmPreset::FujifilmSuperia200 => "Fuji Superia 200",
-                        FilmPreset::FujifilmSuperiaXTra800 => "Fuji Superia X-Tra 800",
-                        FilmPreset::KodakTriX400 => "Kodak Tri-X 400",
-                        FilmPreset::KodakTMax400 => "Kodak T-Max 400",
-                        FilmPreset::KodakTMax100 => "Kodak T-Max 100",
-                        FilmPreset::KodakTMax3200 => "Kodak T-Max 3200",
-                        FilmPreset::KodakPlusX125 => "Kodak Plus-X 125",
-                        FilmPreset::IlfordHp5Plus => "Ilford HP5 Plus",
-                        FilmPreset::IlfordFp4Plus => "Ilford FP4 Plus",
-                        FilmPreset::IlfordDelta100 => "Ilford Delta 100",
-                        FilmPreset::IlfordDelta400 => "Ilford Delta 400",
-                        FilmPreset::IlfordPanFPlus => "Ilford Pan F Plus",
-                        FilmPreset::IlfordSfx200 => "Ilford SFX 200",
-                        FilmPreset::KodakPortra400 => "Kodak Portra 400",
-                        FilmPreset::KodakPortra160 => "Kodak Portra 160",
-                        FilmPreset::KodakEktar100 => "Kodak Ektar 100",
-                        FilmPreset::KodakGold200 => "Kodak Gold 200",
-                        FilmPreset::Kodachrome25 => "Kodachrome 25 (Classic)",
-                        FilmPreset::Kodachrome64 => "Kodachrome 64 (Classic)",
-                        FilmPreset::KodakEktachrome100VS => "Ektachrome 100VS (Classic)",
-                        FilmPreset::FujifilmNeopanAcros100 => "Fuji Neopan Acros 100 (Classic)",
-                        FilmPreset::PolaroidSx70 => "Polaroid SX-70 (Instant)",
-                    })
-                    .show_ui(ui, |ui| {
-                        let mut preset_changed = false;
+                let mut preset_changed = false;
 
+                egui::ScrollArea::vertical().max_height(400.0).show(ui, |ui| {
+                    ui.collapsing("Generic", |ui| {
+                         if ui.selectable_value(&mut self.selected_preset, FilmPreset::StandardDaylight, "Standard Daylight").clicked() {
+                             preset_changed = true;
+                         }
+                    });
+
+                    ui.collapsing("Fujifilm (Slide)", |ui| {
                         let presets = [
-                            (FilmPreset::StandardDaylight, "Standard Daylight"),
-                            (FilmPreset::FujifilmVelvia50, "Fuji Velvia 50"),
-                            (FilmPreset::FujifilmVelvia100F, "Fuji Velvia 100F"),
-                            (FilmPreset::FujifilmVelvia100, "Fuji Velvia 100"),
-                            (FilmPreset::FujifilmProvia100F, "Fuji Provia 100F"),
-                            (FilmPreset::FujifilmAstia100F, "Fuji Astia 100F"),
-                            (FilmPreset::FujifilmProvia400X, "Fuji Provia 400X"),
-                            (FilmPreset::FujifilmTrebi400, "Fuji TREBI 400"),
-                            (FilmPreset::FujifilmPro400H, "Fuji Pro 400H"),
-                            (FilmPreset::FujifilmPro160NS, "Fuji Pro 160NS"),
-                            (FilmPreset::FujifilmPro160NC, "Fuji Pro 160NC"),
-                            (FilmPreset::FujifilmSuperia200, "Fuji Superia 200"),
-                            (FilmPreset::FujifilmSuperiaXTra800, "Fuji Superia X-Tra 800"),
-                            (FilmPreset::KodakTriX400, "Kodak Tri-X 400"),
-                            (FilmPreset::KodakTMax400, "Kodak T-Max 400"),
-                            (FilmPreset::KodakTMax100, "Kodak T-Max 100"),
-                            (FilmPreset::KodakTMax3200, "Kodak T-Max 3200"),
-                            (FilmPreset::KodakPlusX125, "Kodak Plus-X 125"),
-                            (FilmPreset::IlfordHp5Plus, "Ilford HP5 Plus"),
-                            (FilmPreset::IlfordFp4Plus, "Ilford FP4 Plus"),
-                            (FilmPreset::IlfordDelta100, "Ilford Delta 100"),
-                            (FilmPreset::IlfordDelta400, "Ilford Delta 400"),
-                            (FilmPreset::IlfordPanFPlus, "Ilford Pan F Plus"),
-                            (FilmPreset::IlfordSfx200, "Ilford SFX 200"),
-                            (FilmPreset::KodakPortra400, "Kodak Portra 400"),
-                            (FilmPreset::KodakPortra160, "Kodak Portra 160"),
-                            (FilmPreset::KodakEktar100, "Kodak Ektar 100"),
-                            (FilmPreset::KodakGold200, "Kodak Gold 200"),
-                            (FilmPreset::Kodachrome25, "Kodachrome 25 (Classic)"),
-                            (FilmPreset::Kodachrome64, "Kodachrome 64 (Classic)"),
-                            (
-                                FilmPreset::KodakEktachrome100VS,
-                                "Ektachrome 100VS (Classic)",
-                            ),
-                            (
-                                FilmPreset::FujifilmNeopanAcros100,
-                                "Fuji Neopan Acros 100 (Classic)",
-                            ),
-                            (FilmPreset::PolaroidSx70, "Polaroid SX-70 (Instant)"),
+                            (FilmPreset::FujifilmVelvia50, "Velvia 50"),
+                            (FilmPreset::FujifilmVelvia100F, "Velvia 100F"),
+                            (FilmPreset::FujifilmVelvia100, "Velvia 100"),
+                            (FilmPreset::FujifilmProvia100F, "Provia 100F"),
+                            (FilmPreset::FujifilmAstia100F, "Astia 100F"),
+                            (FilmPreset::FujifilmProvia400X, "Provia 400X"),
+                            (FilmPreset::FujifilmTrebi400, "TREBI 400"),
                         ];
-
-                        for (preset, label) in presets.iter() {
-                            if ui
-                                .selectable_value(&mut self.selected_preset, *preset, *label)
-                                .clicked()
-                            {
+                        for (p, l) in presets {
+                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
                                 preset_changed = true;
                             }
                         }
+                    });
 
-                        if preset_changed {
-                            self.load_preset_values();
-                            changed = true;
+                    ui.collapsing("Fujifilm (Color Negative)", |ui| {
+                        let presets = [
+                            (FilmPreset::FujifilmPro400H, "Pro 400H"),
+                            (FilmPreset::FujifilmPro160NS, "Pro 160NS"),
+                            (FilmPreset::FujifilmPro160NC, "Pro 160NC"),
+                            (FilmPreset::FujifilmSuperia200, "Superia 200"),
+                            (FilmPreset::FujifilmSuperiaXTra800, "Superia X-Tra 800"),
+                        ];
+                        for (p, l) in presets {
+                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                                preset_changed = true;
+                            }
                         }
                     });
+                    
+                     ui.collapsing("Fujifilm (B&W)", |ui| {
+                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::FujifilmNeopanAcros100, "Neopan Acros 100").clicked() {
+                             preset_changed = true;
+                         }
+                    });
+
+                    ui.collapsing("Kodak (B&W)", |ui| {
+                         let presets = [
+                            (FilmPreset::KodakTriX400, "Tri-X 400"),
+                            (FilmPreset::KodakTMax400, "T-Max 400"),
+                            (FilmPreset::KodakTMax100, "T-Max 100"),
+                            (FilmPreset::KodakTMax3200, "T-Max 3200"),
+                            (FilmPreset::KodakPlusX125, "Plus-X 125"),
+                        ];
+                        for (p, l) in presets {
+                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                                preset_changed = true;
+                            }
+                        }
+                    });
+
+                    ui.collapsing("Kodak (Color Negative)", |ui| {
+                         let presets = [
+                            (FilmPreset::KodakPortra400, "Portra 400"),
+                            (FilmPreset::KodakPortra160, "Portra 160"),
+                            (FilmPreset::KodakEktar100, "Ektar 100"),
+                            (FilmPreset::KodakGold200, "Gold 200"),
+                        ];
+                        for (p, l) in presets {
+                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                                preset_changed = true;
+                            }
+                        }
+                    });
+                    
+                    ui.collapsing("Kodak (Slide)", |ui| {
+                         let presets = [
+                            (FilmPreset::Kodachrome25, "Kodachrome 25"),
+                            (FilmPreset::Kodachrome64, "Kodachrome 64"),
+                            (FilmPreset::KodakEktachrome100VS, "Ektachrome 100VS"),
+                        ];
+                        for (p, l) in presets {
+                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                                preset_changed = true;
+                            }
+                        }
+                    });
+
+                    ui.collapsing("Ilford (B&W)", |ui| {
+                        let presets = [
+                            (FilmPreset::IlfordHp5Plus, "HP5 Plus"),
+                            (FilmPreset::IlfordFp4Plus, "FP4 Plus"),
+                            (FilmPreset::IlfordDelta100, "Delta 100"),
+                            (FilmPreset::IlfordDelta400, "Delta 400"),
+                            (FilmPreset::IlfordPanFPlus, "Pan F Plus"),
+                            (FilmPreset::IlfordSfx200, "SFX 200"),
+                        ];
+                        for (p, l) in presets {
+                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                                preset_changed = true;
+                            }
+                        }
+                    });
+                    
+                     ui.collapsing("Polaroid", |ui| {
+                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::PolaroidSx70, "SX-70").clicked() {
+                             preset_changed = true;
+                         }
+                    });
+                });
+
+                if preset_changed {
+                    self.load_preset_values();
+                    changed = true;
+                }
 
                 ui.separator();
 
