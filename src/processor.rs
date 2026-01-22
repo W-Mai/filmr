@@ -325,6 +325,53 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     // relative to the old RGB implementation.
     // tuned to approx 1/Integral(Gaussian^2) where width ~30nm
     const SPECTRAL_NORM: f32 = 0.008;
+    let compute_white_balance = |neutral: f32| {
+        let scene_spectrum = camera_sens.uplift(neutral, neutral, neutral);
+        let exposure_vals = film_sens.expose(&scene_spectrum);
+        let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
+        let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
+        let b_in = (exposure_vals[2] * SPECTRAL_NORM).max(0.0);
+        let t_eff = if config.exposure_time > 1.0 {
+            config.exposure_time.powf(film.reciprocity_exponent)
+        } else {
+            config.exposure_time
+        };
+        let r_exp = physics::calculate_exposure(r_in, t_eff);
+        let g_exp = physics::calculate_exposure(g_in, t_eff);
+        let b_exp = physics::calculate_exposure(b_in, t_eff);
+        let epsilon = 1e-6;
+        let log_e = [
+            r_exp.max(epsilon).log10(),
+            g_exp.max(epsilon).log10(),
+            b_exp.max(epsilon).log10(),
+        ];
+        let densities = film.map_log_exposure(log_e);
+        let (r_lin, g_lin, b_lin) = match config.output_mode {
+            OutputMode::Negative => {
+                let t_r = physics::density_to_transmission(densities[0]);
+                let t_g = physics::density_to_transmission(densities[1]);
+                let t_b = physics::density_to_transmission(densities[2]);
+                (
+                    t_r.clamp(0.0, 1.0),
+                    t_g.clamp(0.0, 1.0),
+                    t_b.clamp(0.0, 1.0),
+                )
+            }
+            OutputMode::Positive => {
+                let max_d = 3.0;
+                let norm = |d: f32| (d / max_d).clamp(0.0, 1.0);
+                (norm(densities[0]), norm(densities[1]), norm(densities[2]))
+            }
+        };
+        let avg = (r_lin + g_lin + b_lin) / 3.0;
+        [
+            avg / r_lin.max(epsilon),
+            avg / g_lin.max(epsilon),
+            avg / b_lin.max(epsilon),
+        ]
+    };
+    let white_balance_gray = compute_white_balance(0.18);
+    let white_balance_white = compute_white_balance(1.0);
 
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
         let x = (i as u32) % width;
@@ -394,27 +441,37 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         };
 
         // Output Formatting
-        let (r_out, g_out, b_out) = match config.output_mode {
+        let (r_lin, g_lin, b_lin) = match config.output_mode {
             OutputMode::Negative => {
                 let t_r = physics::density_to_transmission(final_densities[0]);
                 let t_g = physics::density_to_transmission(final_densities[1]);
                 let t_b = physics::density_to_transmission(final_densities[2]);
                 (
-                    physics::linear_to_srgb(t_r.clamp(0.0, 1.0)),
-                    physics::linear_to_srgb(t_g.clamp(0.0, 1.0)),
-                    physics::linear_to_srgb(t_b.clamp(0.0, 1.0)),
+                    t_r.clamp(0.0, 1.0),
+                    t_g.clamp(0.0, 1.0),
+                    t_b.clamp(0.0, 1.0),
                 )
             }
             OutputMode::Positive => {
                 let max_d = 3.0;
                 let norm = |d: f32| (d / max_d).clamp(0.0, 1.0);
                 (
-                    physics::linear_to_srgb(norm(final_densities[0])),
-                    physics::linear_to_srgb(norm(final_densities[1])),
-                    physics::linear_to_srgb(norm(final_densities[2])),
+                    norm(final_densities[0]),
+                    norm(final_densities[1]),
+                    norm(final_densities[2]),
                 )
             }
         };
+        let lum = 0.2126 * lin_pixel[0] + 0.7152 * lin_pixel[1] + 0.0722 * lin_pixel[2];
+        let t = lum.clamp(0.0, 1.0);
+        let white_balance = [
+            white_balance_gray[0] * (1.0 - t) + white_balance_white[0] * t,
+            white_balance_gray[1] * (1.0 - t) + white_balance_white[1] * t,
+            white_balance_gray[2] * (1.0 - t) + white_balance_white[2] * t,
+        ];
+        let r_out = physics::linear_to_srgb((r_lin * white_balance[0]).clamp(0.0, 1.0));
+        let g_out = physics::linear_to_srgb((g_lin * white_balance[1]).clamp(0.0, 1.0));
+        let b_out = physics::linear_to_srgb((b_lin * white_balance[2]).clamp(0.0, 1.0));
 
         chunk[0] = (r_out * 255.0).round() as u8;
         chunk[1] = (g_out * 255.0).round() as u8;

@@ -44,8 +44,8 @@ impl Spectrum {
         for i in 0..BINS {
             sum += self.power[i] * other.power[i];
         }
-        // Normalize by step size? 
-        // Exposure = Power * Time. The units of power are arbitrary here, 
+        // Normalize by step size?
+        // Exposure = Power * Time. The units of power are arbitrary here,
         // but physically it's Integral(P(lambda) d_lambda).
         sum * (LAMBDA_STEP as f32)
     }
@@ -92,14 +92,14 @@ impl CameraSensitivities {
         // Peak_B * 25 = Peak_G * 30 = Peak_R * 30
         // Set Peak_R = 1.0, Peak_G = 1.0
         // Peak_B = 30/25 * 1.0 = 1.2
-        
+
         Self {
             r_curve: Spectrum::new_gaussian_with_amplitude(610.0, 30.0, 1.0),
             g_curve: Spectrum::new_gaussian_with_amplitude(540.0, 30.0, 1.0),
             b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 25.0, 1.2), // Peak shifted to 465 to match blue better
         }
     }
-    
+
     pub fn srgb() -> Self {
         Self::srgb_balanced()
     }
@@ -118,7 +118,7 @@ pub struct FilmSensitivities {
     pub r_sensitivity: Spectrum, // Cyan forming layer (Red sensitive)
     pub g_sensitivity: Spectrum, // Magenta forming layer (Green sensitive)
     pub b_sensitivity: Spectrum, // Yellow forming layer (Blue sensitive)
-    pub r_factor: f32, // Relative sensitivity factors
+    pub r_factor: f32,           // Relative sensitivity factors
     pub g_factor: f32,
     pub b_factor: f32,
 }
@@ -126,36 +126,48 @@ pub struct FilmSensitivities {
 /// Parameters to generate spectral sensitivities
 #[derive(Debug, Clone, Copy)]
 pub struct FilmSpectralParams {
-    pub r_peak: f32, pub r_width: f32,
-    pub g_peak: f32, pub g_width: f32,
-    pub b_peak: f32, pub b_width: f32,
+    pub r_peak: f32,
+    pub r_width: f32,
+    pub g_peak: f32,
+    pub g_width: f32,
+    pub b_peak: f32,
+    pub b_width: f32,
 }
 
 impl FilmSpectralParams {
     /// Create standard panchromatic response
     pub const fn new_panchromatic() -> Self {
-       Self {
-            r_peak: 650.0, r_width: 60.0,  // Wide peak for red
-            g_peak: 545.0, g_width: 50.0,  // Shifted and wide
-            b_peak: 465.0, b_width: 55.0,  // Matched to blue
+        Self {
+            r_peak: 650.0,
+            r_width: 60.0, // Wide peak for red
+            g_peak: 545.0,
+            g_width: 50.0, // Shifted and wide
+            b_peak: 465.0,
+            b_width: 55.0, // Matched to blue
         }
     }
 
     /// Create orthochromatic response (insensitive to red)
     pub const fn new_orthochromatic() -> Self {
         Self {
-            r_peak: 0.0, r_width: 0.0, // Special case 0 = no sensitivity
-            g_peak: 540.0, g_width: 40.0,
-            b_peak: 440.0, b_width: 40.0,
+            r_peak: 0.0,
+            r_width: 0.0, // Special case 0 = no sensitivity
+            g_peak: 540.0,
+            g_width: 40.0,
+            b_peak: 440.0,
+            b_width: 40.0,
         }
     }
-    
+
     /// Create infrared response (extended red)
     pub const fn new_infrared() -> Self {
         Self {
-            r_peak: 720.0, r_width: 60.0,
-            g_peak: 540.0, g_width: 40.0,
-            b_peak: 440.0, b_width: 40.0,
+            r_peak: 720.0,
+            r_width: 60.0,
+            g_peak: 540.0,
+            g_width: 40.0,
+            b_peak: 440.0,
+            b_width: 40.0,
         }
     }
 }
@@ -163,14 +175,26 @@ impl FilmSpectralParams {
 impl FilmSensitivities {
     pub fn from_params(params: FilmSpectralParams) -> Self {
         // Standard Panchromatic Balance defaults
-        // These can be overridden if we had them in params, but for now hardcode 
+        // These can be overridden if we had them in params, but for now hardcode
         // the balancing logic for the common case.
         // We assume most films using "panchromatic" params want neutral balance.
-        
+
         let mut s = Self {
-            r_sensitivity: if params.r_peak > 0.0 { Spectrum::new_gaussian(params.r_peak, params.r_width) } else { Spectrum::new_zero() },
-            g_sensitivity: if params.g_peak > 0.0 { Spectrum::new_gaussian(params.g_peak, params.g_width) } else { Spectrum::new_zero() },
-            b_sensitivity: if params.b_peak > 0.0 { Spectrum::new_gaussian(params.b_peak, params.b_width) } else { Spectrum::new_zero() },
+            r_sensitivity: if params.r_peak > 0.0 {
+                Spectrum::new_gaussian(params.r_peak, params.r_width)
+            } else {
+                Spectrum::new_zero()
+            },
+            g_sensitivity: if params.g_peak > 0.0 {
+                Spectrum::new_gaussian(params.g_peak, params.g_width)
+            } else {
+                Spectrum::new_zero()
+            },
+            b_sensitivity: if params.b_peak > 0.0 {
+                Spectrum::new_gaussian(params.b_peak, params.b_width)
+            } else {
+                Spectrum::new_zero()
+            },
             r_factor: 1.0,
             g_factor: 1.0,
             b_factor: 1.0,
@@ -180,7 +204,7 @@ impl FilmSensitivities {
         if params.r_peak > 600.0 && params.b_peak > 400.0 {
             s.r_factor = 1.70; // Boost Red to match Green
             s.g_factor = 1.0;
-            s.b_factor = 1.30; // Boost Blue significantly to fix yellow tint
+            s.b_factor = 1.40; // Boost Blue significantly to fix yellow tint
         }
 
         s

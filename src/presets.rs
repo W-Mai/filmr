@@ -18,9 +18,9 @@ pub const STANDARD_DAYLIGHT: FilmStock = FilmStock {
         exposure_offset: 0.18,
     },
     b_curve: SegmentedCurve {
-        d_min: 0.11,
-        d_max: 2.8,
-        gamma: 1.7,
+        d_min: 0.10,
+        d_max: 3.0,
+        gamma: 1.8,
         exposure_offset: 0.18,
     },
     color_matrix: [[1.00, 0.05, 0.02], [0.04, 1.00, 0.04], [0.01, 0.05, 1.00]],
