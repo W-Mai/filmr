@@ -140,6 +140,7 @@ pub struct FilmStock {
 
 impl FilmStock {
     /// Create a custom film stock
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         iso: f32,
         r_curve: SegmentedCurve,
