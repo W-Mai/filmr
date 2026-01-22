@@ -178,9 +178,9 @@ impl FilmSensitivities {
 
         // Auto-balance logic if it looks like a standard panchromatic film
         if params.r_peak > 600.0 && params.b_peak > 400.0 {
-            s.r_factor = 1.55; // Boost Red to match Green/Blue
+            s.r_factor = 1.70; // Boost Red to match Green
             s.g_factor = 1.0;
-            s.b_factor = 1.0; // Blue already strong due to camera boost
+            s.b_factor = 1.30; // Boost Blue significantly to fix yellow tint
         }
 
         s
