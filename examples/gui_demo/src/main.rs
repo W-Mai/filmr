@@ -23,6 +23,11 @@ enum FilmPreset {
     KodakTriX400,
     FujifilmVelvia50,
     IlfordHp5Plus,
+    KodakPortra400,
+    KodakEktar100,
+    KodakTMax3200,
+    IlfordDelta100,
+    FujifilmPro400H,
 }
 
 struct FilmrApp {
@@ -79,6 +84,11 @@ impl FilmrApp {
             FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400,
             FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50,
             FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS,
+            FilmPreset::KodakPortra400 => presets::KODAK_PORTRA_400,
+            FilmPreset::KodakEktar100 => presets::KODAK_EKTAR_100,
+            FilmPreset::KodakTMax3200 => presets::KODAK_T_MAX_3200,
+            FilmPreset::IlfordDelta100 => presets::ILFORD_DELTA_100,
+            FilmPreset::FujifilmPro400H => presets::FUJIFILM_PRO_400H,
         };
 
         self.halation_strength = preset.halation_strength;
@@ -100,6 +110,11 @@ impl FilmrApp {
                 FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400,
                 FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50,
                 FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS,
+                FilmPreset::KodakPortra400 => presets::KODAK_PORTRA_400,
+                FilmPreset::KodakEktar100 => presets::KODAK_EKTAR_100,
+                FilmPreset::KodakTMax3200 => presets::KODAK_T_MAX_3200,
+                FilmPreset::IlfordDelta100 => presets::ILFORD_DELTA_100,
+                FilmPreset::FujifilmPro400H => presets::FUJIFILM_PRO_400H,
             };
 
             let mut film = FilmStock::new(
@@ -198,6 +213,11 @@ impl App for FilmrApp {
                         FilmPreset::KodakTriX400 => "Kodak Tri-X 400",
                         FilmPreset::FujifilmVelvia50 => "Fujifilm Velvia 50",
                         FilmPreset::IlfordHp5Plus => "Ilford HP5 Plus",
+                        FilmPreset::KodakPortra400 => "Kodak Portra 400",
+                        FilmPreset::KodakEktar100 => "Kodak Ektar 100",
+                        FilmPreset::KodakTMax3200 => "Kodak T-Max 3200",
+                        FilmPreset::IlfordDelta100 => "Ilford Delta 100",
+                        FilmPreset::FujifilmPro400H => "Fujifilm Pro 400H",
                     })
                     .show_ui(ui, |ui| {
                         let mut preset_changed = false;
@@ -236,6 +256,56 @@ impl App for FilmrApp {
                                 &mut self.selected_preset,
                                 FilmPreset::IlfordHp5Plus,
                                 "Ilford HP5 Plus",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::KodakPortra400,
+                                "Kodak Portra 400",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::KodakEktar100,
+                                "Kodak Ektar 100",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::KodakTMax3200,
+                                "Kodak T-Max 3200",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::IlfordDelta100,
+                                "Ilford Delta 100",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::FujifilmPro400H,
+                                "Fujifilm Pro 400H",
                             )
                             .clicked()
                         {
@@ -298,6 +368,11 @@ impl App for FilmrApp {
                         FilmPreset::FujifilmVelvia50 =>
                             presets::FUJIFILM_VELVIA_50.grain_model.alpha,
                         FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS.grain_model.alpha,
+                        FilmPreset::KodakPortra400 => presets::KODAK_PORTRA_400.grain_model.alpha,
+                        FilmPreset::KodakEktar100 => presets::KODAK_EKTAR_100.grain_model.alpha,
+                        FilmPreset::KodakTMax3200 => presets::KODAK_T_MAX_3200.grain_model.alpha,
+                        FilmPreset::IlfordDelta100 => presets::ILFORD_DELTA_100.grain_model.alpha,
+                        FilmPreset::FujifilmPro400H => presets::FUJIFILM_PRO_400H.grain_model.alpha,
                     }
                 ));
                 ui.label(format!(
@@ -310,6 +385,15 @@ impl App for FilmrApp {
                             presets::FUJIFILM_VELVIA_50.grain_model.sigma_read,
                         FilmPreset::IlfordHp5Plus =>
                             presets::ILFORD_HP5_PLUS.grain_model.sigma_read,
+                        FilmPreset::KodakPortra400 =>
+                            presets::KODAK_PORTRA_400.grain_model.sigma_read,
+                        FilmPreset::KodakEktar100 => presets::KODAK_EKTAR_100.grain_model.sigma_read,
+                        FilmPreset::KodakTMax3200 =>
+                            presets::KODAK_T_MAX_3200.grain_model.sigma_read,
+                        FilmPreset::IlfordDelta100 =>
+                            presets::ILFORD_DELTA_100.grain_model.sigma_read,
+                        FilmPreset::FujifilmPro400H =>
+                            presets::FUJIFILM_PRO_400H.grain_model.sigma_read,
                     }
                 ));
             });

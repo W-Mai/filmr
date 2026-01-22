@@ -171,3 +171,235 @@ pub const ILFORD_HP5_PLUS: FilmStock = FilmStock {
     halation_sigma: 0.02,
     halation_tint: [0.8, 0.8, 0.8],
 };
+
+/// Kodak Portra 400 (Professional Color Negative)
+/// Source: Kodak E-7053
+/// ISO: 400
+/// PGI: 35 -> Est. RMS ~11 -> Alpha = 0.0121
+/// Gamma: 0.65 (Negative)
+/// Dmax: 2.9, Dmin: 0.15
+/// Resolution: 115 lp/mm
+/// Spectral: Neutral + 15% Saturation
+pub const KODAK_PORTRA_400: FilmStock = FilmStock {
+    iso: 400.0,
+    r_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 2.9,
+        gamma: 0.65,
+        exposure_offset: 0.005,
+    },
+    g_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 2.9,
+        gamma: 0.65,
+        exposure_offset: 0.005,
+    },
+    b_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 2.9,
+        gamma: 0.65,
+        exposure_offset: 0.005,
+    },
+    color_matrix: [
+        [1.15, -0.05, -0.1],
+        [-0.05, 1.15, -0.1],
+        [-0.1, -0.05, 1.15],
+    ],
+    // Simulating slight spectral overlap (Red sees some Green, Green sees some Blue)
+    spectral_sensitivity: [[0.95, 0.05, 0.0], [0.05, 0.90, 0.05], [0.0, 0.05, 0.95]],
+    grain_model: GrainModel {
+        alpha: 0.0121,
+        sigma_read: 0.005,
+        monochrome: false,
+    },
+    resolution_lp_mm: 115.0,
+    reciprocity_exponent: 0.85, // Typical color negative
+    halation_strength: 0.15,
+    halation_threshold: 0.85,
+    halation_sigma: 0.015,
+    halation_tint: [1.0, 0.6, 0.4], // Warm glow
+};
+
+/// Kodak Ektar 100 (Fine Grain Color Negative)
+/// Source: Kodak E-7043
+/// ISO: 100
+/// PGI: 25 -> Est. RMS ~8 -> Alpha = 0.0064
+/// Gamma: 0.75 (High Saturation Negative)
+/// Dmax: 3.2, Dmin: 0.15
+/// Resolution: 150 lp/mm
+/// Spectral: High Saturation (+25%)
+pub const KODAK_EKTAR_100: FilmStock = FilmStock {
+    iso: 100.0,
+    r_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 3.2,
+        gamma: 0.75,
+        exposure_offset: 0.01,
+    },
+    g_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 3.2,
+        gamma: 0.75,
+        exposure_offset: 0.01,
+    },
+    b_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 3.2,
+        gamma: 0.75,
+        exposure_offset: 0.01,
+    },
+    color_matrix: [
+        [1.25, -0.10, -0.15],
+        [-0.10, 1.25, -0.15],
+        [-0.15, -0.10, 1.25],
+    ],
+    // Ektar has high color separation (enhanced saturation)
+    spectral_sensitivity: [[1.05, -0.05, 0.0], [-0.05, 1.05, -0.05], [0.0, -0.05, 1.05]],
+    grain_model: GrainModel {
+        alpha: 0.0064,
+        sigma_read: 0.003,
+        monochrome: false,
+    },
+    resolution_lp_mm: 150.0,
+    reciprocity_exponent: 0.90,
+    halation_strength: 0.1,
+    halation_threshold: 0.9,
+    halation_sigma: 0.01,
+    halation_tint: [1.0, 0.5, 0.3],
+};
+
+/// Kodak T-Max 3200 (High Speed B&W)
+/// Source: Kodak F-4016
+/// ISO: 3200 (EI 800-6400)
+/// RMS: 18 -> Alpha = 0.0324
+/// Gamma: 0.75
+/// Dmax: 2.1, Dmin: 0.15
+/// Resolution: 80 lp/mm
+/// Reciprocity: Good for high speed
+pub const KODAK_T_MAX_3200: FilmStock = FilmStock {
+    iso: 3200.0,
+    r_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 2.1,
+        gamma: 0.75,
+        exposure_offset: 0.0003, // Very fast
+    },
+    g_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 2.1,
+        gamma: 0.75,
+        exposure_offset: 0.0003,
+    },
+    b_curve: SegmentedCurve {
+        d_min: 0.15,
+        d_max: 2.1,
+        gamma: 0.75,
+        exposure_offset: 0.0003,
+    },
+    color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
+    // Standard Panchromatic response
+    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    grain_model: GrainModel {
+        alpha: 0.0324,
+        sigma_read: 0.03,
+        monochrome: true,
+    },
+    resolution_lp_mm: 80.0,
+    reciprocity_exponent: 0.80,
+    halation_strength: 0.3,
+    halation_threshold: 0.7,
+    halation_sigma: 0.025,
+    halation_tint: [0.9, 0.9, 0.9],
+};
+
+/// Ilford Delta 100 (Professional B&W)
+/// Source: Ilford 2021 Data Sheet
+/// ISO: 100
+/// RMS: 7 -> Alpha = 0.0049
+/// Gamma: 0.70
+/// Dmax: 2.2, Dmin: 0.08
+/// Resolution: 160 lp/mm
+/// Crystal: Core-Shell
+pub const ILFORD_DELTA_100: FilmStock = FilmStock {
+    iso: 100.0,
+    r_curve: SegmentedCurve {
+        d_min: 0.08,
+        d_max: 2.2,
+        gamma: 0.70,
+        exposure_offset: 0.01,
+    },
+    g_curve: SegmentedCurve {
+        d_min: 0.08,
+        d_max: 2.2,
+        gamma: 0.70,
+        exposure_offset: 0.01,
+    },
+    b_curve: SegmentedCurve {
+        d_min: 0.08,
+        d_max: 2.2,
+        gamma: 0.70,
+        exposure_offset: 0.01,
+    },
+    color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
+    // Standard Panchromatic response
+    spectral_sensitivity: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    grain_model: GrainModel {
+        alpha: 0.0049,
+        sigma_read: 0.005,
+        monochrome: true,
+    },
+    resolution_lp_mm: 160.0,
+    reciprocity_exponent: 0.85,
+    halation_strength: 0.1,
+    halation_threshold: 0.9,
+    halation_sigma: 0.01,
+    halation_tint: [0.85, 0.85, 0.85],
+};
+
+/// Fujifilm Pro 400H (Professional Color Negative)
+/// Source: Fujifilm 2020 Data Sheet
+/// ISO: 400
+/// RMS: 12 -> Alpha = 0.0144
+/// Gamma: 0.65 (Wide Latitude)
+/// Dmax: 2.8, Dmin: 0.10
+/// Resolution: 125 lp/mm
+/// Spectral: Fourth Color Layer Sim (Cyan-ish)
+pub const FUJIFILM_PRO_400H: FilmStock = FilmStock {
+    iso: 400.0,
+    r_curve: SegmentedCurve {
+        d_min: 0.10,
+        d_max: 2.8,
+        gamma: 0.65,
+        exposure_offset: 0.005,
+    },
+    g_curve: SegmentedCurve {
+        d_min: 0.10,
+        d_max: 2.8,
+        gamma: 0.65,
+        exposure_offset: 0.005,
+    },
+    b_curve: SegmentedCurve {
+        d_min: 0.10,
+        d_max: 2.8,
+        gamma: 0.65,
+        exposure_offset: 0.005,
+    },
+    color_matrix: [
+        [1.05, 0.0, -0.05],
+        [-0.05, 1.1, -0.05], // Slightly better greens
+        [-0.05, 0.0, 1.05],
+    ],
+    // Fuji colors: distinct Green/Blue handling
+    spectral_sensitivity: [[0.95, 0.05, 0.0], [0.0, 1.0, 0.1], [0.0, 0.1, 0.95]],
+    grain_model: GrainModel {
+        alpha: 0.0144,
+        sigma_read: 0.008,
+        monochrome: false,
+    },
+    resolution_lp_mm: 125.0,
+    reciprocity_exponent: 0.90,
+    halation_strength: 0.12,
+    halation_threshold: 0.88,
+    halation_sigma: 0.018,
+    halation_tint: [0.8, 1.0, 0.9], // Cooler halation tint characteristic of Fuji?
+};
