@@ -245,11 +245,7 @@ fn apply_gaussian_blur(image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, sigma: f32) 
 
 /// Main processor function.
 /// Takes an input image and film parameters, returns the simulated image.
-pub fn process_image(
-    input: &RgbImage,
-    film: &FilmStock,
-    config: &SimulationConfig,
-) -> RgbImage {
+pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConfig) -> RgbImage {
     let width = input.width();
     let height = input.height();
 
@@ -278,7 +274,7 @@ pub fn process_image(
         // Thresholding: Only bright lights cause significant halation
         let threshold = film.halation_threshold; // Linear light threshold
         let mut halation_map = linear_image.clone();
-        
+
         // Apply threshold
         halation_map.pixels_mut().for_each(|p| {
             // Luminance approx
@@ -328,8 +324,22 @@ pub fn process_image(
 
         let lin_pixel = linear_image.get_pixel(x, y).0;
 
+        // Apply Spectral Sensitivity
+        let r_in = (film.spectral_sensitivity[0][0] * lin_pixel[0]
+            + film.spectral_sensitivity[0][1] * lin_pixel[1]
+            + film.spectral_sensitivity[0][2] * lin_pixel[2])
+            .max(0.0);
+        let g_in = (film.spectral_sensitivity[1][0] * lin_pixel[0]
+            + film.spectral_sensitivity[1][1] * lin_pixel[1]
+            + film.spectral_sensitivity[1][2] * lin_pixel[2])
+            .max(0.0);
+        let b_in = (film.spectral_sensitivity[2][0] * lin_pixel[0]
+            + film.spectral_sensitivity[2][1] * lin_pixel[1]
+            + film.spectral_sensitivity[2][2] * lin_pixel[2])
+            .max(0.0);
+
         // Apply Exposure
-        // E = I * t. 
+        // E = I * t.
         // Reciprocity Failure: Effective Time t_eff = t^p (for t > 1.0s usually, but let's apply globally or with threshold)
         // Simple Schwarzschild model: t_eff = t.powf(film.reciprocity_exponent)
         let t_eff = if config.exposure_time > 1.0 {
@@ -337,11 +347,11 @@ pub fn process_image(
         } else {
             config.exposure_time
         };
-        
-        let r_exp = physics::calculate_exposure(lin_pixel[0], t_eff);
-        let g_exp = physics::calculate_exposure(lin_pixel[1], t_eff);
-        let b_exp = physics::calculate_exposure(lin_pixel[2], t_eff);
-        
+
+        let r_exp = physics::calculate_exposure(r_in, t_eff);
+        let g_exp = physics::calculate_exposure(g_in, t_eff);
+        let b_exp = physics::calculate_exposure(b_in, t_eff);
+
         // Avoid log(0)
         let epsilon = 1e-6;
         let log_e = [
@@ -356,7 +366,7 @@ pub fn process_image(
         // Add Grain (Using Film's Grain Model)
         let final_densities = if config.enable_grain {
             let mut rng = rand::thread_rng();
-            
+
             if film.grain_model.monochrome {
                 // For B&W, generate one noise sample based on luminance (or Green channel)
                 // and apply it to all channels to ensure neutral grain.

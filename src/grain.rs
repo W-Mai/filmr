@@ -14,7 +14,11 @@ pub struct GrainModel {
 
 impl GrainModel {
     pub fn new(alpha: f32, sigma_read: f32, monochrome: bool) -> Self {
-        Self { alpha, sigma_read, monochrome }
+        Self {
+            alpha,
+            sigma_read,
+            monochrome,
+        }
     }
 
     /// Default parameters for a medium-grained film

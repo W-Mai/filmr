@@ -1,4 +1,4 @@
-use filmr::{process_image, FilmStock, GrainModel, OutputMode, SimulationConfig, presets};
+use filmr::{presets, process_image, OutputMode, SimulationConfig};
 use image::{Rgb, RgbImage};
 
 fn main() {
@@ -19,7 +19,6 @@ fn main() {
     // 2. Setup Film Simulation
     // Use preset
     let film = presets::STANDARD_DAYLIGHT;
-    let grain = GrainModel::medium_grain();
     let config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: true,
@@ -27,7 +26,7 @@ fn main() {
     };
 
     println!("Starting simulation (Positive Mode)...");
-    let output = process_image(&img, &film, &grain, &config);
+    let output = process_image(&img, &film, &config);
     println!("Simulation finished.");
 
     // 3. Save output

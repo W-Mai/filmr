@@ -1,7 +1,7 @@
 use crate::grain::GrainModel;
 
 /// Film Modeling Module
-/// 
+///
 /// Handles Characteristic Curves (H-D Curves) and Color Coupling.
 /// Section 3 & 5 of the technical document.
 
@@ -97,18 +97,24 @@ pub struct FilmStock {
     pub g_curve: SegmentedCurve,
     /// Response of the Blue-sensitive layer (Top Layer -> Yellow Dye)
     pub b_curve: SegmentedCurve,
-    
+
     // 3x3 Matrix for crosstalk. Rows: R_out, G_out, B_out. Cols: R_in, G_in, B_in.
     // D_out = Matrix * D_in
     pub color_matrix: [[f32; 3]; 3],
-    
+
+    /// Spectral Sensitivity Matrix (Input Mixing).
+    /// Maps Linear RGB (Scene) to Layer Sensitivities (R, G, B layers).
+    /// Layer_Exposure = Sensitivity_Matrix * Linear_RGB
+    /// Used to simulate Orthochromatic vs Panchromatic response, or color shifts.
+    pub spectral_sensitivity: [[f32; 3]; 3],
+
     /// Grain parameters derived from RMS Granularity.
     pub grain_model: GrainModel,
-    
+
     /// Resolution limit in line pairs per mm (lp/mm).
     /// Used to simulate optical softness before grain.
     pub resolution_lp_mm: f32,
-    
+
     /// Reciprocity Failure Schwarzschild exponent (p).
     /// Effective time = t^p (for t > 1s).
     /// Usually ~0.7-0.9 for long exposures.
@@ -118,15 +124,15 @@ pub struct FilmStock {
     /// Simulates light reflecting off the film base back into the emulsion.
     /// Primarily affects the Red layer (bottom layer) and spreads out (blur).
     pub halation_strength: f32,
-    
+
     /// Linear light threshold for halation (0.0 to 1.0).
     /// Only highlights above this threshold trigger halation.
     pub halation_threshold: f32,
-    
+
     /// Blur radius for halation as a fraction of image width (e.g. 0.02).
     /// Controls the spread of the glow.
     pub halation_sigma: f32,
-    
+
     /// Tint color for the halation glow (RGB).
     /// Usually reddish-orange [1.0, 0.4, 0.2] due to base reflection.
     pub halation_tint: [f32; 3],
@@ -140,6 +146,7 @@ impl FilmStock {
         g_curve: SegmentedCurve,
         b_curve: SegmentedCurve,
         color_matrix: [[f32; 3]; 3],
+        spectral_sensitivity: [[f32; 3]; 3],
         grain_model: GrainModel,
         resolution_lp_mm: f32,
         reciprocity_exponent: f32,
@@ -153,6 +160,7 @@ impl FilmStock {
             r_curve,
             g_curve,
             b_curve,
+            spectral_sensitivity,
             color_matrix,
             grain_model,
             resolution_lp_mm,
@@ -169,7 +177,7 @@ impl FilmStock {
         self.halation_strength = strength;
         self
     }
-    
+
     /// Apply the film simulation to RGB log-exposures
     pub fn map_log_exposure(&self, log_e: [f32; 3]) -> [f32; 3] {
         // 1. Map each channel through its curve (Simulates Section 3)

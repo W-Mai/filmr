@@ -37,7 +37,7 @@ struct FilmrApp {
     // Parameters
     exposure_time: f32,
     gamma_boost: f32,
-    
+
     // Halation Parameters
     halation_strength: f32,
     halation_threshold: f32,
@@ -85,7 +85,7 @@ impl FilmrApp {
         self.halation_threshold = preset.halation_threshold;
         self.halation_sigma = preset.halation_sigma;
 
-        // Grain defaults could also be tied to presets if we wanted, 
+        // Grain defaults could also be tied to presets if we wanted,
         // but currently they are separate in the struct logic.
     }
 
@@ -108,6 +108,7 @@ impl FilmrApp {
                 base_film.g_curve,
                 base_film.b_curve,
                 base_film.color_matrix,
+                base_film.spectral_sensitivity,
                 base_film.grain_model,
                 base_film.resolution_lp_mm,
                 base_film.reciprocity_exponent,
@@ -189,7 +190,7 @@ impl App for FilmrApp {
                 }
 
                 ui.label("Film Stock");
-                
+
                 // Preset ComboBox
                 egui::ComboBox::from_label("Preset")
                     .selected_text(match self.selected_preset {
@@ -200,11 +201,47 @@ impl App for FilmrApp {
                     })
                     .show_ui(ui, |ui| {
                         let mut preset_changed = false;
-                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::StandardDaylight, "Standard Daylight").clicked() { preset_changed = true; }
-                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::KodakTriX400, "Kodak Tri-X 400").clicked() { preset_changed = true; }
-                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::FujifilmVelvia50, "Fujifilm Velvia 50").clicked() { preset_changed = true; }
-                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::IlfordHp5Plus, "Ilford HP5 Plus").clicked() { preset_changed = true; }
-                        
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::StandardDaylight,
+                                "Standard Daylight",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::KodakTriX400,
+                                "Kodak Tri-X 400",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::FujifilmVelvia50,
+                                "Fujifilm Velvia 50",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.selected_preset,
+                                FilmPreset::IlfordHp5Plus,
+                                "Ilford HP5 Plus",
+                            )
+                            .clicked()
+                        {
+                            preset_changed = true;
+                        }
+
                         if preset_changed {
                             self.load_preset_values();
                             changed = true;
@@ -219,7 +256,7 @@ impl App for FilmrApp {
                 {
                     changed = true;
                 }
-                
+
                 ui.label("Halation");
                 if ui
                     .add(
@@ -252,18 +289,29 @@ impl App for FilmrApp {
 
             ui.group(|ui| {
                 ui.label("Grain (From Preset)");
-                ui.label(format!("Alpha: {:.3}", match self.selected_preset {
-                    FilmPreset::StandardDaylight => presets::STANDARD_DAYLIGHT.grain_model.alpha,
-                    FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400.grain_model.alpha,
-                    FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50.grain_model.alpha,
-                    FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS.grain_model.alpha,
-                }));
-                 ui.label(format!("Sigma: {:.3}", match self.selected_preset {
-                    FilmPreset::StandardDaylight => presets::STANDARD_DAYLIGHT.grain_model.sigma_read,
-                    FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400.grain_model.sigma_read,
-                    FilmPreset::FujifilmVelvia50 => presets::FUJIFILM_VELVIA_50.grain_model.sigma_read,
-                    FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS.grain_model.sigma_read,
-                }));
+                ui.label(format!(
+                    "Alpha: {:.3}",
+                    match self.selected_preset {
+                        FilmPreset::StandardDaylight =>
+                            presets::STANDARD_DAYLIGHT.grain_model.alpha,
+                        FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400.grain_model.alpha,
+                        FilmPreset::FujifilmVelvia50 =>
+                            presets::FUJIFILM_VELVIA_50.grain_model.alpha,
+                        FilmPreset::IlfordHp5Plus => presets::ILFORD_HP5_PLUS.grain_model.alpha,
+                    }
+                ));
+                ui.label(format!(
+                    "Sigma: {:.3}",
+                    match self.selected_preset {
+                        FilmPreset::StandardDaylight =>
+                            presets::STANDARD_DAYLIGHT.grain_model.sigma_read,
+                        FilmPreset::KodakTriX400 => presets::KODAK_TRI_X_400.grain_model.sigma_read,
+                        FilmPreset::FujifilmVelvia50 =>
+                            presets::FUJIFILM_VELVIA_50.grain_model.sigma_read,
+                        FilmPreset::IlfordHp5Plus =>
+                            presets::ILFORD_HP5_PLUS.grain_model.sigma_read,
+                    }
+                ));
             });
 
             ui.group(|ui| {
