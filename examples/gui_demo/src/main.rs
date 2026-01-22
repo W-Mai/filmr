@@ -153,6 +153,12 @@ impl FilmrApp {
         self.halation_threshold = preset.halation_threshold;
         self.halation_sigma = preset.halation_sigma;
 
+        // Auto-adjust exposure time based on preset sensitivity (exposure_offset)
+        // Standard Daylight has offset 0.18 (18% gray).
+        // If a film is more sensitive (lower offset), we need less exposure time.
+        // T = Offset / 0.18
+        self.exposure_time = preset.r_curve.exposure_offset / 0.18;
+
         // Grain defaults could also be tied to presets if we wanted,
         // but currently they are separate in the struct logic.
     }
@@ -244,8 +250,9 @@ impl App for FilmrApp {
                 ui.label("Physics");
                 if ui
                     .add(
-                        egui::Slider::new(&mut self.exposure_time, 0.1..=10.0)
-                            .text("Exposure Time"),
+                        egui::Slider::new(&mut self.exposure_time, 0.001..=2.0)
+                            .text("Exposure Time")
+                            .logarithmic(true),
                     )
                     .changed()
                 {
