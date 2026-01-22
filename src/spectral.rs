@@ -117,9 +117,9 @@ impl FilmSpectralParams {
     /// Create standard panchromatic response
     pub const fn new_panchromatic() -> Self {
         Self {
-            r_peak: 620.0, r_width: 40.0,
-            g_peak: 540.0, g_width: 40.0,
-            b_peak: 440.0, b_width: 40.0,
+            r_peak: 620.0, r_width: 48.0, // Widened from 40.0 to catch more Red
+            g_peak: 540.0, g_width: 38.0, // Narrowed slightly from 40.0 to reduce dominance
+            b_peak: 450.0, b_width: 45.0, // Shifted to 450nm (sRGB peak) and widened
         }
     }
 

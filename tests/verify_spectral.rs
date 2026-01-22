@@ -174,4 +174,42 @@ mod tests {
         assert!(v_green > 0.5, "White light should have Green component");
         assert!(v_red > 0.5, "White light should have Red component");
     }
+
+    #[test]
+    fn test_white_balance() {
+        use filmr::spectral::FilmSensitivities;
+        
+        // 1. Setup White Light (1.0, 1.0, 1.0) -> Spectrum
+        let camera = CameraSensitivities::srgb();
+        let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
+
+        // 2. Setup Standard Film (Panchromatic)
+        let film_params = FilmSpectralParams::new_panchromatic();
+        let film_sens = FilmSensitivities::from_params(film_params);
+
+        // 3. Integrate
+        // Note: We use a raw integration here, similar to processor.rs
+        let r_response = white_spectrum.integrate_product(&film_sens.r_sensitivity);
+        let g_response = white_spectrum.integrate_product(&film_sens.g_sensitivity);
+        let b_response = white_spectrum.integrate_product(&film_sens.b_sensitivity);
+
+        println!("White Balance Response:");
+        println!("R: {:.4}", r_response);
+        println!("G: {:.4}", g_response);
+        println!("B: {:.4}", b_response);
+
+        // 4. Check ratios
+        // Ideally they should be roughly equal for a "Neutral" film,
+        // OR the exposure logic later compensates for sensitivity differences.
+        // But usually "Panchromatic" means roughly equal sensitivity to visible light.
+        
+        let max_resp = r_response.max(g_response).max(b_response);
+        let min_resp = r_response.min(g_response).min(b_response);
+        
+        // Allow some variance (e.g. 20%)
+        let ratio = min_resp / max_resp;
+        println!("Min/Max Ratio: {:.2}", ratio);
+        
+        assert!(ratio > 0.7, "Film response to white light should be balanced (within 30%)");
+    }
 }
