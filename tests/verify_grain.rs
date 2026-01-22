@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use filmr::presets::KODAK_TRI_X_400;
-    use filmr::processor::{process_image, OutputMode, SimulationConfig};
+    use filmr::processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
     use image::{Rgb, RgbImage};
 
     #[test]
@@ -24,6 +24,8 @@ mod tests {
             exposure_time: 1.0,
             enable_grain: true,
             output_mode: OutputMode::Positive,
+            white_balance_mode: WhiteBalanceMode::Auto,
+            white_balance_strength: 1.0,
         };
 
         let output = process_image(&input, &film, &config);
@@ -74,6 +76,8 @@ mod tests {
             exposure_time: 1.0,
             enable_grain: true,
             output_mode: OutputMode::Positive,
+            white_balance_mode: WhiteBalanceMode::Auto,
+            white_balance_strength: 1.0,
         };
 
         let output = process_image(&input, &film, &config);

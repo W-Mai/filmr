@@ -22,6 +22,12 @@ impl Spectrum {
         Self { power: [0.0; BINS] }
     }
 
+    pub fn new_flat(value: f32) -> Self {
+        Self {
+            power: [value; BINS],
+        }
+    }
+
     pub fn new_gaussian(peak_nm: f32, sigma_nm: f32) -> Self {
         Self::new_gaussian_with_amplitude(peak_nm, sigma_nm, 1.0)
     }
@@ -33,6 +39,45 @@ impl Spectrum {
             // Gaussian: exp(-0.5 * ((x - mu) / sigma)^2)
             let diff = (lambda - peak_nm) / sigma_nm;
             s.power[i] = amplitude * (-0.5 * diff * diff).exp();
+        }
+        s
+    }
+
+    pub fn new_blackbody(temperature: f32) -> Self {
+        let mut s = Self::new();
+        let c1 = 3.741771e-16f32;
+        let c2 = 1.4388e-2f32;
+        for i in 0..BINS {
+            let lambda_nm = (LAMBDA_START + i * LAMBDA_STEP) as f32;
+            let lambda_m = lambda_nm * 1.0e-9;
+            let denom =
+                (lambda_m.powi(5) * ((c2 / (lambda_m * temperature)).exp() - 1.0)).max(1.0e-30f32);
+            s.power[i] = (c1 / denom).max(0.0);
+        }
+        s.normalize_max();
+        s
+    }
+
+    pub fn new_d65() -> Self {
+        Self::new_blackbody(6504.0)
+    }
+
+    pub fn normalize_max(&mut self) {
+        let mut max_val = 0.0f32;
+        for i in 0..BINS {
+            max_val = max_val.max(self.power[i]);
+        }
+        if max_val > 0.0 {
+            for i in 0..BINS {
+                self.power[i] /= max_val;
+            }
+        }
+    }
+
+    pub fn multiply(&self, other: &Spectrum) -> Self {
+        let mut s = Self::new();
+        for i in 0..BINS {
+            s.power[i] = self.power[i] * other.power[i];
         }
         s
     }
@@ -200,11 +245,15 @@ impl FilmSensitivities {
             b_factor: 1.0,
         };
 
-        // Auto-balance logic if it looks like a standard panchromatic film
-        if params.r_peak > 600.0 && params.b_peak > 400.0 {
-            s.r_factor = 1.70; // Boost Red to match Green
-            s.g_factor = 1.0;
-            s.b_factor = 1.40; // Boost Blue significantly to fix yellow tint
+        if params.r_peak > 0.0 || params.g_peak > 0.0 || params.b_peak > 0.0 {
+            let gray_spectrum = Spectrum::new_flat(1.0);
+            let r_resp = s.r_sensitivity.integrate_product(&gray_spectrum);
+            let g_resp = s.g_sensitivity.integrate_product(&gray_spectrum);
+            let b_resp = s.b_sensitivity.integrate_product(&gray_spectrum);
+            let epsilon = 1e-6;
+            s.r_factor = 1.0 / r_resp.max(epsilon);
+            s.g_factor = 1.0 / g_resp.max(epsilon);
+            s.b_factor = 1.0 / b_resp.max(epsilon);
         }
 
         s

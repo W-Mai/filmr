@@ -1,6 +1,6 @@
 use crate::film::FilmStock;
 use crate::physics;
-use crate::spectral::CameraSensitivities;
+use crate::spectral::{CameraSensitivities, Spectrum};
 use image::{ImageBuffer, Rgb, RgbImage};
 use rayon::prelude::*;
 
@@ -9,6 +9,8 @@ pub struct SimulationConfig {
     pub exposure_time: f32, // t in E = I * t
     pub enable_grain: bool,
     pub output_mode: OutputMode,
+    pub white_balance_mode: WhiteBalanceMode,
+    pub white_balance_strength: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -17,12 +19,22 @@ pub enum OutputMode {
     Positive, // Scanned/Inverted Positive (Dark -> Dark, Bright -> Bright)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum WhiteBalanceMode {
+    Auto,
+    Gray,
+    White,
+    Off,
+}
+
 impl Default for SimulationConfig {
     fn default() -> Self {
         Self {
             exposure_time: 1.0,
             enable_grain: true,
             output_mode: OutputMode::Positive, // Default to what users expect
+            white_balance_mode: WhiteBalanceMode::Auto,
+            white_balance_strength: 1.0,
         }
     }
 }
@@ -321,12 +333,57 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     // 3. Process Exposure -> Density -> Output
     let camera_sens = CameraSensitivities::srgb();
     let film_sens = film.get_spectral_sensitivities();
+    let illuminant = Spectrum::new_d65();
+    let apply_illuminant = |s: Spectrum| s.multiply(&illuminant);
     // Normalization factor to keep exposure values in a reasonable range
     // relative to the old RGB implementation.
     // tuned to approx 1/Integral(Gaussian^2) where width ~30nm
     const SPECTRAL_NORM: f32 = 0.008;
+    let map_densities = |densities: [f32; 3]| -> (f32, f32, f32) {
+        let net_r = (densities[0] - film.r_curve.d_min).max(0.0);
+        let net_g = (densities[1] - film.g_curve.d_min).max(0.0);
+        let net_b = (densities[2] - film.b_curve.d_min).max(0.0);
+        match config.output_mode {
+            OutputMode::Negative => {
+                let t_r = physics::density_to_transmission(net_r);
+                let t_g = physics::density_to_transmission(net_g);
+                let t_b = physics::density_to_transmission(net_b);
+                (
+                    t_r.clamp(0.0, 1.0),
+                    t_g.clamp(0.0, 1.0),
+                    t_b.clamp(0.0, 1.0),
+                )
+            }
+            OutputMode::Positive => {
+                let t_r = physics::density_to_transmission(net_r);
+                let t_g = physics::density_to_transmission(net_g);
+                let t_b = physics::density_to_transmission(net_b);
+                let t_r_max = physics::density_to_transmission(0.0);
+                let t_g_max = physics::density_to_transmission(0.0);
+                let t_b_max = physics::density_to_transmission(0.0);
+                let t_r_min = physics::density_to_transmission(
+                    (film.r_curve.d_max - film.r_curve.d_min).max(0.0),
+                );
+                let t_g_min = physics::density_to_transmission(
+                    (film.g_curve.d_max - film.g_curve.d_min).max(0.0),
+                );
+                let t_b_min = physics::density_to_transmission(
+                    (film.b_curve.d_max - film.b_curve.d_min).max(0.0),
+                );
+                let norm = |t: f32, t_min: f32, t_max: f32| {
+                    let denom = (t_max - t_min).max(1e-6);
+                    (t_max - t).clamp(0.0, denom) / denom
+                };
+                (
+                    norm(t_r, t_r_min, t_r_max),
+                    norm(t_g, t_g_min, t_g_max),
+                    norm(t_b, t_b_min, t_b_max),
+                )
+            }
+        }
+    };
     let compute_white_balance = |neutral: f32| {
-        let scene_spectrum = camera_sens.uplift(neutral, neutral, neutral);
+        let scene_spectrum = apply_illuminant(camera_sens.uplift(neutral, neutral, neutral));
         let exposure_vals = film_sens.expose(&scene_spectrum);
         let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
         let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
@@ -346,23 +403,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
             b_exp.max(epsilon).log10(),
         ];
         let densities = film.map_log_exposure(log_e);
-        let (r_lin, g_lin, b_lin) = match config.output_mode {
-            OutputMode::Negative => {
-                let t_r = physics::density_to_transmission(densities[0]);
-                let t_g = physics::density_to_transmission(densities[1]);
-                let t_b = physics::density_to_transmission(densities[2]);
-                (
-                    t_r.clamp(0.0, 1.0),
-                    t_g.clamp(0.0, 1.0),
-                    t_b.clamp(0.0, 1.0),
-                )
-            }
-            OutputMode::Positive => {
-                let max_d = 3.0;
-                let norm = |d: f32| (d / max_d).clamp(0.0, 1.0);
-                (norm(densities[0]), norm(densities[1]), norm(densities[2]))
-            }
-        };
+        let (r_lin, g_lin, b_lin) = map_densities(densities);
         let avg = (r_lin + g_lin + b_lin) / 3.0;
         [
             avg / r_lin.max(epsilon),
@@ -372,14 +413,96 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     };
     let white_balance_gray = compute_white_balance(0.18);
     let white_balance_white = compute_white_balance(1.0);
+    let mut lum = Vec::with_capacity((width * height) as usize);
+    for p in linear_image.pixels() {
+        let lin_pixel = p.0;
+        lum.push(0.2126 * lin_pixel[0] + 0.7152 * lin_pixel[1] + 0.0722 * lin_pixel[2]);
+    }
+    let lum_p50 = {
+        let mut sorted = lum.clone();
+        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let idx = ((sorted.len() - 1) as f32 * 0.5).round() as usize;
+        sorted[idx]
+    };
     let auto_wb = {
         let mut sum = [0.0f32; 3];
         let mut count = 0.0f32;
-        for p in linear_image.pixels() {
-            sum[0] += p[0];
-            sum[1] += p[1];
-            sum[2] += p[2];
+        for (i, p) in linear_image.pixels().enumerate() {
+            if (lum[i] - lum_p50).abs() > lum_p50 * 0.1 {
+                continue;
+            }
+            let lin_pixel = p.0;
+            let scene_spectrum =
+                apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
+            let exposure_vals = film_sens.expose(&scene_spectrum);
+            let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
+            let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
+            let b_in = (exposure_vals[2] * SPECTRAL_NORM).max(0.0);
+            let t_eff = if config.exposure_time > 1.0 {
+                config.exposure_time.powf(film.reciprocity_exponent)
+            } else {
+                config.exposure_time
+            };
+            let r_exp = physics::calculate_exposure(r_in, t_eff);
+            let g_exp = physics::calculate_exposure(g_in, t_eff);
+            let b_exp = physics::calculate_exposure(b_in, t_eff);
+            let epsilon = 1e-6;
+            let log_e = [
+                r_exp.max(epsilon).log10(),
+                g_exp.max(epsilon).log10(),
+                b_exp.max(epsilon).log10(),
+            ];
+            let densities = film.map_log_exposure(log_e);
+            let (r_lin, g_lin, b_lin) = map_densities(densities);
+            let lum = 0.2126 * lin_pixel[0] + 0.7152 * lin_pixel[1] + 0.0722 * lin_pixel[2];
+            let t = lum.clamp(0.0, 1.0);
+            let white_balance = [
+                white_balance_gray[0] * (1.0 - t) + white_balance_white[0] * t,
+                white_balance_gray[1] * (1.0 - t) + white_balance_white[1] * t,
+                white_balance_gray[2] * (1.0 - t) + white_balance_white[2] * t,
+            ];
+            sum[0] += (r_lin * white_balance[0]).clamp(0.0, 1.0);
+            sum[1] += (g_lin * white_balance[1]).clamp(0.0, 1.0);
+            sum[2] += (b_lin * white_balance[2]).clamp(0.0, 1.0);
             count += 1.0;
+        }
+        if count == 0.0 {
+            for p in linear_image.pixels() {
+                let lin_pixel = p.0;
+                let scene_spectrum =
+                    apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
+                let exposure_vals = film_sens.expose(&scene_spectrum);
+                let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
+                let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
+                let b_in = (exposure_vals[2] * SPECTRAL_NORM).max(0.0);
+                let t_eff = if config.exposure_time > 1.0 {
+                    config.exposure_time.powf(film.reciprocity_exponent)
+                } else {
+                    config.exposure_time
+                };
+                let r_exp = physics::calculate_exposure(r_in, t_eff);
+                let g_exp = physics::calculate_exposure(g_in, t_eff);
+                let b_exp = physics::calculate_exposure(b_in, t_eff);
+                let epsilon = 1e-6;
+                let log_e = [
+                    r_exp.max(epsilon).log10(),
+                    g_exp.max(epsilon).log10(),
+                    b_exp.max(epsilon).log10(),
+                ];
+                let densities = film.map_log_exposure(log_e);
+                let (r_lin, g_lin, b_lin) = map_densities(densities);
+                let lum = 0.2126 * lin_pixel[0] + 0.7152 * lin_pixel[1] + 0.0722 * lin_pixel[2];
+                let t = lum.clamp(0.0, 1.0);
+                let white_balance = [
+                    white_balance_gray[0] * (1.0 - t) + white_balance_white[0] * t,
+                    white_balance_gray[1] * (1.0 - t) + white_balance_white[1] * t,
+                    white_balance_gray[2] * (1.0 - t) + white_balance_white[2] * t,
+                ];
+                sum[0] += (r_lin * white_balance[0]).clamp(0.0, 1.0);
+                sum[1] += (g_lin * white_balance[1]).clamp(0.0, 1.0);
+                sum[2] += (b_lin * white_balance[2]).clamp(0.0, 1.0);
+                count += 1.0;
+            }
         }
         let avg = [sum[0] / count, sum[1] / count, sum[2] / count];
         let avg_all = (avg[0] + avg[1] + avg[2]) / 3.0;
@@ -390,12 +513,21 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
             avg_all / avg[2].max(epsilon),
         ];
         let strength = 0.6;
-        [
-            1.0 + (raw[0] - 1.0) * strength,
-            1.0 + (raw[1] - 1.0) * strength,
-            1.0 + (raw[2] - 1.0) * strength,
-        ]
+        let apply = |v: f32| (1.0 + (v - 1.0) * strength).clamp(0.85, 1.15);
+        [apply(raw[0]), apply(raw[1]), apply(raw[2])]
     };
+    let wb_strength = config.white_balance_strength.clamp(0.0, 1.0);
+    let wb_target = match config.white_balance_mode {
+        WhiteBalanceMode::Auto => auto_wb,
+        WhiteBalanceMode::Gray => white_balance_gray,
+        WhiteBalanceMode::White => white_balance_white,
+        WhiteBalanceMode::Off => [1.0, 1.0, 1.0],
+    };
+    let white_balance = [
+        1.0 + (wb_target[0] - 1.0) * wb_strength,
+        1.0 + (wb_target[1] - 1.0) * wb_strength,
+        1.0 + (wb_target[2] - 1.0) * wb_strength,
+    ];
 
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
         let x = (i as u32) % width;
@@ -404,7 +536,8 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         let lin_pixel = linear_image.get_pixel(x, y).0;
 
         // Uplift RGB to Spectrum
-        let scene_spectrum = camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]);
+        let scene_spectrum =
+            apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
 
         // Integrate with Film Sensitivities
         let exposure_vals = film_sens.expose(&scene_spectrum);
@@ -465,34 +598,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         };
 
         // Output Formatting
-        let (r_lin, g_lin, b_lin) = match config.output_mode {
-            OutputMode::Negative => {
-                let t_r = physics::density_to_transmission(final_densities[0]);
-                let t_g = physics::density_to_transmission(final_densities[1]);
-                let t_b = physics::density_to_transmission(final_densities[2]);
-                (
-                    t_r.clamp(0.0, 1.0),
-                    t_g.clamp(0.0, 1.0),
-                    t_b.clamp(0.0, 1.0),
-                )
-            }
-            OutputMode::Positive => {
-                let max_d = 3.0;
-                let norm = |d: f32| (d / max_d).clamp(0.0, 1.0);
-                (
-                    norm(final_densities[0]),
-                    norm(final_densities[1]),
-                    norm(final_densities[2]),
-                )
-            }
-        };
-        let lum = 0.2126 * lin_pixel[0] + 0.7152 * lin_pixel[1] + 0.0722 * lin_pixel[2];
-        let t = lum.clamp(0.0, 1.0);
-        let white_balance = [
-            (white_balance_gray[0] * (1.0 - t) + white_balance_white[0] * t) * auto_wb[0],
-            (white_balance_gray[1] * (1.0 - t) + white_balance_white[1] * t) * auto_wb[1],
-            (white_balance_gray[2] * (1.0 - t) + white_balance_white[2] * t) * auto_wb[2],
-        ];
+        let (r_lin, g_lin, b_lin) = map_densities(final_densities);
         let r_out = physics::linear_to_srgb((r_lin * white_balance[0]).clamp(0.0, 1.0));
         let g_out = physics::linear_to_srgb((g_lin * white_balance[1]).clamp(0.0, 1.0));
         let b_out = physics::linear_to_srgb((b_lin * white_balance[2]).clamp(0.0, 1.0));

@@ -1,8 +1,11 @@
 #[cfg(test)]
 mod tests {
     use filmr::presets::STANDARD_DAYLIGHT;
-    use filmr::processor::{process_image, OutputMode, SimulationConfig};
-    use filmr::spectral::{CameraSensitivities, FilmSpectralParams, LAMBDA_START, LAMBDA_STEP, BINS};
+    use filmr::processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
+    use filmr::spectral::{
+        CameraSensitivities, FilmSensitivities, FilmSpectralParams, Spectrum, BINS, LAMBDA_START,
+        LAMBDA_STEP,
+    };
     use image::{Rgb, RgbImage};
 
     #[test]
@@ -25,9 +28,12 @@ mod tests {
         // Red Blindness (Orthochromatic simulation)
         // Use narrow curves to minimize overlap with sRGB Red tail
         film.spectral_params = FilmSpectralParams {
-            r_peak: 0.0, r_width: 0.0,
-            g_peak: 500.0, g_width: 20.0, // Shifted to 500nm to avoid Red tail
-            b_peak: 440.0, b_width: 20.0,
+            r_peak: 0.0,
+            r_width: 0.0,
+            g_peak: 500.0,
+            g_width: 20.0, // Shifted to 500nm to avoid Red tail
+            b_peak: 440.0,
+            b_width: 20.0,
         };
         // Disable grain and halation for pure color check
         film.grain_model.alpha = 0.0;
@@ -38,6 +44,8 @@ mod tests {
             exposure_time: 1.0,
             enable_grain: false,
             output_mode: OutputMode::Positive,
+            white_balance_mode: WhiteBalanceMode::Auto,
+            white_balance_strength: 1.0,
         };
 
         let output = process_image(&input, &film, &config);
@@ -75,9 +83,12 @@ mod tests {
         film.b_curve.d_min = 0.0;
 
         film.spectral_params = FilmSpectralParams {
-            r_peak: 540.0, r_width: 20.0, // Red layer sees GREEN (Cross talk), Narrow
-            g_peak: 540.0, g_width: 20.0, // Green layer sees GREEN, Narrow
-            b_peak: 440.0, b_width: 20.0, // Blue layer sees BLUE, Narrow
+            r_peak: 540.0,
+            r_width: 20.0, // Red layer sees GREEN (Cross talk), Narrow
+            g_peak: 540.0,
+            g_width: 20.0, // Green layer sees GREEN, Narrow
+            b_peak: 440.0,
+            b_width: 20.0, // Blue layer sees BLUE, Narrow
         };
         // Identity color matrix to ensure we see the layer densities directly
         film.color_matrix = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
@@ -89,6 +100,8 @@ mod tests {
             exposure_time: 1.0, // Standard exposure
             enable_grain: false,
             output_mode: OutputMode::Positive,
+            white_balance_mode: WhiteBalanceMode::Auto,
+            white_balance_strength: 1.0,
         };
 
         let output = process_image(&input, &film, &config);
@@ -139,31 +152,44 @@ mod tests {
         let red_spectrum = camera.uplift(1.0, 0.0, 0.0);
         let red_peak = find_peak(&red_spectrum);
         println!("Red Peak: {} nm", red_peak);
-        assert!((red_peak - 610.0).abs() < 10.0, "Red peak should be around 610nm");
+        assert!(
+            (red_peak - 610.0).abs() < 10.0,
+            "Red peak should be around 610nm"
+        );
 
         // Test Green Uplift
         let green_spectrum = camera.uplift(0.0, 1.0, 0.0);
         let green_peak = find_peak(&green_spectrum);
         println!("Green Peak: {} nm", green_peak);
-        assert!((green_peak - 540.0).abs() < 10.0, "Green peak should be around 540nm");
+        assert!(
+            (green_peak - 540.0).abs() < 10.0,
+            "Green peak should be around 540nm"
+        );
 
         // Test Blue Uplift
         let blue_spectrum = camera.uplift(0.0, 0.0, 1.0);
         let blue_peak = find_peak(&blue_spectrum);
         println!("Blue Peak: {} nm", blue_peak);
-        assert!((blue_peak - 465.0).abs() < 10.0, "Blue peak should be around 465nm");
+        assert!(
+            (blue_peak - 465.0).abs() < 10.0,
+            "Blue peak should be around 465nm"
+        );
     }
 
     #[test]
     fn test_white_spectrum_energy() {
         let camera = CameraSensitivities::srgb();
         let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
-        
+
         // White spectrum should have energy across the board (sum of 3 Gaussians)
         // Let's check a few points
         let get_val = |nm: usize| -> f32 {
-             let idx = (nm - LAMBDA_START) / LAMBDA_STEP;
-             if idx < BINS { white_spectrum.power[idx] } else { 0.0 }
+            let idx = (nm - LAMBDA_START) / LAMBDA_STEP;
+            if idx < BINS {
+                white_spectrum.power[idx]
+            } else {
+                0.0
+            }
         };
 
         let v_blue = get_val(450);
@@ -176,20 +202,25 @@ mod tests {
     }
 
     #[test]
-    fn test_white_balance() {
-        use filmr::spectral::FilmSensitivities;
-        
-        // 1. Setup White Light (1.0, 1.0, 1.0) -> Spectrum
-        let camera = CameraSensitivities::srgb();
-        let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
-
-        // 2. Setup Standard Film (Panchromatic)
+    fn test_gray_spectrum_probe() {
+        let gray_spectrum = Spectrum::new_flat(1.0);
         let film_params = FilmSpectralParams::new_panchromatic();
         let film_sens = FilmSensitivities::from_params(film_params);
+        let hb = film_sens.b_sensitivity.integrate_product(&gray_spectrum) * film_sens.b_factor;
+        let hg = film_sens.g_sensitivity.integrate_product(&gray_spectrum) * film_sens.g_factor;
+        let hr = film_sens.r_sensitivity.integrate_product(&gray_spectrum) * film_sens.r_factor;
+        println!("Gray H {},{},{}", hb, hg, hr);
+        let max_h = hb.max(hg).max(hr);
+        let min_h = hb.min(hg).min(hr);
+        assert!((max_h / min_h) < 1.05);
+    }
 
-        // 3. Integrate
-        // Use the new expose() method which includes relative factors
-        let exposure = film_sens.expose(&white_spectrum);
+    #[test]
+    fn test_white_balance() {
+        let gray_spectrum = Spectrum::new_flat(1.0);
+        let film_params = FilmSpectralParams::new_panchromatic();
+        let film_sens = FilmSensitivities::from_params(film_params);
+        let exposure = film_sens.expose(&gray_spectrum);
         let r_response = exposure[0];
         let g_response = exposure[1];
         let b_response = exposure[2];
@@ -199,18 +230,12 @@ mod tests {
         println!("G: {:.4}", g_response);
         println!("B: {:.4}", b_response);
 
-        // 4. Check ratios
-        // Ideally they should be roughly equal for a "Neutral" film,
-        // OR the exposure logic later compensates for sensitivity differences.
-        // But usually "Panchromatic" means roughly equal sensitivity to visible light.
-        
         let max_resp = r_response.max(g_response).max(b_response);
         let min_resp = r_response.min(g_response).min(b_response);
-        
-        // Allow some variance (e.g. 15%) - Tighter constraint
+
         let ratio = min_resp / max_resp;
         println!("Min/Max Ratio: {:.2}", ratio);
-        
-        assert!(ratio > 0.85, "Film response to white light should be very balanced (within 15%)");
+
+        assert!(ratio > 0.95);
     }
 }

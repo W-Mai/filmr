@@ -190,21 +190,29 @@ impl FilmStock {
         let d_g = self.g_curve.map_smooth(log_e[1]);
         let d_b = self.b_curve.map_smooth(log_e[2]);
 
+        let net_r = (d_r - self.r_curve.d_min).max(0.0);
+        let net_g = (d_g - self.g_curve.d_min).max(0.0);
+        let net_b = (d_b - self.b_curve.d_min).max(0.0);
+
         // 2. Apply Color Matrix (Simulates Section 5 - Layer Coupling)
         // [Dr']   [ M00 M01 M02 ] [ Dr ]
         // [Dg'] = [ M10 M11 M12 ] [ Dg ]
         // [Db']   [ M20 M21 M22 ] [ Db ]
 
-        let d_r_out = self.color_matrix[0][0] * d_r
-            + self.color_matrix[0][1] * d_g
-            + self.color_matrix[0][2] * d_b;
-        let d_g_out = self.color_matrix[1][0] * d_r
-            + self.color_matrix[1][1] * d_g
-            + self.color_matrix[1][2] * d_b;
-        let d_b_out = self.color_matrix[2][0] * d_r
-            + self.color_matrix[2][1] * d_g
-            + self.color_matrix[2][2] * d_b;
+        let d_r_out = self.color_matrix[0][0] * net_r
+            + self.color_matrix[0][1] * net_g
+            + self.color_matrix[0][2] * net_b;
+        let d_g_out = self.color_matrix[1][0] * net_r
+            + self.color_matrix[1][1] * net_g
+            + self.color_matrix[1][2] * net_b;
+        let d_b_out = self.color_matrix[2][0] * net_r
+            + self.color_matrix[2][1] * net_g
+            + self.color_matrix[2][2] * net_b;
 
-        [d_r_out, d_g_out, d_b_out]
+        [
+            d_r_out + self.r_curve.d_min,
+            d_g_out + self.g_curve.d_min,
+            d_b_out + self.b_curve.d_min,
+        ]
     }
 }

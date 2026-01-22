@@ -1,4 +1,4 @@
-use filmr::{presets, process_image, OutputMode, SimulationConfig};
+use filmr::{presets, process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
 use image::{Rgb, RgbImage};
 
 fn main() {
@@ -23,6 +23,8 @@ fn main() {
         exposure_time: 1.0,
         enable_grain: true,
         output_mode: OutputMode::Positive, // Generate a positive image
+        white_balance_mode: WhiteBalanceMode::Auto,
+        white_balance_strength: 1.0,
     };
 
     println!("Starting simulation (Positive Mode)...");

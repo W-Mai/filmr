@@ -1,6 +1,6 @@
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, Pos2, Rect, Sense, TextureHandle, Vec2};
-use filmr::{presets, process_image, FilmStock, OutputMode, SimulationConfig};
+use filmr::{presets, process_image, FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode};
 use image::DynamicImage;
 
 fn main() -> eframe::Result<()> {
@@ -81,6 +81,8 @@ struct FilmrApp {
     // Selection
     selected_preset: FilmPreset,
     output_mode: OutputMode,
+    white_balance_mode: WhiteBalanceMode,
+    white_balance_strength: f32,
 
     // Status
     status_msg: String,
@@ -103,6 +105,8 @@ impl FilmrApp {
 
             selected_preset: FilmPreset::StandardDaylight,
             output_mode: OutputMode::Positive,
+            white_balance_mode: WhiteBalanceMode::Auto,
+            white_balance_strength: 1.0,
             status_msg: "Drag and drop an image here to start.".to_owned(),
         }
     }
@@ -196,6 +200,8 @@ impl FilmrApp {
                 exposure_time: self.exposure_time,
                 enable_grain: true, // Always enable if we want grain, control via film params
                 output_mode: self.output_mode,
+                white_balance_mode: self.white_balance_mode,
+                white_balance_strength: self.white_balance_strength,
             };
 
             // Process (this might be slow on main thread for large images, but okay for example)
@@ -263,115 +269,156 @@ impl App for FilmrApp {
 
                 let mut preset_changed = false;
 
-                egui::ScrollArea::vertical().max_height(400.0).show(ui, |ui| {
-                    ui.collapsing("Generic", |ui| {
-                         if ui.selectable_value(&mut self.selected_preset, FilmPreset::StandardDaylight, "Standard Daylight").clicked() {
-                             preset_changed = true;
-                         }
-                    });
+                egui::ScrollArea::vertical()
+                    .max_height(400.0)
+                    .show(ui, |ui| {
+                        ui.collapsing("Generic", |ui| {
+                            if ui
+                                .selectable_value(
+                                    &mut self.selected_preset,
+                                    FilmPreset::StandardDaylight,
+                                    "Standard Daylight",
+                                )
+                                .clicked()
+                            {
+                                preset_changed = true;
+                            }
+                        });
 
-                    ui.collapsing("Fujifilm (Slide)", |ui| {
-                        let presets = [
-                            (FilmPreset::FujifilmVelvia50, "Velvia 50"),
-                            (FilmPreset::FujifilmVelvia100F, "Velvia 100F"),
-                            (FilmPreset::FujifilmVelvia100, "Velvia 100"),
-                            (FilmPreset::FujifilmProvia100F, "Provia 100F"),
-                            (FilmPreset::FujifilmAstia100F, "Astia 100F"),
-                            (FilmPreset::FujifilmProvia400X, "Provia 400X"),
-                            (FilmPreset::FujifilmTrebi400, "TREBI 400"),
-                        ];
-                        for (p, l) in presets {
-                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
-                                preset_changed = true;
+                        ui.collapsing("Fujifilm (Slide)", |ui| {
+                            let presets = [
+                                (FilmPreset::FujifilmVelvia50, "Velvia 50"),
+                                (FilmPreset::FujifilmVelvia100F, "Velvia 100F"),
+                                (FilmPreset::FujifilmVelvia100, "Velvia 100"),
+                                (FilmPreset::FujifilmProvia100F, "Provia 100F"),
+                                (FilmPreset::FujifilmAstia100F, "Astia 100F"),
+                                (FilmPreset::FujifilmProvia400X, "Provia 400X"),
+                                (FilmPreset::FujifilmTrebi400, "TREBI 400"),
+                            ];
+                            for (p, l) in presets {
+                                if ui
+                                    .selectable_value(&mut self.selected_preset, p, l)
+                                    .clicked()
+                                {
+                                    preset_changed = true;
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    ui.collapsing("Fujifilm (Color Negative)", |ui| {
-                        let presets = [
-                            (FilmPreset::FujifilmPro400H, "Pro 400H"),
-                            (FilmPreset::FujifilmPro160NS, "Pro 160NS"),
-                            (FilmPreset::FujifilmPro160NC, "Pro 160NC"),
-                            (FilmPreset::FujifilmSuperia200, "Superia 200"),
-                            (FilmPreset::FujifilmSuperiaXTra800, "Superia X-Tra 800"),
-                        ];
-                        for (p, l) in presets {
-                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
-                                preset_changed = true;
+                        ui.collapsing("Fujifilm (Color Negative)", |ui| {
+                            let presets = [
+                                (FilmPreset::FujifilmPro400H, "Pro 400H"),
+                                (FilmPreset::FujifilmPro160NS, "Pro 160NS"),
+                                (FilmPreset::FujifilmPro160NC, "Pro 160NC"),
+                                (FilmPreset::FujifilmSuperia200, "Superia 200"),
+                                (FilmPreset::FujifilmSuperiaXTra800, "Superia X-Tra 800"),
+                            ];
+                            for (p, l) in presets {
+                                if ui
+                                    .selectable_value(&mut self.selected_preset, p, l)
+                                    .clicked()
+                                {
+                                    preset_changed = true;
+                                }
                             }
-                        }
-                    });
-                    
-                     ui.collapsing("Fujifilm (B&W)", |ui| {
-                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::FujifilmNeopanAcros100, "Neopan Acros 100").clicked() {
-                             preset_changed = true;
-                         }
-                    });
+                        });
 
-                    ui.collapsing("Kodak (B&W)", |ui| {
-                         let presets = [
-                            (FilmPreset::KodakTriX400, "Tri-X 400"),
-                            (FilmPreset::KodakTMax400, "T-Max 400"),
-                            (FilmPreset::KodakTMax100, "T-Max 100"),
-                            (FilmPreset::KodakTMax3200, "T-Max 3200"),
-                            (FilmPreset::KodakPlusX125, "Plus-X 125"),
-                        ];
-                        for (p, l) in presets {
-                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                        ui.collapsing("Fujifilm (B&W)", |ui| {
+                            if ui
+                                .selectable_value(
+                                    &mut self.selected_preset,
+                                    FilmPreset::FujifilmNeopanAcros100,
+                                    "Neopan Acros 100",
+                                )
+                                .clicked()
+                            {
                                 preset_changed = true;
                             }
-                        }
-                    });
+                        });
 
-                    ui.collapsing("Kodak (Color Negative)", |ui| {
-                         let presets = [
-                            (FilmPreset::KodakPortra400, "Portra 400"),
-                            (FilmPreset::KodakPortra160, "Portra 160"),
-                            (FilmPreset::KodakEktar100, "Ektar 100"),
-                            (FilmPreset::KodakGold200, "Gold 200"),
-                        ];
-                        for (p, l) in presets {
-                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
-                                preset_changed = true;
+                        ui.collapsing("Kodak (B&W)", |ui| {
+                            let presets = [
+                                (FilmPreset::KodakTriX400, "Tri-X 400"),
+                                (FilmPreset::KodakTMax400, "T-Max 400"),
+                                (FilmPreset::KodakTMax100, "T-Max 100"),
+                                (FilmPreset::KodakTMax3200, "T-Max 3200"),
+                                (FilmPreset::KodakPlusX125, "Plus-X 125"),
+                            ];
+                            for (p, l) in presets {
+                                if ui
+                                    .selectable_value(&mut self.selected_preset, p, l)
+                                    .clicked()
+                                {
+                                    preset_changed = true;
+                                }
                             }
-                        }
-                    });
-                    
-                    ui.collapsing("Kodak (Slide)", |ui| {
-                         let presets = [
-                            (FilmPreset::Kodachrome25, "Kodachrome 25"),
-                            (FilmPreset::Kodachrome64, "Kodachrome 64"),
-                            (FilmPreset::KodakEktachrome100VS, "Ektachrome 100VS"),
-                        ];
-                        for (p, l) in presets {
-                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
-                                preset_changed = true;
-                            }
-                        }
-                    });
+                        });
 
-                    ui.collapsing("Ilford (B&W)", |ui| {
-                        let presets = [
-                            (FilmPreset::IlfordHp5Plus, "HP5 Plus"),
-                            (FilmPreset::IlfordFp4Plus, "FP4 Plus"),
-                            (FilmPreset::IlfordDelta100, "Delta 100"),
-                            (FilmPreset::IlfordDelta400, "Delta 400"),
-                            (FilmPreset::IlfordPanFPlus, "Pan F Plus"),
-                            (FilmPreset::IlfordSfx200, "SFX 200"),
-                        ];
-                        for (p, l) in presets {
-                            if ui.selectable_value(&mut self.selected_preset, p, l).clicked() {
+                        ui.collapsing("Kodak (Color Negative)", |ui| {
+                            let presets = [
+                                (FilmPreset::KodakPortra400, "Portra 400"),
+                                (FilmPreset::KodakPortra160, "Portra 160"),
+                                (FilmPreset::KodakEktar100, "Ektar 100"),
+                                (FilmPreset::KodakGold200, "Gold 200"),
+                            ];
+                            for (p, l) in presets {
+                                if ui
+                                    .selectable_value(&mut self.selected_preset, p, l)
+                                    .clicked()
+                                {
+                                    preset_changed = true;
+                                }
+                            }
+                        });
+
+                        ui.collapsing("Kodak (Slide)", |ui| {
+                            let presets = [
+                                (FilmPreset::Kodachrome25, "Kodachrome 25"),
+                                (FilmPreset::Kodachrome64, "Kodachrome 64"),
+                                (FilmPreset::KodakEktachrome100VS, "Ektachrome 100VS"),
+                            ];
+                            for (p, l) in presets {
+                                if ui
+                                    .selectable_value(&mut self.selected_preset, p, l)
+                                    .clicked()
+                                {
+                                    preset_changed = true;
+                                }
+                            }
+                        });
+
+                        ui.collapsing("Ilford (B&W)", |ui| {
+                            let presets = [
+                                (FilmPreset::IlfordHp5Plus, "HP5 Plus"),
+                                (FilmPreset::IlfordFp4Plus, "FP4 Plus"),
+                                (FilmPreset::IlfordDelta100, "Delta 100"),
+                                (FilmPreset::IlfordDelta400, "Delta 400"),
+                                (FilmPreset::IlfordPanFPlus, "Pan F Plus"),
+                                (FilmPreset::IlfordSfx200, "SFX 200"),
+                            ];
+                            for (p, l) in presets {
+                                if ui
+                                    .selectable_value(&mut self.selected_preset, p, l)
+                                    .clicked()
+                                {
+                                    preset_changed = true;
+                                }
+                            }
+                        });
+
+                        ui.collapsing("Polaroid", |ui| {
+                            if ui
+                                .selectable_value(
+                                    &mut self.selected_preset,
+                                    FilmPreset::PolaroidSx70,
+                                    "SX-70",
+                                )
+                                .clicked()
+                            {
                                 preset_changed = true;
                             }
-                        }
+                        });
                     });
-                    
-                     ui.collapsing("Polaroid", |ui| {
-                        if ui.selectable_value(&mut self.selected_preset, FilmPreset::PolaroidSx70, "SX-70").clicked() {
-                             preset_changed = true;
-                         }
-                    });
-                });
 
                 if preset_changed {
                     self.load_preset_values();
@@ -440,6 +487,48 @@ impl App for FilmrApp {
                         changed = true;
                     }
                 });
+            });
+            ui.group(|ui| {
+                ui.label("White Balance");
+                ui.horizontal(|ui| {
+                    if ui
+                        .radio_value(&mut self.white_balance_mode, WhiteBalanceMode::Auto, "Auto")
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                    if ui
+                        .radio_value(&mut self.white_balance_mode, WhiteBalanceMode::Gray, "Gray")
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                    if ui
+                        .radio_value(
+                            &mut self.white_balance_mode,
+                            WhiteBalanceMode::White,
+                            "White",
+                        )
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                    if ui
+                        .radio_value(&mut self.white_balance_mode, WhiteBalanceMode::Off, "Off")
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                });
+                if ui
+                    .add(
+                        egui::Slider::new(&mut self.white_balance_strength, 0.0..=1.0)
+                            .text("Strength"),
+                    )
+                    .changed()
+                {
+                    changed = true;
+                }
             });
 
             ui.separator();
