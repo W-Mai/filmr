@@ -86,12 +86,11 @@ impl Spectrum {
     /// Used for calculating response: Integral(Light * Sensitivity)
     pub fn integrate_product(&self, other: &Spectrum) -> f32 {
         let mut sum = 0.0;
-        for i in 0..BINS {
-            sum += self.power[i] * other.power[i];
+        for i in 0..(BINS - 1) {
+            let v0 = self.power[i] * other.power[i];
+            let v1 = self.power[i + 1] * other.power[i + 1];
+            sum += 0.5 * (v0 + v1);
         }
-        // Normalize by step size?
-        // Exposure = Power * Time. The units of power are arbitrary here,
-        // but physically it's Integral(P(lambda) d_lambda).
         sum * (LAMBDA_STEP as f32)
     }
 }
@@ -246,10 +245,10 @@ impl FilmSensitivities {
         };
 
         if params.r_peak > 0.0 || params.g_peak > 0.0 || params.b_peak > 0.0 {
-            let gray_spectrum = Spectrum::new_flat(1.0);
-            let r_resp = s.r_sensitivity.integrate_product(&gray_spectrum);
-            let g_resp = s.g_sensitivity.integrate_product(&gray_spectrum);
-            let b_resp = s.b_sensitivity.integrate_product(&gray_spectrum);
+            let reference = Spectrum::new_d65();
+            let r_resp = s.r_sensitivity.integrate_product(&reference);
+            let g_resp = s.g_sensitivity.integrate_product(&reference);
+            let b_resp = s.b_sensitivity.integrate_product(&reference);
             let epsilon = 1e-6;
             s.r_factor = 1.0 / r_resp.max(epsilon);
             s.g_factor = 1.0 / g_resp.max(epsilon);
