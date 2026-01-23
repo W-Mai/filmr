@@ -39,6 +39,25 @@ impl Default for SimulationConfig {
     }
 }
 
+pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
+    let mut sum_log = 0.0f32;
+    let mut count = 0.0f32;
+    for p in input.pixels() {
+        let r = physics::srgb_to_linear(p[0] as f32 / 255.0);
+        let g = physics::srgb_to_linear(p[1] as f32 / 255.0);
+        let b = physics::srgb_to_linear(p[2] as f32 / 255.0);
+        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        sum_log += (lum + 1.0e-6).ln();
+        count += 1.0;
+    }
+    if count == 0.0 {
+        return 1.0;
+    }
+    let log_avg = (sum_log / count).exp().max(1.0e-4);
+    let exposure_time = film.r_curve.exposure_offset / log_avg;
+    exposure_time.clamp(0.001, 4.0)
+}
+
 /// Helper to apply Box Blur (Approximates Gaussian when repeated)
 /// Uses a sliding window (Integral Image / Moving Average) approach for O(1) per pixel independent of radius.
 fn apply_box_blur(image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, radius: u32) {

@@ -7,4 +7,6 @@ pub mod spectral;
 
 pub use film::FilmStock;
 pub use grain::GrainModel;
-pub use processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
+pub use processor::{
+    estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
+};

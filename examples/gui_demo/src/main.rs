@@ -1,6 +1,9 @@
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, Pos2, Rect, Sense, TextureHandle, Vec2};
-use filmr::{presets, process_image, FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode};
+use filmr::{
+    estimate_exposure_time, presets, process_image, FilmStock, OutputMode, SimulationConfig,
+    WhiteBalanceMode,
+};
 use image::DynamicImage;
 
 fn main() -> eframe::Result<()> {
@@ -157,11 +160,12 @@ impl FilmrApp {
         self.halation_threshold = preset.halation_threshold;
         self.halation_sigma = preset.halation_sigma;
 
-        // Auto-adjust exposure time based on preset sensitivity (exposure_offset)
-        // Standard Daylight has offset 0.18 (18% gray).
-        // If a film is more sensitive (lower offset), we need less exposure time.
-        // T = Offset / 0.18
-        self.exposure_time = preset.r_curve.exposure_offset / 0.18;
+        let base_exposure = preset.r_curve.exposure_offset / 0.18;
+        self.exposure_time = if let Some(img) = &self.original_image {
+            estimate_exposure_time(&img.to_rgb8(), &preset)
+        } else {
+            base_exposure
+        };
 
         // Grain defaults could also be tied to presets if we wanted,
         // but currently they are separate in the struct logic.
@@ -231,6 +235,9 @@ impl App for FilmrApp {
                     match image::open(path) {
                         Ok(img) => {
                             self.original_image = Some(img);
+                            let preset = Self::get_preset_stock(self.selected_preset);
+                            let rgb_img = self.original_image.as_ref().unwrap().to_rgb8();
+                            self.exposure_time = estimate_exposure_time(&rgb_img, &preset);
                             self.status_msg = format!("Loaded: {:?}", path.file_name().unwrap());
                             // Reset view
                             self.zoom = 1.0;
@@ -256,7 +263,7 @@ impl App for FilmrApp {
                 ui.label("Physics");
                 if ui
                     .add(
-                        egui::Slider::new(&mut self.exposure_time, 0.001..=2.0)
+                        egui::Slider::new(&mut self.exposure_time, 0.001..=4.0)
                             .text("Exposure Time")
                             .logarithmic(true),
                     )
