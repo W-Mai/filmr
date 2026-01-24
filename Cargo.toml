@@ -2,6 +2,13 @@
 name = "filmr"
 version = "0.1.0"
 edition = "2021"
+authors = ["Benign X <1341398182@qq.com>", "W-Mai"]
+description = "A high-fidelity, physics-based film simulation engine written in Rust."
+readme = "README.md"
+repository = "https://github.com/W-Mai/filmr"
+license = "MIT"
+keywords = ["film", "simulation", "photography", "image-processing", "analog"]
+categories = ["multimedia::images", "rendering", "science"]
 
 [workspace]
 members = [
