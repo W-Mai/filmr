@@ -6,7 +6,8 @@ use filmr::{
 };
 use image::{Rgb, RgbImage};
 use image::imageops::FilterType;
-use imageproc::drawing::{draw_text_mut, draw_line_segment_mut};
+use imageproc::drawing::{draw_text_mut, draw_line_segment_mut, draw_filled_rect_mut};
+use imageproc::rect::Rect;
 use rusttype::{Font, Scale};
 use std::fs;
 use std::path::Path;
@@ -52,8 +53,9 @@ fn main() {
         let metrics = FilmMetrics::analyze(&result);
 
         // Generate Plots
-        let hist_img = draw_rgb_histogram(&result, 140, 100);
-        let lab_img = draw_lab_scatter(&result, 140, 100);
+        let hist_img = draw_rgb_histogram(&result, 220, 120);
+        let lab_img = draw_lab_scatter(&result, 220, 120);
+        let lbp_img = draw_lbp_histogram(&metrics.lbp_hist, 220, 120);
 
         // Store for contact sheet
         results.push((
@@ -62,7 +64,8 @@ fn main() {
             t_est, 
             metrics,
             hist_img,
-            lab_img
+            lab_img,
+            lbp_img
         ));
     }
 
@@ -72,21 +75,21 @@ fn main() {
 }
 
 fn generate_contact_sheet(
-    data: &[(&str, RgbImage, f32, FilmMetrics, RgbImage, RgbImage)], 
+    data: &[(&str, RgbImage, f32, FilmMetrics, RgbImage, RgbImage, RgbImage)], 
     output_dir: &str
 ) {
     let thumb_size = 300;
     let padding = 20;
     let header_height = 40; 
-    let cols = 3; // Wider cells, so fewer columns
+    let cols = 3; 
     let rows = (data.len() as f32 / cols as f32).ceil() as u32;
     
     // Cell Layout:
-    // [ Image (300x300) ] [ Stats / Plots (300x300) ]
-    // Total Width: 600 + padding
+    // [ Image (300x300) ] [ Stats Text ]
+    // [ RGB Hist ] [ Lab Scatter ] [ LBP Hist ]
     
-    let cell_width = 600 + padding * 2;
-    let cell_height = 300 + padding * 2;
+    let cell_width = 750 + padding * 2;
+    let cell_height = 500 + padding * 2;
     
     let total_width = cols * cell_width;
     let total_height = rows * cell_height + header_height;
@@ -100,20 +103,20 @@ fn generate_contact_sheet(
     let font_data = include_bytes!("/System/Library/Fonts/Monaco.ttf");
     let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
     let scale_title = Scale { x: 20.0, y: 20.0 };
-    let scale_text = Scale { x: 14.0, y: 14.0 };
+    let scale_text = Scale { x: 13.0, y: 13.0 }; // Slightly smaller text
 
-    for (i, (name, img, t_est, metrics, hist, lab)) in data.iter().enumerate() {
+    for (i, (name, img, t_est, metrics, hist, lab, lbp)) in data.iter().enumerate() {
         let col = i as u32 % cols;
         let row = i as u32 / cols;
         
         let x_base = col * cell_width + padding;
         let y_base = header_height + row * cell_height + padding;
         
-        // 1. Draw Main Image (Left)
+        // 1. Draw Main Image (Top Left)
         let thumb = image::imageops::resize(img, thumb_size, thumb_size, FilterType::Lanczos3);
         copy_image(&mut contact_sheet, &thumb, x_base, y_base);
         
-        // 2. Draw Stats (Right Top)
+        // 2. Draw Stats (Top Right)
         let x_stats = x_base + thumb_size + padding;
         let mut y_text = y_base;
         
@@ -121,29 +124,42 @@ fn generate_contact_sheet(
         y_text += 30;
         
         let lines = [
-            format!("Exp: {:.4}s", t_est),
-            format!("Mean RGB: {:.0}/{:.0}/{:.0}", metrics.mean_rgb[0], metrics.mean_rgb[1], metrics.mean_rgb[2]),
+            format!("Exp: {:.4}s | DR: {:.1}dB", t_est, metrics.dynamic_range),
+            format!("Mean: {:.0}/{:.0}/{:.0} | Entropy: {:.2}", metrics.mean_rgb[0], metrics.mean_rgb[1], metrics.mean_rgb[2], metrics.entropy),
+            format!("Std:  {:.1}/{:.1}/{:.1}", metrics.std_rgb[0], metrics.std_rgb[1], metrics.std_rgb[2]),
+            format!("Skew: {:.1}/{:.1}/{:.1}", metrics.skewness_rgb[0], metrics.skewness_rgb[1], metrics.skewness_rgb[2]),
+            format!("Kurt: {:.1}/{:.1}/{:.1}", metrics.kurtosis_rgb[0], metrics.kurtosis_rgb[1], metrics.kurtosis_rgb[2]),
+            format!("Clip: Z{:.1}% S{:.1}%", metrics.clipping_ratio[0]*100.0, metrics.clipping_ratio[1]*100.0),
             format!("Lab Mean: {:.1}/{:.1}/{:.1}", metrics.lab_mean[0], metrics.lab_mean[1], metrics.lab_mean[2]),
+            format!("Sat Mean: {:.1} Skew: {:.1}", metrics.saturation_mean, metrics.saturation_skew),
             format!("Rg/Bg: {:.2}/{:.2}", metrics.rg_ratio, metrics.bg_ratio),
-            format!("Sat Mean/Skew: {:.2}/{:.2}", metrics.saturation_mean, metrics.saturation_skew),
-            format!("Entropy: {:.2}", metrics.entropy),
+            format!("CCT: {:.0}K Tint: {:.4}", metrics.cct_tint.0, metrics.cct_tint.1),
+            format!("Texture Lap: {:.1}", metrics.laplacian_variance),
+            format!("PSD Beta: {:.2}", metrics.psd_slope),
+            format!("GLCM: C{:.1} E{:.2} H{:.2}", metrics.glcm_stats[0], metrics.glcm_stats[2], metrics.glcm_stats[3]),
         ];
         
         for line in lines {
             draw_text_mut(&mut contact_sheet, Rgb([200, 200, 200]), x_stats as i32, y_text as i32, scale_text, &font, &line);
-            y_text += 20;
+            y_text += 18;
         }
         
-        // 3. Draw Plots (Right Bottom)
-        let y_plots = y_base + 180;
+        // 3. Draw Plots (Bottom Row)
+        let y_plots = y_base + 320;
+        let plot_w = 220;
+        let plot_gap = 20;
         
-        // Histogram
-        copy_image(&mut contact_sheet, hist, x_stats, y_plots);
-        draw_text_mut(&mut contact_sheet, Rgb([150, 150, 150]), x_stats as i32, (y_plots + 105) as i32, scale_text, &font, "RGB Hist");
-
+        // RGB Hist
+        copy_image(&mut contact_sheet, hist, x_base, y_plots);
+        draw_text_mut(&mut contact_sheet, Rgb([150, 150, 150]), x_base as i32, (y_plots + 125) as i32, scale_text, &font, "RGB Hist");
+        
         // Lab Scatter
-        copy_image(&mut contact_sheet, lab, x_stats + 150, y_plots);
-        draw_text_mut(&mut contact_sheet, Rgb([150, 150, 150]), (x_stats + 150) as i32, (y_plots + 105) as i32, scale_text, &font, "Lab Scatter");
+        copy_image(&mut contact_sheet, lab, x_base + plot_w + plot_gap, y_plots);
+        draw_text_mut(&mut contact_sheet, Rgb([150, 150, 150]), (x_base + plot_w + plot_gap) as i32, (y_plots + 125) as i32, scale_text, &font, "Lab Scatter");
+        
+        // LBP Hist
+        copy_image(&mut contact_sheet, lbp, x_base + (plot_w + plot_gap)*2, y_plots);
+        draw_text_mut(&mut contact_sheet, Rgb([150, 150, 150]), (x_base + (plot_w + plot_gap)*2) as i32, (y_plots + 125) as i32, scale_text, &font, "LBP Texture");
     }
     
     let out_file = std::fs::File::create(format!("{}/contact_sheet.jpg", output_dir)).unwrap();
@@ -222,17 +238,40 @@ fn draw_lab_scatter(img: &RgbImage, width: u32, height: u32) -> RgbImage {
         let lab: Lab = Lab::from_color(srgb);
         
         // Map a/b (-100..100) to fit
-        // Center at width/2, height/2
-        // Scale: if range is +/-100, and width is 140, we need scale ~ 0.7
         let center_x = width as f32 / 2.0;
         let center_y = height as f32 / 2.0;
-        let scale = 0.6; 
+        let scale = 0.8; 
         
         let plot_x = center_x + lab.a * scale;
         let plot_y = center_y - lab.b * scale; 
         
         if plot_x >= 0.0 && plot_x < width as f32 && plot_y >= 0.0 && plot_y < height as f32 {
             canvas.put_pixel(plot_x as u32, plot_y as u32, Rgb([200, 200, 200]));
+        }
+    }
+    
+    canvas
+}
+
+fn draw_lbp_histogram(hist: &[f32; 10], width: u32, height: u32) -> RgbImage {
+    let mut canvas = RgbImage::from_pixel(width, height, Rgb([40, 40, 40]));
+    
+    let mut max_val = 0.0f32;
+    for &v in hist {
+        max_val = max_val.max(v);
+    }
+    
+    let bar_width = width as f32 / 10.0;
+    let scale_y = if max_val > 0.0 { (height - 10) as f32 / max_val } else { 0.0 };
+    
+    for i in 0..10 {
+        let h = hist[i] * scale_y;
+        if h >= 1.0 {
+            let x = i as f32 * bar_width;
+            let y = height as f32 - h;
+            
+            let rect = Rect::at(x as i32, y as i32).of_size(bar_width as u32 - 2, h as u32);
+            draw_filled_rect_mut(&mut canvas, rect, Rgb([100, 200, 255]));
         }
     }
     
