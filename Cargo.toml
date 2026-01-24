@@ -18,4 +18,5 @@ rayon = "1.8" # For parallel processing of pixels
 
 [dev-dependencies]
 imageproc = "0.23.0"
+palette = "0.7.6"
 rusttype = "0.9.3"
