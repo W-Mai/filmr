@@ -3,6 +3,8 @@ use filmr::presets::get_all_stocks;
 use image::{Rgb, RgbImage};
 use std::fs;
 use std::path::Path;
+use imageproc::drawing::draw_text_mut;
+use rusttype::{Font, Scale};
 
 /// Quality Report Generator based on tec4.md
 /// "Diagnostic Images" & "Quantitative Metrics"
@@ -20,9 +22,9 @@ fn main() {
     report.push_str("| Film Stock | Neutral Drift (Avg) | Channel Leak (R->G) | Hue Monotonicity | Status |\n");
     report.push_str("|------------|---------------------|---------------------|------------------|--------|\n");
 
-    for (name, stock) in stocks {
+    for (name, stock) in &stocks {
         println!("Verifying {}...", name);
-        let metrics = verify_stock(name, &stock, output_dir);
+        let metrics = verify_stock(name, stock, output_dir);
         
         let status = if metrics.passed { "✅ PASS" } else { "❌ FAIL" };
         report.push_str(&format!("| {} | {:.4} | {:.4} | {} | {} |\n", 
@@ -31,6 +33,76 @@ fn main() {
 
     fs::write(format!("{}/report.md", output_dir), report).unwrap();
     println!("Quality verification complete. Report saved to {}/report.md", output_dir);
+    
+    // Generate Contact Sheet
+    println!("Generating contact sheet...");
+    generate_contact_sheet(&stocks, output_dir);
+    println!("Contact sheet saved to {}/contact_sheet.jpg", output_dir);
+}
+
+fn generate_contact_sheet(stocks: &[(&str, FilmStock)], output_dir: &str) {
+    let thumb_height = 50; // Use hue ramp height
+    let padding = 30; // Padding for text
+    let total_width = 1200; // 3 columns
+    let cols = 3;
+    let rows = (stocks.len() as f32 / cols as f32).ceil() as u32;
+    let cell_height = thumb_height + padding;
+    
+    let mut contact_sheet = RgbImage::new(total_width, rows * cell_height);
+    // White background
+    for p in contact_sheet.pixels_mut() {
+        *p = Rgb([255, 255, 255]);
+    }
+
+    // Load font
+    let font_data = include_bytes!("/System/Library/Fonts/Monaco.ttf"); // MacOS default
+    let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
+
+    for (i, (name, _)) in stocks.iter().enumerate() {
+        let safe_name = name.replace(" ", "_");
+        let hue_path = format!("{}/{}_hue.jpg", output_dir, safe_name);
+        
+        if let Ok(img) = image::open(&hue_path) {
+            let img = img.to_rgb8();
+            let row = i as u32 / cols;
+            let col = i as u32 % cols;
+            
+            let x_off = col * (total_width / cols);
+            let y_off = row * cell_height;
+            
+            // Draw image
+            // Center the image in the cell if it's smaller than column width
+            let target_x = x_off + 10;
+            let target_y = y_off + padding;
+            
+            // Copy pixels manually or use GenericImage::copy_from
+            // image::imageops::replace(&mut contact_sheet, &img, target_x as i64, target_y as i64);
+            // Simple manual copy to be safe
+            for y in 0..img.height().min(thumb_height) {
+                for x in 0..img.width().min(total_width/cols - 20) {
+                     let p = img.get_pixel(x, y);
+                     contact_sheet.put_pixel(target_x + x, target_y + y, *p);
+                }
+            }
+
+            // Draw Text
+            let scale = Scale { x: 16.0, y: 16.0 };
+            draw_text_mut(
+                &mut contact_sheet,
+                Rgb([0, 0, 0]),
+                (x_off + 10) as i32,
+                (y_off + 5) as i32,
+                scale,
+                &font,
+                name
+            );
+        }
+    }
+    
+    // Save as JPEG with high quality
+    let out_file = std::fs::File::create(format!("{}/contact_sheet.jpg", output_dir)).unwrap();
+    let mut enc = image::codecs::jpeg::JpegEncoder::new_with_quality(out_file, 100);
+    enc.encode_image(&contact_sheet).unwrap();
 }
 
 struct QualityMetrics {
