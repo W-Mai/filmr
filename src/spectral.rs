@@ -137,11 +137,28 @@ impl CameraSensitivities {
         // Set Peak_R = 1.0, Peak_G = 1.0
         // Peak_B = 30/25 * 1.0 = 1.2
 
-        Self {
+        let s = Self {
             r_curve: Spectrum::new_gaussian_with_amplitude(610.0, 30.0, 1.0),
             g_curve: Spectrum::new_gaussian_with_amplitude(540.0, 30.0, 1.0),
             b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 25.0, 1.2), // Peak shifted to 465 to match blue better
-        }
+        };
+
+        // Normalize to D65 energy conservation
+        // Uplifting (1, 1, 1) should result in a spectrum that resembles D65 in terms of total energy
+        // or at least balance.
+        // Current uplift: S = 1*R + 1*G + 1*B
+        // We want Integral(S * D65) or similar metric to be consistent.
+        // Actually, we want the uplifted white to have the same chromaticity as D65.
+        // But simply: let's normalize the curves so their sum approximates a flat or D65 spectrum power.
+        // For simplicity in this "physically plausible" model, we scale them so that
+        // Integral(Curve_i) are equal, which we did roughly with amplitudes.
+        // Let's refine the amplitudes based on Gaussian integral = A * sigma * sqrt(2pi).
+        // R: 1.0 * 30 = 30
+        // G: 1.0 * 30 = 30
+        // B: 1.2 * 25 = 30
+        // They are balanced in area.
+
+        s
     }
 
     pub fn srgb() -> Self {
@@ -265,6 +282,18 @@ impl FilmSensitivities {
             self.g_sensitivity.integrate_product(light) * self.g_factor,
             self.b_sensitivity.integrate_product(light) * self.b_factor,
         ]
+    }
+
+    /// Calibrate sensitivity factors to a specific white point spectrum.
+    /// Ensures that exposing this spectrum results in [1.0, 1.0, 1.0].
+    pub fn calibrate_to_white_point(&mut self, white_point: &Spectrum) {
+        let r_resp = self.r_sensitivity.integrate_product(white_point);
+        let g_resp = self.g_sensitivity.integrate_product(white_point);
+        let b_resp = self.b_sensitivity.integrate_product(white_point);
+        let epsilon = 1e-6;
+        self.r_factor = 1.0 / r_resp.max(epsilon);
+        self.g_factor = 1.0 / g_resp.max(epsilon);
+        self.b_factor = 1.0 / b_resp.max(epsilon);
     }
 }
 

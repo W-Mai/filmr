@@ -39,12 +39,18 @@ impl Default for SimulationConfig {
     }
 }
 
+const SPECTRAL_NORM: f32 = 1.0;
+
 pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
     let camera_sens = CameraSensitivities::srgb();
-    let film_sens = film.get_spectral_sensitivities();
+    let mut film_sens = film.get_spectral_sensitivities();
     let illuminant = Spectrum::new_d65();
     let apply_illuminant = |s: Spectrum| s.multiply(&illuminant);
-    const SPECTRAL_NORM: f32 = 0.008;
+    
+    // CALIBRATION: Ensure consistency with process_image
+    let system_white = apply_illuminant(camera_sens.uplift(1.0, 1.0, 1.0));
+    film_sens.calibrate_to_white_point(&system_white);
+    
     let total = (input.width() * input.height()) as usize;
     let max_samples = 20000usize;
     let step = (total / max_samples).max(1);
@@ -431,10 +437,15 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
 
     // 4. Process Exposure -> Density
     let camera_sens = CameraSensitivities::srgb();
-    let film_sens = film.get_spectral_sensitivities();
+    let mut film_sens = film.get_spectral_sensitivities();
     let illuminant = Spectrum::new_d65();
     let apply_illuminant = |s: Spectrum| s.multiply(&illuminant);
-    const SPECTRAL_NORM: f32 = 0.008;
+
+    // CALIBRATION: Ensure energy conservation
+    // Construct the "System White Point" (sRGB (1,1,1) uplifted and illuminated by D65).
+    // This ensures that a neutral white input results in equal exposure to all film layers.
+    let system_white = apply_illuminant(camera_sens.uplift(1.0, 1.0, 1.0));
+    film_sens.calibrate_to_white_point(&system_white);
 
     // Calculate Reciprocity Failure Factor
     // E_film = E_actual / (1 + beta * log10(t)^2)
@@ -445,6 +456,59 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     };
     let t_eff = config.exposure_time / reciprocity_factor;
 
+    // Calculate White Balance Gain (Physical Layer / Latent Image Domain)
+    // We analyze the "Latent Image" (exposure values after spectral integration)
+    // and balance them before they hit the non-linear film curves.
+    let wb_gains = match config.white_balance_mode {
+        WhiteBalanceMode::Auto => {
+            // Gray World on Latent Image
+            let step = (width * height / 1000).max(1);
+            let mut sum_r = 0.0;
+            let mut sum_g = 0.0;
+            let mut sum_b = 0.0;
+            let mut count = 0.0;
+
+            for i in (0..(width * height)).step_by(step as usize) {
+                let x = i % width;
+                let y = i / width;
+                let p = linear_image.get_pixel(x, y).0;
+                
+                // Full spectral path for sample
+                // Note: We don't apply SPECTRAL_NORM here as we just want ratios
+                let scene_spectrum = apply_illuminant(camera_sens.uplift(p[0], p[1], p[2]));
+                let exposure_vals = film_sens.expose(&scene_spectrum);
+                
+                sum_r += exposure_vals[0];
+                sum_g += exposure_vals[1];
+                sum_b += exposure_vals[2];
+                count += 1.0;
+            }
+
+            if count > 0.0 {
+                let avg_r = sum_r / count;
+                let avg_g = sum_g / count;
+                let avg_b = sum_b / count;
+                let lum = (avg_r + avg_g + avg_b) / 3.0;
+                let eps = 1e-9;
+                
+                let gain_r = lum / avg_r.max(eps);
+                let gain_g = lum / avg_g.max(eps);
+                let gain_b = lum / avg_b.max(eps);
+                
+                let s = config.white_balance_strength.clamp(0.0, 1.0);
+                [
+                    1.0 + (gain_r - 1.0) * s,
+                    1.0 + (gain_g - 1.0) * s,
+                    1.0 + (gain_b - 1.0) * s,
+                ]
+            } else {
+                [1.0, 1.0, 1.0]
+            }
+        },
+        WhiteBalanceMode::Gray | WhiteBalanceMode::White => [1.0, 1.0, 1.0],
+        WhiteBalanceMode::Off => [1.0, 1.0, 1.0],
+    };
+
     // Buffer for Density (D)
     let mut density_image: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
 
@@ -453,14 +517,20 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         let y = (i as u32) / width;
         let lin_pixel = linear_image.get_pixel(x, y).0;
 
-        // Spectral Uplift & Exposure
+        // Spectral Uplift
         let scene_spectrum = apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
         let exposure_vals = film_sens.expose(&scene_spectrum);
 
+        // Apply White Balance (Physical Layer)
+        // We modify the exposure values directly.
+        let r_balanced = exposure_vals[0] * wb_gains[0];
+        let g_balanced = exposure_vals[1] * wb_gains[1];
+        let b_balanced = exposure_vals[2] * wb_gains[2];
+
         // Calculate Log Exposure
-        let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
-        let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
-        let b_in = (exposure_vals[2] * SPECTRAL_NORM).max(0.0);
+        let r_in = (r_balanced * SPECTRAL_NORM).max(0.0);
+        let g_in = (g_balanced * SPECTRAL_NORM).max(0.0);
+        let b_in = (b_balanced * SPECTRAL_NORM).max(0.0);
 
         let r_exp = physics::calculate_exposure(r_in, t_eff);
         let g_exp = physics::calculate_exposure(g_in, t_eff);
@@ -550,59 +620,11 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         }
     };
 
-    // Calculate White Balance (on original linear image for simplicity, or on simulated?)
-    // Typically WB is done on the final image or the linear image.
-    // Here we do it on the output.
-    // We need to re-calculate WB based on the Density -> Output mapping.
-    
-    // NOTE: Re-implementing WB logic to match the new pipeline structure.
-    // For efficiency, we can calculate WB using a subsampled pass or just reusing logic.
-    // The previous implementation calculated WB by running the density pipeline on pixels.
-    // Since we now have the full density image, we can calculate WB from it.
-
     let mut pixels: Vec<u8> = vec![0; (width * height * 3) as usize];
     
-    // Calculate Auto WB if needed
-    let wb_factors = if config.white_balance_mode == WhiteBalanceMode::Off {
-        [1.0, 1.0, 1.0]
-    } else {
-         // ... Similar logic to before, but using density_image ...
-         // For brevity and speed, let's assume we want to balance the OUTPUT.
-         // But we need to know the factors BEFORE mapping to u8.
-         
-         // Let's sample the center or sparse pixels to estimate WB
-         let step = (width * height / 1000).max(1);
-         let mut sum = [0.0f32; 3];
-         let mut count = 0.0f32;
-         
-         // Simple Gray World on Output
-         for i in (0..(width*height)).step_by(step as usize) {
-             let x = i % width;
-             let y = i / width;
-             let d = density_image.get_pixel(x, y).0;
-             let (r, g, b) = map_densities(d);
-             sum[0] += r;
-             sum[1] += g;
-             sum[2] += b;
-             count += 1.0;
-         }
-         
-         if count > 0.0 {
-             let avg = [sum[0]/count, sum[1]/count, sum[2]/count];
-             let global_avg = (avg[0] + avg[1] + avg[2]) / 3.0;
-             let eps = 1e-6;
-             let raw = [global_avg / avg[0].max(eps), global_avg / avg[1].max(eps), global_avg / avg[2].max(eps)];
-             
-             let strength = config.white_balance_strength.clamp(0.0, 1.0);
-             [
-                 1.0 + (raw[0] - 1.0) * strength,
-                 1.0 + (raw[1] - 1.0) * strength,
-                 1.0 + (raw[2] - 1.0) * strength
-             ]
-         } else {
-             [1.0, 1.0, 1.0]
-         }
-    };
+    // Previous WB logic removed as we now do it in spectral domain.
+    // If output-side adjustments are needed (e.g. creative tinting), they can be added here.
+    // For now, we assume the spectral WB + H-D Curve provides the desired look.
 
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
         let x = (i as u32) % width;
@@ -611,13 +633,10 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         
         let (r_lin, g_lin, b_lin) = map_densities(d);
         
-        let r_wb = (r_lin * wb_factors[0]).clamp(0.0, 1.0);
-        let g_wb = (g_lin * wb_factors[1]).clamp(0.0, 1.0);
-        let b_wb = (b_lin * wb_factors[2]).clamp(0.0, 1.0);
-        
-        let r_out = physics::linear_to_srgb(r_wb);
-        let g_out = physics::linear_to_srgb(g_wb);
-        let b_out = physics::linear_to_srgb(b_wb);
+        // No further WB here
+        let r_out = physics::linear_to_srgb(r_lin.clamp(0.0, 1.0));
+        let g_out = physics::linear_to_srgb(g_lin.clamp(0.0, 1.0));
+        let b_out = physics::linear_to_srgb(b_lin.clamp(0.0, 1.0));
 
         chunk[0] = (r_out * 255.0).round() as u8;
         chunk[1] = (g_out * 255.0).round() as u8;
