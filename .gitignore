@@ -2,3 +2,4 @@
 *.lock
 .trae
 diagnosis_output/
+quality_report/

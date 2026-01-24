@@ -132,15 +132,12 @@ impl CameraSensitivities {
         //
         // Target: Equal Area under curve for white balance.
         // Area ~= peak * sigma.
-        // Using sRGB-ish sigmas: B=25, G=30, R=30.
-        // Peak_B * 25 = Peak_G * 30 = Peak_R * 30
-        // Set Peak_R = 1.0, Peak_G = 1.0
-        // Peak_B = 30/25 * 1.0 = 1.2
-
+        // Using sharper sigmas for better color separation: B=15, G=15, R=15.
+        // This reduces cross-talk significantly.
         let s = Self {
             r_curve: Spectrum::new_gaussian_with_amplitude(610.0, 30.0, 1.0),
             g_curve: Spectrum::new_gaussian_with_amplitude(540.0, 30.0, 1.0),
-            b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 25.0, 1.2), // Peak shifted to 465 to match blue better
+            b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 30.0, 1.2), // Peak shifted to 465 to match blue better
         };
 
         // Normalize to D65 energy conservation
@@ -199,12 +196,12 @@ impl FilmSpectralParams {
     /// Create standard panchromatic response
     pub const fn new_panchromatic() -> Self {
         Self {
-            r_peak: 650.0,
-            r_width: 60.0, // Wide peak for red
-            g_peak: 545.0,
-            g_width: 50.0, // Shifted and wide
-            b_peak: 465.0,
-            b_width: 55.0, // Matched to blue
+            r_peak: 630.0, // Closer to 610 to pick up Red efficiency
+            r_width: 20.0, // Very narrow to avoid crosstalk
+            g_peak: 540.0, // Centered on Green
+            g_width: 20.0, // Narrow
+            b_peak: 460.0, // Centered on Blue
+            b_width: 20.0, // Narrow
         }
     }
 
