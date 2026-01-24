@@ -15,8 +15,9 @@ rand = "0.8"
 rand_distr = "0.4"
 nalgebra = "0.32"
 rayon = "1.8" # For parallel processing of pixels
+palette = "0.7.6"
+rustfft = "6.4.1"
 
 [dev-dependencies]
 imageproc = "0.23.0"
-palette = "0.7.6"
 rusttype = "0.9.3"
