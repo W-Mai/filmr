@@ -134,11 +134,7 @@ impl CameraSensitivities {
         // Area ~= peak * sigma.
         // Using sharper sigmas for better color separation: B=15, G=15, R=15.
         // This reduces cross-talk significantly.
-        let s = Self {
-            r_curve: Spectrum::new_gaussian_with_amplitude(610.0, 30.0, 1.0),
-            g_curve: Spectrum::new_gaussian_with_amplitude(540.0, 30.0, 1.0),
-            b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 30.0, 1.2), // Peak shifted to 465 to match blue better
-        };
+        
 
         // Normalize to D65 energy conservation
         // Uplifting (1, 1, 1) should result in a spectrum that resembles D65 in terms of total energy
@@ -155,7 +151,11 @@ impl CameraSensitivities {
         // B: 1.2 * 25 = 30
         // They are balanced in area.
 
-        s
+        Self {
+            r_curve: Spectrum::new_gaussian_with_amplitude(610.0, 30.0, 1.0),
+            g_curve: Spectrum::new_gaussian_with_amplitude(540.0, 30.0, 1.0),
+            b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 30.0, 1.2), // Peak shifted to 465 to match blue better
+        }
     }
 
     pub fn srgb() -> Self {

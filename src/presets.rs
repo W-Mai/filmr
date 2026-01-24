@@ -191,19 +191,19 @@ pub const KODAK_PORTRA_400: FilmStock = FilmStock {
         d_min: 0.15,
         d_max: 2.9,
         gamma: 0.65,
-        exposure_offset: 625.04688,
+        exposure_offset: 625.046_9,
     },
     g_curve: SegmentedCurve {
         d_min: 0.15,
         d_max: 2.9,
         gamma: 0.65,
-        exposure_offset: 625.04688,
+        exposure_offset: 625.046_9,
     },
     b_curve: SegmentedCurve {
         d_min: 0.15,
         d_max: 2.9,
         gamma: 0.65,
-        exposure_offset: 625.04688,
+        exposure_offset: 625.046_9,
     },
     color_matrix: [
         [1.15, -0.05, -0.1],

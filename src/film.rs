@@ -52,7 +52,7 @@ impl SegmentedCurve {
         // So Gamma = range / (sigma * sqrt(pi))
         // Sigma = range / (Gamma * sqrt(pi))
         
-        let sqrt_pi = 1.77245385;
+        let sqrt_pi = 1.772_453_9;
         let sigma = range / (self.gamma * sqrt_pi);
         
         let z = (log_e - log_e0) / sigma;
