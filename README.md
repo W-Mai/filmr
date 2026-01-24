@@ -1,9 +1,25 @@
 # Filmr
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
+<p align="center">
+  <img src="statics/filmr.svg#gh-light-mode-only" alt="filmr logo" width="160"/>
+  <img src="statics/filmr.svg#gh-dark-mode-only" alt="filmr logo" width="160"/>
+</p>
+
+<p align="center">
+  <strong>FilmeR / Film Rust</strong>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/filmr">
+    <img src="https://img.shields.io/crates/v/filmr?style=flat-square" alt="Crates.io version" />
+  </a>
+  <a href="https://github.com/W-Mai/filmr/blob/main/LICENSE">
+    <img src="https://img.shields.io/crates/l/filmr?style=flat-square" alt="License" />
+  </a>
+  <a href="https://crates.io/crates/filmr">
+    <img src="https://img.shields.io/crates/d/filmr?style=flat-square" alt="Downloads" />
+  </a>
+</p>
 
 **Filmr** is a high-fidelity, physics-based film simulation engine written in Rust. Unlike simple LUT-based filters, Filmr simulates the physical properties of photographic film—from spectral sensitivity and grain structure to chemical development curves—to produce authentic, organic results.
 
