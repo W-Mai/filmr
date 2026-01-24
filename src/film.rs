@@ -1,4 +1,5 @@
 use crate::grain::GrainModel;
+use crate::physics;
 use crate::spectral::{FilmSensitivities, FilmSpectralParams};
 
 /// Film Modeling Module
@@ -28,39 +29,36 @@ impl SegmentedCurve {
     /// Implements a simplified sigmoid-like S-curve based on the segmented model logic
     /// but smoothed for better visual results if exact break points aren't provided.
     pub fn map(&self, log_e: f32) -> f32 {
-        // Simplified implementation:
-        // Linear region: D = D_min + gamma * (log_e - log_e0)
-        // We clamp it to [D_min, D_max] and add soft knees.
+        self.map_erf(log_e)
+    }
 
+    /// Implementation using the Error Function (Erf), which corresponds to the
+    /// Gaussian distribution of crystal sensitivities. This is the scientifically
+    /// accurate model mentioned in the technical documentation.
+    ///
+    /// D(E) = D_min + (D_max - D_min) * (1 + erf((log E - log E0) / sigma)) / 2
+    pub fn map_erf(&self, log_e: f32) -> f32 {
         let log_e0 = self.exposure_offset.log10();
-        let linear_d = self.d_min + self.gamma * (log_e - log_e0);
-
-        // Midpoint of linear section:
-        let d_mid = (self.d_min + self.d_max) / 2.0;
-        let log_e_mid = log_e0 + (d_mid - self.d_min) / self.gamma;
-
-        let toe_limit = log_e_mid - 0.7; // arbitrary soft knee start
-        let shoulder_limit = log_e_mid + 0.7;
-
-        if log_e > toe_limit && log_e < shoulder_limit {
-            // Linear Region
-            self.d_min + self.gamma * (log_e - log_e0)
-        } else if log_e <= toe_limit {
-            // Toe Region
-            if log_e < log_e0 {
-                // Hard floor at D_min for very low exposure
-                self.d_min.max(linear_d)
-            } else {
-                linear_d
-            }
-        } else {
-            // Shoulder Region
-            if linear_d > self.d_max {
-                self.d_max
-            } else {
-                linear_d
-            }
+        let range = self.d_max - self.d_min;
+        
+        if range <= 0.0 {
+            return self.d_min;
         }
+
+        // Relationship between Gamma and Sigma:
+        // Gamma is the slope at the inflection point (log_e = log_e0).
+        // D'(log_e) = range * (1/sqrt(pi)) * exp(-z^2) * (1/sigma)
+        // At z=0, D' = range / (sigma * sqrt(pi))
+        // So Gamma = range / (sigma * sqrt(pi))
+        // Sigma = range / (Gamma * sqrt(pi))
+        
+        let sqrt_pi = 1.77245385;
+        let sigma = range / (self.gamma * sqrt_pi);
+        
+        let z = (log_e - log_e0) / sigma;
+        
+        let val = 0.5 * (1.0 + physics::erf(z));
+        self.d_min + range * val
     }
 
     /// A smoother implementation using interpolation, closer to real film.
@@ -114,10 +112,10 @@ pub struct FilmStock {
     /// Used to simulate optical softness before grain.
     pub resolution_lp_mm: f32,
 
-    /// Reciprocity Failure Schwarzschild exponent (p).
-    /// Effective time = t^p (for t > 1s).
-    /// Usually ~0.7-0.9 for long exposures.
-    pub reciprocity_exponent: f32,
+    /// Reciprocity Failure coefficient (beta).
+    /// E_effective = E * (1 + beta * log10(t/t0)^2)
+    /// Typically 0.03-0.10.
+    pub reciprocity_beta: f32,
 
     /// Halation strength.
     /// Simulates light reflecting off the film base back into the emulsion.
@@ -149,7 +147,7 @@ impl FilmStock {
         spectral_params: FilmSpectralParams,
         grain_model: GrainModel,
         resolution_lp_mm: f32,
-        reciprocity_exponent: f32,
+        reciprocity_beta: f32,
         halation_strength: f32,
         halation_threshold: f32,
         halation_sigma: f32,
@@ -164,7 +162,7 @@ impl FilmStock {
             color_matrix,
             grain_model,
             resolution_lp_mm,
-            reciprocity_exponent,
+            reciprocity_beta,
             halation_strength,
             halation_threshold,
             halation_sigma,

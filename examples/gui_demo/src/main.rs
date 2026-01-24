@@ -188,7 +188,7 @@ impl FilmrApp {
                 base_film.spectral_params,
                 base_film.grain_model,
                 base_film.resolution_lp_mm,
-                base_film.reciprocity_exponent,
+                base_film.reciprocity_beta,
                 self.halation_strength,
                 self.halation_threshold,
                 self.halation_sigma,

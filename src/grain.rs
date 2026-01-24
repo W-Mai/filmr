@@ -10,14 +10,16 @@ pub struct GrainModel {
     pub alpha: f32,       // Shot noise coefficient (scales with density)
     pub sigma_read: f32,  // Base noise (fog/scanner noise)
     pub monochrome: bool, // Whether the grain affects all channels equally (B&W)
+    pub blur_radius: f32, // Spatial correlation radius (simulates grain size)
 }
 
 impl GrainModel {
-    pub fn new(alpha: f32, sigma_read: f32, monochrome: bool) -> Self {
+    pub fn new(alpha: f32, sigma_read: f32, monochrome: bool, blur_radius: f32) -> Self {
         Self {
             alpha,
             sigma_read,
             monochrome,
+            blur_radius,
         }
     }
 
@@ -27,6 +29,7 @@ impl GrainModel {
             alpha: 0.05,
             sigma_read: 0.01,
             monochrome: false,
+            blur_radius: 0.5,
         }
     }
 
