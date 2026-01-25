@@ -15,17 +15,19 @@ struct ProcessRequest {
     image: Arc<RgbImage>,
     film: FilmStock,
     config: SimulationConfig,
+    is_preview: bool,
 }
 
 struct ProcessResult {
     image: RgbImage,
     metrics: FilmMetrics,
+    is_preview: bool,
 }
 
 pub struct FilmrApp {
     // State
     pub original_image: Option<DynamicImage>,
-    pub preview_image: Option<DynamicImage>,
+    pub preview_image: Option<Arc<RgbImage>>,
     pub developed_image: Option<DynamicImage>,
     pub processed_texture: Option<TextureHandle>,
     pub original_texture: Option<TextureHandle>,
@@ -96,6 +98,7 @@ impl FilmrApp {
                     let _ = tx_res.send(ProcessResult {
                         image: processed,
                         metrics,
+                        is_preview: req.is_preview,
                     });
                     
                     // Wake up the GUI
@@ -170,11 +173,10 @@ impl FilmrApp {
 
     pub fn process_and_update_texture(&mut self, _ctx: &egui::Context) {
         // Use preview image for GUI display to maintain responsiveness
-        let source_image = self.preview_image.as_ref().or(self.original_image.as_ref());
+        // For preview, we use the pre-converted Arc<RgbImage>
+        let source_image = self.preview_image.as_ref();
 
         if let Some(img) = source_image {
-            let rgb_img = img.to_rgb8();
-
             // Construct params
             // Use preset as base and modify
             let base_film = self.get_current_stock();
@@ -198,12 +200,12 @@ impl FilmrApp {
             };
 
             // Send request to worker
-            // We clone the image data into an Arc. For 1024x1024, this is cheap enough.
-            // Ideally we'd keep the Arc<RgbImage> in self.preview_image to avoid this copy.
+            // Direct clone of Arc, O(1)
             let request = ProcessRequest {
-                image: Arc::new(rgb_img),
+                image: Arc::clone(img),
                 film,
                 config,
+                is_preview: true,
             };
 
             let _ = self.tx_req.send(request);
@@ -211,11 +213,14 @@ impl FilmrApp {
         }
     }
 
-    pub fn develop_image(&mut self, ctx: &egui::Context) {
+    pub fn develop_image(&mut self, _ctx: &egui::Context) {
         if let Some(img) = &self.original_image {
             self.status_msg = "Developing full resolution image...".to_owned();
             
-            let rgb_img = img.to_rgb8();
+            // This might still take a bit of time to clone/convert, but it's unavoidable for full-res develop
+            // unless we also keep full-res as RgbImage (memory intensive).
+            let rgb_img = Arc::new(img.to_rgb8());
+            
             let base_film = self.get_current_stock();
             let mut film = base_film;
             film.halation_strength = self.halation_strength;
@@ -233,34 +238,15 @@ impl FilmrApp {
                 white_balance_strength: self.white_balance_strength,
             };
 
-            // This can be slow, ideally run in a separate thread but for simplicity here we block
-            let processed = process_image(&rgb_img, &film, &config);
-            
-            // Calculate developed metrics
-            let developed_metrics = FilmMetrics::analyze(&processed);
-            self.metrics_developed = Some(developed_metrics.clone());
-            // Also update preview metrics so the panel shows the developed stats
-            self.metrics_preview = Some(developed_metrics);
-
-            // Update texture with developed result (resize for display if too large)
-            let display_img = if processed.width() > 1024 || processed.height() > 1024 {
-                 DynamicImage::ImageRgb8(processed.clone()).resize(1024, 1024, FilterType::Triangle).to_rgb8()
-            } else {
-                 processed.clone()
+            let request = ProcessRequest {
+                image: rgb_img,
+                film,
+                config,
+                is_preview: false,
             };
-
-            let size = [display_img.width() as _, display_img.height() as _];
-            let pixels = display_img.as_flat_samples();
-            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
-
-            self.processed_texture = Some(ctx.load_texture(
-                "processed_image",
-                color_image,
-                egui::TextureOptions::LINEAR,
-            ));
-
-            self.developed_image = Some(DynamicImage::ImageRgb8(processed));
-            self.status_msg = "Development complete. Ready to save.".to_owned();
+            
+            let _ = self.tx_req.send(request);
+            self.is_processing = true;
         }
     }
 
@@ -285,18 +271,47 @@ impl App for FilmrApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut Frame) {
         // Check for async results
         if let Ok(result) = self.rx_res.try_recv() {
-            // Convert to egui texture
-            let size = [result.image.width() as _, result.image.height() as _];
-            let pixels = result.image.as_flat_samples();
-            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+            if result.is_preview {
+                // Convert to egui texture
+                let size = [result.image.width() as _, result.image.height() as _];
+                let pixels = result.image.as_flat_samples();
+                let color_image = ColorImage::from_rgb(size, pixels.as_slice());
 
-            self.processed_texture = Some(ctx.load_texture(
-                "processed_image",
-                color_image,
-                egui::TextureOptions::LINEAR,
-            ));
-            
-            self.metrics_preview = Some(result.metrics);
+                self.processed_texture = Some(ctx.load_texture(
+                    "processed_image",
+                    color_image,
+                    egui::TextureOptions::LINEAR,
+                ));
+                
+                self.metrics_preview = Some(result.metrics);
+            } else {
+                // Handle Development Result
+                let processed = result.image;
+                // Calculate developed metrics (metrics already calculated in worker)
+                self.metrics_developed = Some(result.metrics.clone());
+                // Also update preview metrics
+                self.metrics_preview = Some(result.metrics);
+
+                // Update texture with developed result (resize for display if too large)
+                let display_img = if processed.width() > 1024 || processed.height() > 1024 {
+                     DynamicImage::ImageRgb8(processed.clone()).resize(1024, 1024, FilterType::Triangle).to_rgb8()
+                } else {
+                     processed.clone()
+                };
+
+                let size = [display_img.width() as _, display_img.height() as _];
+                let pixels = display_img.as_flat_samples();
+                let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+
+                self.processed_texture = Some(ctx.load_texture(
+                    "processed_image",
+                    color_image,
+                    egui::TextureOptions::LINEAR,
+                ));
+
+                self.developed_image = Some(DynamicImage::ImageRgb8(processed));
+                self.status_msg = "Development complete. Ready to save.".to_owned();
+            }
             self.is_processing = false;
         }
 
@@ -316,13 +331,12 @@ impl App for FilmrApp {
                             } else {
                                 img
                             };
-                            self.preview_image = Some(preview);
+                            self.preview_image = Some(Arc::new(preview.to_rgb8()));
                             self.metrics_developed = None;
                             self.developed_image = None;
                             
                             // Load original texture (from preview)
-                            if let Some(img) = &self.preview_image {
-                                let rgb_img = img.to_rgb8();
+                            if let Some(rgb_img) = &self.preview_image {
                                 let size = [rgb_img.width() as _, rgb_img.height() as _];
                                 let pixels = rgb_img.as_flat_samples();
                                 let color_image = ColorImage::from_rgb(size, pixels.as_slice());
@@ -338,8 +352,10 @@ impl App for FilmrApp {
                             
                             let preset = self.get_current_stock();
                             // Use preview for exposure estimation (fast enough and accurate enough)
-                            let rgb_img = self.preview_image.as_ref().unwrap().to_rgb8();
-                            self.exposure_time = estimate_exposure_time(&rgb_img, &preset);
+                            // preview_image is now Arc<RgbImage>
+                            if let Some(rgb_img) = &self.preview_image {
+                                self.exposure_time = estimate_exposure_time(rgb_img, &preset);
+                            }
                             self.status_msg = format!("Loaded: {:?}", path.file_name().unwrap());
                             // Reset view
                             self.zoom = 1.0;
