@@ -6,7 +6,7 @@ use filmr::{
 };
 use image::imageops::FilterType;
 use image::DynamicImage;
-use crate::ui;
+use crate::panels;
 
 pub struct FilmrApp {
     // State
@@ -284,8 +284,8 @@ impl App for FilmrApp {
             }
         }
 
-        ui::render_controls(self, ctx);
-        ui::render_metrics(self, ctx);
-        ui::render_central_panel(self, ctx);
+        panels::controls::render_controls(self, ctx);
+        panels::metrics::render_metrics(self, ctx);
+        panels::central::render_central_panel(self, ctx);
     }
 }

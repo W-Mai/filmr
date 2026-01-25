@@ -1,5 +1,5 @@
 mod app;
-mod ui;
+mod panels;
 
 use app::FilmrApp;
 use eframe::egui;
