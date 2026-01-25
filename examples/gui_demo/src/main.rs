@@ -653,43 +653,15 @@ impl App for FilmrApp {
             }); // End ScrollArea
         });
 
-        // Main Central Panel for Image
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // Toolbar Overlay
-            ui.horizontal(|ui| {
-                // Hold to Compare (Larger and Conspicuous)
-                self.show_original = ui.add_sized(
-                    [150.0, 40.0],
-                    egui::Button::new("HOLD TO COMPARE").min_size(Vec2::new(150.0, 40.0)),
-                ).is_pointer_button_down_on();
-                
-                ui.separator();
-
-                // Hold to Show Metrics
-                self.show_metrics = ui.add_sized(
-                    [150.0, 40.0],
-                    egui::Button::new("HOLD FOR METRICS").min_size(Vec2::new(150.0, 40.0)),
-                ).is_pointer_button_down_on();
-
-                ui.separator();
-
-                if ui.add_sized([100.0, 40.0], egui::Button::new("Develop")).clicked() {
-                    self.develop_image(ctx);
-                }
-
-                let save_btn = egui::Button::new("Save").min_size(Vec2::new(100.0, 40.0));
-                if ui.add_enabled(self.developed_image.is_some(), save_btn).clicked() {
-                    self.save_image();
-                }
-            });
-            ui.separator();
-
-            // Metrics Overlay Window (if enabled)
-            if self.show_metrics {
-                egui::Window::new("Image Metrics")
-                    .default_pos([200.0, 50.0])
-                    .default_size([250.0, 300.0])
-                    .show(ctx, |ui| {
+        // Right Panel for Metrics (if enabled)
+        if self.show_metrics {
+            egui::SidePanel::right("metrics_panel")
+                .min_width(200.0)
+                .resizable(true)
+                .show(ctx, |ui| {
+                    ui.heading("Image Metrics");
+                    ui.separator();
+                    egui::ScrollArea::vertical().show(ui, |ui| {
                         if let Some(metrics) = &self.metrics {
                             ui.label(format!("Dynamic Range: {:.1} dB", metrics.dynamic_range));
                             ui.label(format!("Entropy: {:.2}", metrics.entropy));
@@ -708,7 +680,36 @@ impl App for FilmrApp {
                             ui.label("No metrics available");
                         }
                     });
-            }
+                });
+        }
+
+        // Main Central Panel for Image
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // Toolbar Overlay
+            ui.horizontal(|ui| {
+                // Hold to Compare (Larger and Conspicuous)
+                self.show_original = ui.add_sized(
+                    [150.0, 40.0],
+                    egui::Button::new("HOLD TO COMPARE").min_size(Vec2::new(150.0, 40.0)),
+                ).is_pointer_button_down_on();
+                
+                ui.separator();
+
+                // Toggle Metrics Panel
+                ui.toggle_value(&mut self.show_metrics, "Metrics Panel");
+
+                ui.separator();
+
+                if ui.add_sized([100.0, 40.0], egui::Button::new("Develop")).clicked() {
+                    self.develop_image(ctx);
+                }
+
+                let save_btn = egui::Button::new("Save").min_size(Vec2::new(100.0, 40.0));
+                if ui.add_enabled(self.developed_image.is_some(), save_btn).clicked() {
+                    self.save_image();
+                }
+            });
+            ui.separator();
 
             let texture_to_show = if self.show_original {
                 self.original_texture.as_ref()
