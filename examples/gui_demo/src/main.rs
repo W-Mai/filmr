@@ -328,9 +328,9 @@ impl App for FilmrApp {
                             // Keep original full resolution image
                             self.original_image = Some(img.clone());
                             
-                            // Create preview for GUI (max 1920px)
-                            let preview = if img.width() > 1920 || img.height() > 1920 {
-                                img.resize(1920, 1920, FilterType::Triangle)
+                            // Create preview for GUI (max 1024px)
+                            let preview = if img.width() > 1024 || img.height() > 1024 {
+                                img.resize(1024, 1024, FilterType::Triangle)
                             } else {
                                 img
                             };
@@ -955,6 +955,8 @@ impl App for FilmrApp {
                                 Plot::new("skew_kurt")
                                     .view_aspect(2.0)
                                     .legend(Legend::default())
+                                    .include_y(-5.0)
+                                    .include_y(5.0)
                                     .allow_zoom(false)
                                     .allow_drag(false)
                                     .allow_scroll(false)
