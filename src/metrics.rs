@@ -390,7 +390,7 @@ fn calculate_lbp(img: &RgbImage) -> [f32; 10] {
     }
     
     if count > 0.0 {
-        for i in 0..10 { hist[i] /= count; }
+        for val in &mut hist { *val /= count; }
     }
     
     hist
@@ -401,7 +401,6 @@ fn calculate_glcm(img: &RgbImage) -> [f32; 4] {
     // Distance 1, Angle 0 (Horizontal right)
     // Quantize to 16 levels to keep matrix small (16x16)
     
-    let levels = 16;
     let mut matrix = [[0.0; 16]; 16];
     let w = img.width();
     let h = img.height();
@@ -418,9 +417,9 @@ fn calculate_glcm(img: &RgbImage) -> [f32; 4] {
     
     // Normalize
     if count > 0.0 {
-        for i in 0..levels {
-            for j in 0..levels {
-                matrix[i][j] /= count;
+        for row in &mut matrix {
+            for val in row {
+                *val /= count;
             }
         }
     }
@@ -434,9 +433,8 @@ fn calculate_glcm(img: &RgbImage) -> [f32; 4] {
     let mut mean_i = 0.0;
     let mut mean_j = 0.0;
     
-    for i in 0..levels {
-        for j in 0..levels {
-            let p = matrix[i][j];
+    for (i, row) in matrix.iter().enumerate() {
+        for (j, &p) in row.iter().enumerate() {
             mean_i += i as f32 * p;
             mean_j += j as f32 * p;
             
@@ -448,9 +446,8 @@ fn calculate_glcm(img: &RgbImage) -> [f32; 4] {
     
     let mut std_i = 0.0;
     let mut std_j = 0.0;
-    for i in 0..levels {
-        for j in 0..levels {
-            let p = matrix[i][j];
+    for (i, row) in matrix.iter().enumerate() {
+        for (j, &p) in row.iter().enumerate() {
             std_i += (i as f32 - mean_i).powi(2) * p;
             std_j += (j as f32 - mean_j).powi(2) * p;
         }
@@ -459,9 +456,8 @@ fn calculate_glcm(img: &RgbImage) -> [f32; 4] {
     std_j = std_j.sqrt();
     
     if std_i * std_j > 0.0 {
-        for i in 0..levels {
-            for j in 0..levels {
-                let p = matrix[i][j];
+        for (i, row) in matrix.iter().enumerate() {
+            for (j, &p) in row.iter().enumerate() {
                 correlation += ((i as f32 - mean_i) * (j as f32 - mean_j) * p) / (std_i * std_j);
             }
         }

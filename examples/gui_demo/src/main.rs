@@ -74,6 +74,7 @@ struct FilmrApp {
     zoom: f32,
     offset: Vec2,
     show_original: bool,
+    show_metrics: bool,
 
     // Parameters
     exposure_time: f32,
@@ -104,6 +105,7 @@ impl FilmrApp {
             zoom: 1.0,
             offset: Vec2::ZERO,
             show_original: false,
+            show_metrics: false,
             exposure_time: 1.0,
             gamma_boost: 1.0,
 
@@ -185,21 +187,11 @@ impl FilmrApp {
             // Use preset as base and modify
             let base_film = Self::get_preset_stock(self.selected_preset);
 
-            let mut film = FilmStock::new(
-                base_film.iso,
-                base_film.r_curve,
-                base_film.g_curve,
-                base_film.b_curve,
-                base_film.color_matrix,
-                base_film.spectral_params,
-                base_film.grain_model,
-                base_film.resolution_lp_mm,
-                base_film.reciprocity_beta,
-                self.halation_strength,
-                self.halation_threshold,
-                self.halation_sigma,
-                base_film.halation_tint, // Keep tint from preset for now, or add color picker later
-            );
+            let mut film = base_film; // Copy
+            film.halation_strength = self.halation_strength;
+            film.halation_threshold = self.halation_threshold;
+            film.halation_sigma = self.halation_sigma;
+            // film.reciprocity_beta = ... // If we had a slider for this
 
             // Apply gamma boost to all channels
             film.r_curve.gamma *= self.gamma_boost;
@@ -277,13 +269,14 @@ impl App for FilmrApp {
 
         // Side Panel for Controls
         egui::SidePanel::left("controls_panel").show(ctx, |ui| {
-            ui.heading("Filmr Controls");
-            ui.separator();
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.heading("Filmr Controls");
+                ui.separator();
 
-            let mut changed = false;
+                let mut changed = false;
 
-            ui.group(|ui| {
-                ui.label("Physics");
+                ui.group(|ui| {
+                    ui.label("Physics");
                 if ui
                     .add(
                         egui::Slider::new(&mut self.exposure_time, 0.001..=4.0)
@@ -294,6 +287,7 @@ impl App for FilmrApp {
                 {
                     changed = true;
                 }
+                });
 
                 ui.label("Film Stock");
 
@@ -448,7 +442,6 @@ impl App for FilmrApp {
                                 preset_changed = true;
                             }
                         });
-                    });
 
                 if preset_changed {
                     self.load_preset_values();
@@ -570,31 +563,59 @@ impl App for FilmrApp {
             ui.label("- Scroll/Pinch to Zoom");
             ui.label("- Drag to Pan");
             ui.label("- Double Click to Reset View");
-            
-            ui.separator();
-            ui.checkbox(&mut self.show_original, "Show Original");
-
-            if let Some(metrics) = &self.metrics {
-                ui.separator();
-                ui.collapsing("Metrics", |ui| {
-                    ui.label(format!("Dynamic Range: {:.1} dB", metrics.dynamic_range));
-                    ui.label(format!("Entropy: {:.2}", metrics.entropy));
-                    ui.label(format!("Mean RGB: {:.0}/{:.0}/{:.0}", metrics.mean_rgb[0], metrics.mean_rgb[1], metrics.mean_rgb[2]));
-                    ui.label(format!("CCT: {:.0} K", metrics.cct_tint.0));
-                    ui.label(format!("Tint: {:.4}", metrics.cct_tint.1));
-                    ui.label(format!("Saturation: {:.1}", metrics.saturation_mean));
-                    ui.label(format!("Texture (Lap): {:.1}", metrics.laplacian_variance));
-                    ui.label(format!("Clipping: Z{:.1}% S{:.1}%", metrics.clipping_ratio[0]*100.0, metrics.clipping_ratio[1]*100.0));
-                });
-            }
 
             if changed {
                 self.process_and_update_texture(ctx);
             }
+            }); // End ScrollArea
         });
 
         // Main Central Panel for Image
         egui::CentralPanel::default().show(ctx, |ui| {
+            // Toolbar Overlay
+            ui.horizontal(|ui| {
+                // Hold to Compare (Larger and Conspicuous)
+                self.show_original = ui.add_sized(
+                    [150.0, 40.0],
+                    egui::Button::new("HOLD TO COMPARE").min_size(Vec2::new(150.0, 40.0)),
+                ).is_pointer_button_down_on();
+                
+                ui.separator();
+
+                // Hold to Show Metrics
+                self.show_metrics = ui.add_sized(
+                    [150.0, 40.0],
+                    egui::Button::new("HOLD FOR METRICS").min_size(Vec2::new(150.0, 40.0)),
+                ).is_pointer_button_down_on();
+            });
+            ui.separator();
+
+            // Metrics Overlay Window (if enabled)
+            if self.show_metrics {
+                egui::Window::new("Image Metrics")
+                    .default_pos([200.0, 50.0])
+                    .default_size([250.0, 300.0])
+                    .show(ctx, |ui| {
+                        if let Some(metrics) = &self.metrics {
+                            ui.label(format!("Dynamic Range: {:.1} dB", metrics.dynamic_range));
+                            ui.label(format!("Entropy: {:.2}", metrics.entropy));
+                            ui.separator();
+                            ui.label(format!("Mean RGB: {:.0}/{:.0}/{:.0}", metrics.mean_rgb[0], metrics.mean_rgb[1], metrics.mean_rgb[2]));
+                            ui.label(format!("Std RGB: {:.1}/{:.1}/{:.1}", metrics.std_rgb[0], metrics.std_rgb[1], metrics.std_rgb[2]));
+                            ui.separator();
+                            ui.label(format!("CCT: {:.0} K", metrics.cct_tint.0));
+                            ui.label(format!("Tint: {:.4}", metrics.cct_tint.1));
+                            ui.label(format!("Saturation: {:.1}", metrics.saturation_mean));
+                            ui.separator();
+                            ui.label(format!("Texture (Lap): {:.1}", metrics.laplacian_variance));
+                            ui.label(format!("PSD Slope: {:.2}", metrics.psd_slope));
+                            ui.label(format!("Clipping: Z{:.1}% S{:.1}%", metrics.clipping_ratio[0]*100.0, metrics.clipping_ratio[1]*100.0));
+                        } else {
+                            ui.label("No metrics available");
+                        }
+                    });
+            }
+
             let texture_to_show = if self.show_original {
                 self.original_texture.as_ref()
             } else {
