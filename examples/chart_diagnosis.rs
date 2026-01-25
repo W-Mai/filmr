@@ -196,8 +196,24 @@ fn draw_rgb_histogram(img: &RgbImage, width: u32, height: u32) -> RgbImage {
         max_count = max_count.max(hist_r[i]).max(hist_g[i]).max(hist_b[i]);
     }
     
+    // Robust scaling: Use 99.5th percentile to avoid spikes
+    let mut all_counts = Vec::with_capacity(256 * 3);
+    for i in 0..256 {
+        if hist_r[i] > 0 { all_counts.push(hist_r[i]); }
+        if hist_g[i] > 0 { all_counts.push(hist_g[i]); }
+        if hist_b[i] > 0 { all_counts.push(hist_b[i]); }
+    }
+    all_counts.sort_unstable();
+    
+    let norm_max = if !all_counts.is_empty() {
+        let idx = ((all_counts.len() as f32) * 0.995) as usize;
+        all_counts[idx.min(all_counts.len() - 1)] as f32
+    } else {
+        max_count as f32
+    };
+
     let max_h = (height - 5) as f32; // Small padding
-    let scale_y = if max_count > 0 { max_h / max_count as f32 } else { 0.0 };
+    let scale_y = if norm_max > 0.0 { max_h / norm_max } else { 0.0 };
     let scale_x = width as f32 / 256.0;
     
     for i in 0..255 {
@@ -205,8 +221,11 @@ fn draw_rgb_histogram(img: &RgbImage, width: u32, height: u32) -> RgbImage {
         let x2 = ((i + 1) as f32 * scale_x) as f32;
         
         let mut draw_channel = |hist: &[u32; 256], color: Rgb<u8>| {
-            let y1 = height as f32 - (hist[i] as f32 * scale_y);
-            let y2 = height as f32 - (hist[i+1] as f32 * scale_y);
+            let val1 = (hist[i] as f32).min(norm_max);
+            let val2 = (hist[i+1] as f32).min(norm_max);
+            
+            let y1 = height as f32 - (val1 * scale_y);
+            let y2 = height as f32 - (val2 * scale_y);
             draw_line_segment_mut(&mut canvas, (x1, y1), (x2, y2), color);
         };
         

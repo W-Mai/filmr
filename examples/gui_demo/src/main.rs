@@ -72,7 +72,9 @@ struct FilmrApp {
     developed_image: Option<DynamicImage>,
     processed_texture: Option<TextureHandle>,
     original_texture: Option<TextureHandle>,
-    metrics: Option<FilmMetrics>,
+    metrics_original: Option<FilmMetrics>,
+    metrics_preview: Option<FilmMetrics>,
+    metrics_developed: Option<FilmMetrics>,
 
     // View State
     zoom: f32,
@@ -111,7 +113,9 @@ impl FilmrApp {
             developed_image: None,
             processed_texture: None,
             original_texture: None,
-            metrics: None,
+            metrics_original: None,
+            metrics_preview: None,
+            metrics_developed: None,
             zoom: 1.0,
             offset: Vec2::ZERO,
             show_original: false,
@@ -237,7 +241,7 @@ impl FilmrApp {
             ));
             
             // Calculate metrics
-            self.metrics = Some(FilmMetrics::analyze(&processed));
+            self.metrics_preview = Some(FilmMetrics::analyze(&processed));
         }
     }
 
@@ -266,6 +270,12 @@ impl FilmrApp {
             // This can be slow, ideally run in a separate thread but for simplicity here we block
             let processed = process_image(&rgb_img, &film, &config);
             
+            // Calculate developed metrics
+            let developed_metrics = FilmMetrics::analyze(&processed);
+            self.metrics_developed = Some(developed_metrics.clone());
+            // Also update preview metrics so the panel shows the developed stats
+            self.metrics_preview = Some(developed_metrics);
+
             // Update texture with developed result (resize for display if too large)
             // Use same max size as preview for texture limits
             let display_img = if processed.width() > 1920 || processed.height() > 1920 {
@@ -325,6 +335,7 @@ impl App for FilmrApp {
                                 img
                             };
                             self.preview_image = Some(preview);
+                            self.metrics_developed = None;
                             self.developed_image = None;
                             
                             // Load original texture (from preview)
@@ -338,6 +349,9 @@ impl App for FilmrApp {
                                     color_image,
                                     egui::TextureOptions::LINEAR,
                                 ));
+                                
+                                // Calculate original metrics (from full res image if possible but here using loaded image)
+                                self.metrics_original = Some(FilmMetrics::analyze(&self.original_image.as_ref().unwrap().to_rgb8()));
                             }
                             
                             let preset = Self::get_preset_stock(self.selected_preset);
@@ -669,8 +683,41 @@ impl App for FilmrApp {
                 .show(ctx, |ui| {
                     ui.heading("Image Metrics");
                     ui.separator();
+                    
+                    let metrics_to_show = if self.show_original {
+                        &self.metrics_original
+                    } else if self.developed_image.is_some() {
+                        // If developed image is shown (which is handled by texture selection logic below)
+                        // Actually logic below is: if show_original { original } else { processed }
+                        // processed_texture is updated by both preview and develop.
+                        // But develop_image updates developed_image AND processed_texture.
+                        // So if developed_image is Some, we *might* be showing it.
+                        // However, preview updates processed_texture too.
+                        // Let's refine:
+                        // If show_original -> metrics_original
+                        // Else if developed_image is Some AND we haven't changed params since develop -> metrics_developed
+                        // But we don't track "changed since develop".
+                        // Let's assume: if developed_image is Some, we are likely looking at it OR the user is tweaking params.
+                        // If user tweaks params, process_and_update_texture runs, updating processed_texture and metrics_preview.
+                        // So metrics_preview is always current for processed_texture (preview).
+                        // metrics_developed is for the high-res result.
+                        // The texture displayed is self.processed_texture.
+                        // So we should show self.metrics_preview (which matches processed_texture).
+                        // EXCEPT when develop_image just ran, it updates processed_texture AND metrics_developed (we need to update metrics_preview too there or just use developed).
+                        // Let's ensure develop_image updates metrics_preview too?
+                        // Or simpler: always use metrics_preview for the processed view.
+                        // Wait, develop_image updates metrics_developed.
+                        // It also updates processed_texture.
+                        // So we should probably update metrics_preview in develop_image as well?
+                        // Or just display metrics_preview.
+                        // Let's change develop_image to update metrics_preview too.
+                        &self.metrics_preview
+                    } else {
+                        &self.metrics_preview
+                    };
+
                     egui::ScrollArea::vertical().show(ui, |ui| {
-                        if let Some(metrics) = &self.metrics {
+                        if let Some(metrics) = metrics_to_show {
                             
                             // Helper for simple gauges
                             let gauge = |ui: &mut egui::Ui, name: &str, val: f32, min: f32, max: f32, unit: &str, color: egui::Color32| {
@@ -703,6 +750,9 @@ impl App for FilmrApp {
                                     .view_aspect(6.0)
                                     .show_axes([false, false])
                                     .show_grid([false, false])
+                                    .allow_zoom(false)
+                                    .allow_drag(false)
+                                    .allow_scroll(false)
                                     .show(ui, |plot_ui| {
                                         let bars = vec![
                                             Bar::new(0.0, zeros as f64).name("Blacks").fill(egui::Color32::RED).width(0.6),
@@ -721,23 +771,67 @@ impl App for FilmrApp {
                                     .view_aspect(1.5)
                                     .legend(Legend::default())
                                     .include_y(0.0)
+                                    .include_y(1.05) // Leave some headroom
+                                    .allow_zoom(false)
+                                    .allow_drag(false)
+                                    .allow_scroll(false)
                                     .show(ui, |plot_ui| {
+                                        // 1. Collect all relevant bin counts to find a robust maximum (99.5th percentile)
+                                        // This avoids single-bin spikes (like pure black/white) compressing the whole chart.
+                                        let mut all_counts = Vec::with_capacity(256 * 3);
+                                        for c in 0..3 {
+                                            for (i, &v) in metrics.hist_rgb[c].iter().enumerate() {
+                                                // If "Ignore Blacks" is on, skip index 0.
+                                                // Also, we can optionally skip very low indices if they are just shadow noise,
+                                                // but robust percentile handling should catch that naturally.
+                                                if !self.hist_clamp_zeros || i > 0 {
+                                                    all_counts.push(v as f64);
+                                                }
+                                            }
+                                        }
+                                        // Sort to find percentile
+                                        all_counts.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                                        
+                                        // Get 99.5th percentile value
+                                        let max_val = if all_counts.is_empty() {
+                                            1.0
+                                        } else {
+                                            let idx = ((all_counts.len() as f64) * 0.995) as usize;
+                                            all_counts[idx.min(all_counts.len() - 1)].max(1.0)
+                                        };
+                                        
+                                        let norm_denom = if self.hist_log_scale {
+                                            (max_val + 1.0).log10()
+                                        } else {
+                                            max_val
+                                        };
+
                                         for (c, color) in [(0, egui::Color32::RED), (1, egui::Color32::GREEN), (2, egui::Color32::BLUE)].iter() {
-                                            let points: PlotPoints = metrics.hist_rgb[*c]
-                                                .iter()
-                                                .enumerate()
-                                                .filter(|(i, _)| !self.hist_clamp_zeros || *i > 0)
-                                                .map(|(i, &v)| {
-                                                    let val = if self.hist_log_scale {
-                                                        (v as f64 + 1.0).log10()
-                                                    } else {
-                                                        v as f64
-                                                    };
-                                                    [i as f64, val]
-                                                })
-                                                .collect();
+                                            // Construct line points explicitly
+                                            let mut line_points: Vec<[f64; 2]> = Vec::with_capacity(256);
                                             
-                                            plot_ui.line(Line::new(format!("hist_{}", c), points).color(*color).name(match c { 0 => "Red", 1 => "Green", _ => "Blue" }));
+                                            for (i, &v) in metrics.hist_rgb[*c].iter().enumerate() {
+                                                if self.hist_clamp_zeros && i == 0 {
+                                                    continue;
+                                                }
+                                                
+                                                let val_raw = if self.hist_log_scale {
+                                                    (v as f64 + 1.0).log10()
+                                                } else {
+                                                    v as f64
+                                                };
+                                                
+                                                // Clamp to slightly above 1.0 so we see flat tops for clipped spikes
+                                                let val_norm = (val_raw / norm_denom).min(1.0);
+                                                line_points.push([i as f64, val_norm]);
+                                            }
+
+                                            // Draw Line on top
+                                            if !line_points.is_empty() {
+                                                plot_ui.line(Line::new(format!("hist_{}", c), PlotPoints::new(line_points))
+                                                    .color(*color)
+                                                    .name(match c { 0 => "Red", 1 => "Green", _ => "Blue" }));
+                                            }
                                         }
                                     });
                             });
@@ -806,6 +900,9 @@ impl App for FilmrApp {
                                 ui.label("LBP Histogram (Texture Pattern):");
                                 Plot::new("lbp_hist")
                                     .view_aspect(2.0)
+                                    .allow_zoom(false)
+                                    .allow_drag(false)
+                                    .allow_scroll(false)
                                     .show(ui, |plot_ui| {
                                         let bars: Vec<Bar> = metrics.lbp_hist.iter().enumerate().map(|(i, &v)| {
                                             Bar::new(i as f64, v as f64).fill(egui::Color32::LIGHT_BLUE).width(0.8)
@@ -829,6 +926,9 @@ impl App for FilmrApp {
                                 Plot::new("rgb_stats")
                                     .view_aspect(1.5)
                                     .legend(Legend::default())
+                                    .allow_zoom(false)
+                                    .allow_drag(false)
+                                    .allow_scroll(false)
                                     .show(ui, |plot_ui| {
                                         let means = metrics.mean_rgb;
                                         let stds = metrics.std_rgb;
@@ -845,9 +945,9 @@ impl App for FilmrApp {
                                             let x = i as f64;
                                             let y = means[i] as f64;
                                             let s = stds[i] as f64;
-                                            plot_ui.line(Line::new(format!("err_v_{}", i), PlotPoints::from(vec![[x, y-s], [x, y+s]])).color(egui::Color32::WHITE));
-                                            plot_ui.line(Line::new(format!("err_t_{}", i), PlotPoints::from(vec![[x-0.1, y-s], [x+0.1, y-s]])).color(egui::Color32::WHITE));
-                                            plot_ui.line(Line::new(format!("err_b_{}", i), PlotPoints::from(vec![[x-0.1, y+s], [x+0.1, y+s]])).color(egui::Color32::WHITE));
+                                            plot_ui.line(Line::new(format!("err_v_{}", i), PlotPoints::from(vec![[x, y-s], [x, y+s]])).color(egui::Color32::WHITE).name(""));
+                                            plot_ui.line(Line::new(format!("err_t_{}", i), PlotPoints::from(vec![[x-0.1, y-s], [x+0.1, y-s]])).color(egui::Color32::WHITE).name(""));
+                                            plot_ui.line(Line::new(format!("err_b_{}", i), PlotPoints::from(vec![[x-0.1, y+s], [x+0.1, y+s]])).color(egui::Color32::WHITE).name(""));
                                         }
                                     });
                                     
@@ -855,6 +955,9 @@ impl App for FilmrApp {
                                 Plot::new("skew_kurt")
                                     .view_aspect(2.0)
                                     .legend(Legend::default())
+                                    .allow_zoom(false)
+                                    .allow_drag(false)
+                                    .allow_scroll(false)
                                     .show(ui, |plot_ui| {
                                         let mut bars_skew = Vec::new();
                                         let mut bars_kurt = Vec::new();
