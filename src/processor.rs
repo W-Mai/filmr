@@ -568,9 +568,20 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
                 pixel[1] = noise;
                 pixel[2] = noise;
             } else {
-                pixel[0] = film.grain_model.sample_noise(densities[0], &mut rng);
-                pixel[1] = film.grain_model.sample_noise(densities[1], &mut rng);
-                pixel[2] = film.grain_model.sample_noise(densities[2], &mut rng);
+                // Organic Color Noise:
+                // Real color film grain is correlated because dye clouds form around silver.
+                // Pure independent RGB noise looks like digital sensor noise.
+                // We generate independent noise but blend it towards luminance to reduce chroma noise.
+                let n_r = film.grain_model.sample_noise(densities[0], &mut rng);
+                let n_g = film.grain_model.sample_noise(densities[1], &mut rng);
+                let n_b = film.grain_model.sample_noise(densities[2], &mut rng);
+                
+                let n_lum = (n_r + n_g + n_b) / 3.0;
+                let chroma_scale = 0.3; // Reduce chroma noise to 30%
+                
+                pixel[0] = n_lum + (n_r - n_lum) * chroma_scale;
+                pixel[1] = n_lum + (n_g - n_lum) * chroma_scale;
+                pixel[2] = n_lum + (n_b - n_lum) * chroma_scale;
             }
         });
 
