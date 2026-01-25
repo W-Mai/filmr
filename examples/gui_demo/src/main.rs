@@ -233,7 +233,7 @@ impl FilmrApp {
         }
     }
 
-    fn develop_image(&mut self) {
+    fn develop_image(&mut self, ctx: &egui::Context) {
         if let Some(img) = &self.original_image {
             self.status_msg = "Developing full resolution image...".to_owned();
             
@@ -257,6 +257,25 @@ impl FilmrApp {
 
             // This can be slow, ideally run in a separate thread but for simplicity here we block
             let processed = process_image(&rgb_img, &film, &config);
+            
+            // Update texture with developed result (resize for display if too large)
+            // Use same max size as preview for texture limits
+            let display_img = if processed.width() > 1920 || processed.height() > 1920 {
+                 DynamicImage::ImageRgb8(processed.clone()).resize(1920, 1920, FilterType::Triangle).to_rgb8()
+            } else {
+                 processed.clone()
+            };
+
+            let size = [display_img.width() as _, display_img.height() as _];
+            let pixels = display_img.as_flat_samples();
+            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+
+            self.processed_texture = Some(ctx.load_texture(
+                "processed_image",
+                color_image,
+                egui::TextureOptions::LINEAR,
+            ));
+
             self.developed_image = Some(DynamicImage::ImageRgb8(processed));
             self.status_msg = "Development complete. Ready to save.".to_owned();
         }
@@ -655,7 +674,7 @@ impl App for FilmrApp {
                 ui.separator();
 
                 if ui.add_sized([100.0, 40.0], egui::Button::new("Develop")).clicked() {
-                    self.develop_image();
+                    self.develop_image(ctx);
                 }
 
                 let save_btn = egui::Button::new("Save").min_size(Vec2::new(100.0, 40.0));
