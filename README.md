@@ -51,7 +51,7 @@ Filmr implements a comprehensive imaging pipeline that models the physical behav
 The interactive GUI allows you to drag-and-drop images and tweak simulation parameters in real-time.
 
 ```bash
-cargo run --example gui_demo --release
+cargo run -p gui_demo --release
 ```
 
 ### 2. Generate Diagnostic Charts
