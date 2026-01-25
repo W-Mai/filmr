@@ -1,4 +1,4 @@
-use crate::film::FilmStock;
+use crate::film::{FilmStock, FilmType};
 use crate::physics;
 use crate::spectral::{CameraSensitivities, Spectrum};
 use image::{ImageBuffer, Rgb, RgbImage};
@@ -630,7 +630,12 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
                     // This simulates the printing process where high-contrast paper restores scene contrast.
                     // For Slide film (which is modeled as inverted negative), this boost is also needed
                     // to expand the compressed highlight range from the inversion formula.
-                    n.powf(2.0)
+                    // We use a lower gamma (1.5) for Slide to maintain its natural high contrast without crushing.
+                    let paper_gamma = match film.film_type {
+                        FilmType::ColorSlide => 1.5,
+                        _ => 2.0,
+                    };
+                    n.powf(paper_gamma)
                 };
                 (norm(t_r, t_r_min, t_r_max), norm(t_g, t_g_min, t_g_max), norm(t_b, t_b_min, t_b_max))
             }

@@ -245,19 +245,19 @@ pub const KODAK_EKTAR_100: FilmStock = FilmStock {
     r_curve: SegmentedCurve {
         d_min: 0.15,
         d_max: 3.2,
-        gamma: 0.75,
+        gamma: 0.85,
         exposure_offset: 0.20,
     },
     g_curve: SegmentedCurve {
         d_min: 0.15,
         d_max: 3.2,
-        gamma: 0.75,
+        gamma: 0.85,
         exposure_offset: 0.20,
     },
     b_curve: SegmentedCurve {
         d_min: 0.15,
         d_max: 3.2,
-        gamma: 0.75,
+        gamma: 0.85,
         exposure_offset: 0.20,
     },
     color_matrix: [
@@ -572,19 +572,19 @@ pub const FUJIFILM_ASTIA_100F: FilmStock = FilmStock {
     r_curve: SegmentedCurve {
         d_min: 0.12,
         d_max: 3.0,
-        gamma: 0.7,
+        gamma: 0.9,
         exposure_offset: 0.20,
     },
     g_curve: SegmentedCurve {
         d_min: 0.12,
         d_max: 3.0,
-        gamma: 0.7,
+        gamma: 0.9,
         exposure_offset: 0.20,
     },
     b_curve: SegmentedCurve {
         d_min: 0.12,
         d_max: 3.0,
-        gamma: 0.7,
+        gamma: 0.9,
         exposure_offset: 0.20,
     },
     color_matrix: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], // Very neutral
@@ -616,19 +616,19 @@ pub const FUJIFILM_PROVIA_400X: FilmStock = FilmStock {
     r_curve: SegmentedCurve {
         d_min: 0.14,
         d_max: 3.4,
-        gamma: 0.95,
+        gamma: 1.1,
         exposure_offset: 0.005,
     },
     g_curve: SegmentedCurve {
         d_min: 0.14,
         d_max: 3.4,
-        gamma: 0.95,
+        gamma: 1.1,
         exposure_offset: 0.005,
     },
     b_curve: SegmentedCurve {
         d_min: 0.14,
         d_max: 3.4,
-        gamma: 0.95,
+        gamma: 1.1,
         exposure_offset: 0.005,
     },
     color_matrix: [
@@ -1201,19 +1201,19 @@ pub const KODAK_PORTRA_160: FilmStock = FilmStock {
     r_curve: SegmentedCurve {
         d_min: 0.10,
         d_max: 2.8,
-        gamma: 0.65,
+        gamma: 0.75,
         exposure_offset: 0.125,
     },
     g_curve: SegmentedCurve {
         d_min: 0.10,
         d_max: 2.8,
-        gamma: 0.65,
+        gamma: 0.75,
         exposure_offset: 0.125,
     },
     b_curve: SegmentedCurve {
         d_min: 0.10,
         d_max: 2.8,
-        gamma: 0.65,
+        gamma: 0.75,
         exposure_offset: 0.125,
     },
     color_matrix: [
