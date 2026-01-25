@@ -32,6 +32,9 @@ pub struct FilmMetrics {
     
     // Perceptual / Structure
     pub ssim: Option<f32>, // Needs reference
+    
+    // Raw Data
+    pub hist_rgb: [[u32; 256]; 3],
 }
 
 impl FilmMetrics {
@@ -51,6 +54,7 @@ impl FilmMetrics {
         let mut sq_sum_sat = 0.0;
         
         let mut hist = [0u32; 256]; // For entropy (luminance)
+        let mut hist_rgb = [[0u32; 256]; 3];
         
         // Pass 1: Basic Sums
         for p in img.pixels() {
@@ -63,6 +67,7 @@ impl FilmMetrics {
                 let v = p[c] as f32;
                 sum_rgb[c] += v;
                 sq_sum_rgb[c] += v * v;
+                hist_rgb[c][p[c] as usize] += 1;
             }
             
             // Lab & Saturation
@@ -191,6 +196,7 @@ impl FilmMetrics {
             lbp_hist: lbp,
             glcm_stats: glcm,
             ssim: None,
+            hist_rgb,
         }
     }
     
@@ -217,6 +223,7 @@ impl FilmMetrics {
             lbp_hist: [0.0; 10],
             glcm_stats: [0.0; 4],
             ssim: None,
+            hist_rgb: [[0; 256]; 3],
          }
     }
 }
