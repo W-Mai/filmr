@@ -628,6 +628,8 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
                     // Apply Paper Gamma (Contrast Boost)
                     // Standard Grade 2-3 paper has gamma ~2.0 relative to negative density range
                     // This simulates the printing process where high-contrast paper restores scene contrast.
+                    // For Slide film (which is modeled as inverted negative), this boost is also needed
+                    // to expand the compressed highlight range from the inversion formula.
                     n.powf(2.0)
                 };
                 (norm(t_r, t_r_min, t_r_max), norm(t_g, t_g_min, t_g_max), norm(t_b, t_b_min, t_b_max))

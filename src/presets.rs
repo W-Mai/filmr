@@ -1,9 +1,10 @@
-use crate::film::{FilmStock, SegmentedCurve};
+use crate::film::{FilmStock, SegmentedCurve, FilmType};
 use crate::grain::GrainModel;
 use crate::spectral::FilmSpectralParams;
 
 /// Standard Daylight Film (Generic)
 pub const STANDARD_DAYLIGHT: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.12,
@@ -48,6 +49,7 @@ pub const STANDARD_DAYLIGHT: FilmStock = FilmStock {
 /// Resolution: 100 lp/mm
 /// Reciprocity: 1s -> +1 stop (exponent ~0.7)
 pub const KODAK_TRI_X_400: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.11,
@@ -93,6 +95,7 @@ pub const KODAK_TRI_X_400: FilmStock = FilmStock {
 /// Reciprocity: Very stable until 1/4000s or >1s. Exponent ~0.95.
 /// Spectral: Enhanced Red Sensitivity
 pub const FUJIFILM_VELVIA_50: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 50.0,
     r_curve: SegmentedCurve {
         d_min: 0.15,
@@ -142,6 +145,7 @@ pub const FUJIFILM_VELVIA_50: FilmStock = FilmStock {
 /// Reciprocity: Good
 /// Spectral: Slightly lower Red response
 pub const ILFORD_HP5_PLUS: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.09,
@@ -186,6 +190,7 @@ pub const ILFORD_HP5_PLUS: FilmStock = FilmStock {
 /// Resolution: 115 lp/mm
 /// Spectral: Neutral + 15% Saturation
 pub const KODAK_PORTRA_400: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.15,
@@ -235,6 +240,7 @@ pub const KODAK_PORTRA_400: FilmStock = FilmStock {
 /// Resolution: 150 lp/mm
 /// Spectral: High Saturation (+25%)
 pub const KODAK_EKTAR_100: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.15,
@@ -284,6 +290,7 @@ pub const KODAK_EKTAR_100: FilmStock = FilmStock {
 /// Resolution: 80 lp/mm
 /// Reciprocity: Good for high speed
 pub const KODAK_T_MAX_3200: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 3200.0,
     r_curve: SegmentedCurve {
         d_min: 0.15,
@@ -329,6 +336,7 @@ pub const KODAK_T_MAX_3200: FilmStock = FilmStock {
 /// Resolution: 160 lp/mm
 /// Crystal: Core-Shell
 pub const ILFORD_DELTA_100: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.08,
@@ -374,6 +382,7 @@ pub const ILFORD_DELTA_100: FilmStock = FilmStock {
 /// Resolution: 125 lp/mm
 /// Spectral: Fourth Color Layer Sim (Cyan-ish)
 pub const FUJIFILM_PRO_400H: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -422,6 +431,7 @@ pub const FUJIFILM_PRO_400H: FilmStock = FilmStock {
 /// Dmax: 3.8, Dmin: 0.15
 /// Resolution: 160 lp/mm
 pub const FUJIFILM_VELVIA_100F: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.15,
@@ -469,6 +479,7 @@ pub const FUJIFILM_VELVIA_100F: FilmStock = FilmStock {
 /// Dmax: 3.7, Dmin: 0.16
 /// Resolution: 160 lp/mm
 pub const FUJIFILM_VELVIA_100: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.16,
@@ -512,6 +523,7 @@ pub const FUJIFILM_VELVIA_100: FilmStock = FilmStock {
 /// Dmax: 3.2, Dmin: 0.12
 /// Resolution: 135 lp/mm
 pub const FUJIFILM_PROVIA_100F: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.12,
@@ -555,6 +567,7 @@ pub const FUJIFILM_PROVIA_100F: FilmStock = FilmStock {
 /// Dmax: 3.0, Dmin: 0.12
 /// Resolution: 135 lp/mm
 pub const FUJIFILM_ASTIA_100F: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.12,
@@ -598,6 +611,7 @@ pub const FUJIFILM_ASTIA_100F: FilmStock = FilmStock {
 /// Dmax: 3.4, Dmin: 0.14
 /// Resolution: 125 lp/mm
 pub const FUJIFILM_PROVIA_400X: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.14,
@@ -645,6 +659,7 @@ pub const FUJIFILM_PROVIA_400X: FilmStock = FilmStock {
 /// Dmax: 3.3, Dmin: 0.15
 /// Resolution: 125 lp/mm
 pub const FUJIFILM_TREBI_400: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.15,
@@ -688,6 +703,7 @@ pub const FUJIFILM_TREBI_400: FilmStock = FilmStock {
 /// Dmax: 2.6, Dmin: 0.08
 /// Resolution: 135 lp/mm
 pub const FUJIFILM_PRO_160NS: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 160.0,
     r_curve: SegmentedCurve {
         d_min: 0.08,
@@ -735,6 +751,7 @@ pub const FUJIFILM_PRO_160NS: FilmStock = FilmStock {
 /// Dmax: 2.5, Dmin: 0.08
 /// Resolution: 125 lp/mm
 pub const FUJIFILM_PRO_160NC: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 160.0,
     r_curve: SegmentedCurve {
         d_min: 0.08,
@@ -778,6 +795,7 @@ pub const FUJIFILM_PRO_160NC: FilmStock = FilmStock {
 /// Dmax: 2.7, Dmin: 0.10
 /// Resolution: 125 lp/mm
 pub const FUJIFILM_SUPERIA_200: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 200.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -825,6 +843,7 @@ pub const FUJIFILM_SUPERIA_200: FilmStock = FilmStock {
 /// Dmax: 2.9, Dmin: 0.12
 /// Resolution: 110 lp/mm
 pub const FUJIFILM_SUPERIA_X_TRA_800: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 800.0,
     r_curve: SegmentedCurve {
         d_min: 0.12,
@@ -868,6 +887,7 @@ pub const FUJIFILM_SUPERIA_X_TRA_800: FilmStock = FilmStock {
 /// Dmax: 2.4, Dmin: 0.10
 /// Resolution: 125 lp/mm
 pub const KODAK_T_MAX_400: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -911,6 +931,7 @@ pub const KODAK_T_MAX_400: FilmStock = FilmStock {
 /// Dmax: 2.3, Dmin: 0.10
 /// Resolution: 200 lp/mm
 pub const KODAK_T_MAX_100: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -954,6 +975,7 @@ pub const KODAK_T_MAX_100: FilmStock = FilmStock {
 /// Dmax: 2.1, Dmin: 0.10
 /// Resolution: 125 lp/mm
 pub const KODAK_PLUS_X_125: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 125.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -997,6 +1019,7 @@ pub const KODAK_PLUS_X_125: FilmStock = FilmStock {
 /// Dmax: 2.0, Dmin: 0.08
 /// Resolution: 135 lp/mm
 pub const ILFORD_FP4_PLUS: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 125.0,
     r_curve: SegmentedCurve {
         d_min: 0.08,
@@ -1040,6 +1063,7 @@ pub const ILFORD_FP4_PLUS: FilmStock = FilmStock {
 /// Dmax: 2.3, Dmin: 0.10
 /// Resolution: 125 lp/mm
 pub const ILFORD_DELTA_400: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 400.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -1083,6 +1107,7 @@ pub const ILFORD_DELTA_400: FilmStock = FilmStock {
 /// Dmax: 1.9, Dmin: 0.05
 /// Resolution: 180 lp/mm
 pub const ILFORD_PAN_F_PLUS: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 50.0,
     r_curve: SegmentedCurve {
         d_min: 0.05,
@@ -1126,6 +1151,7 @@ pub const ILFORD_PAN_F_PLUS: FilmStock = FilmStock {
 /// Dmax: 2.0, Dmin: 0.10
 /// Resolution: 100 lp/mm
 pub const ILFORD_SFX_200: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 200.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -1170,6 +1196,7 @@ pub const ILFORD_SFX_200: FilmStock = FilmStock {
 /// Dmax: 2.8, Dmin: 0.10
 /// Resolution: 125 lp/mm
 pub const KODAK_PORTRA_160: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 160.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -1217,6 +1244,7 @@ pub const KODAK_PORTRA_160: FilmStock = FilmStock {
 /// Dmax: 2.7, Dmin: 0.10
 /// Resolution: 110 lp/mm
 pub const KODAK_GOLD_200: FilmStock = FilmStock {
+    film_type: FilmType::ColorNegative,
     iso: 200.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -1260,6 +1288,7 @@ pub const KODAK_GOLD_200: FilmStock = FilmStock {
 /// Dmax: 3.6, Dmin: 0.10
 /// Resolution: 200 lp/mm
 pub const KODACHROME_25: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 25.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -1341,6 +1370,7 @@ pub fn get_all_stocks() -> Vec<(&'static str, FilmStock)> {
 /// Dmax: 3.5, Dmin: 0.12
 /// Resolution: 160 lp/mm
 pub const KODACHROME_64: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 64.0,
     r_curve: SegmentedCurve {
         d_min: 0.12,
@@ -1388,6 +1418,7 @@ pub const KODACHROME_64: FilmStock = FilmStock {
 /// Dmax: 3.6, Dmin: 0.12
 /// Resolution: 140 lp/mm
 pub const KODAK_EKTACHROME_100VS: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.12,
@@ -1435,6 +1466,7 @@ pub const KODAK_EKTACHROME_100VS: FilmStock = FilmStock {
 /// Dmax: 2.2, Dmin: 0.10
 /// Resolution: 160 lp/mm
 pub const FUJIFILM_NEOPAN_ACROS_100: FilmStock = FilmStock {
+    film_type: FilmType::BwNegative,
     iso: 100.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,
@@ -1476,6 +1508,7 @@ pub const FUJIFILM_NEOPAN_ACROS_100: FilmStock = FilmStock {
 /// Res: 50 lp/mm
 /// Dmax: 2.0
 pub const POLAROID_SX_70: FilmStock = FilmStock {
+    film_type: FilmType::ColorSlide,
     iso: 150.0,
     r_curve: SegmentedCurve {
         d_min: 0.10,

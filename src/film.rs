@@ -84,8 +84,18 @@ impl SegmentedCurve {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum FilmType {
+    ColorNegative,
+    ColorSlide,
+    BwNegative,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FilmStock {
+    /// Film Type (affects processing pipeline)
+    pub film_type: FilmType,
+
     /// ISO Sensitivity (e.g. 400.0, 50.0).
     /// Used for metadata and reciprocity calculations.
     pub iso: f32,
@@ -139,6 +149,7 @@ impl FilmStock {
     /// Create a custom film stock
     #[allow(clippy::too_many_arguments)]
     pub fn new(
+        film_type: FilmType,
         iso: f32,
         r_curve: SegmentedCurve,
         g_curve: SegmentedCurve,
@@ -154,6 +165,7 @@ impl FilmStock {
         halation_tint: [f32; 3],
     ) -> Self {
         Self {
+            film_type,
             iso,
             r_curve,
             g_curve,
@@ -275,6 +287,7 @@ mod tests {
     fn test_film_stock_creation() {
         let curve = SegmentedCurve::new(0.0, 2.0, 1.0, 1.0);
         let stock = FilmStock::new(
+            FilmType::ColorNegative,
             100.0,
             curve, curve, curve,
             [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
@@ -286,5 +299,6 @@ mod tests {
         );
         
         assert_eq!(stock.iso, 100.0);
+        assert_eq!(stock.film_type, FilmType::ColorNegative);
     }
 }

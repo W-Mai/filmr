@@ -162,9 +162,10 @@ fn check_reciprocity_failure(stock: &FilmStock) -> bool {
     let lum1 = (p1[0] as f32 + p1[1] as f32 + p1[2] as f32) / 3.0;
 
     // Case 2: 10s exposure (Intensity should be 1/10th for constant H)
-    // But input image is fixed. We simulate intensity change by scaling input pixel?
-    // No, process_image takes RGB image. We need a darker image.
-    let _input2 = RgbImage::from_pixel(1, 1, Rgb([13, 13, 13])); // ~128/10
+    // We need 1/10th Linear Intensity.
+    // 128 sRGB -> ~0.21 Linear. Target ~0.021 Linear.
+    // ~0.021 Linear -> ~44 sRGB.
+    let _input2 = RgbImage::from_pixel(1, 1, Rgb([44, 44, 44]));
     let config2 = SimulationConfig {
         exposure_time: 10.0, 
         enable_grain: false,
