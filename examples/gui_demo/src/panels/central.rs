@@ -13,11 +13,6 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
             
             ui.separator();
 
-            // Toggle Metrics Panel
-            ui.toggle_value(&mut app.show_metrics, "Metrics Panel");
-
-            ui.separator();
-
             if ui.add_sized([100.0, 40.0], egui::Button::new("Develop")).clicked() {
                 app.develop_image(ctx);
             }
@@ -26,6 +21,16 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
             if ui.add_enabled(app.developed_image.is_some(), save_btn).clicked() {
                 app.save_image();
             }
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let metrics_button = egui::Button::new("Metrics Panel").selected(app.show_metrics);
+                let response = ui.add_sized(Vec2::new(100.0, 40.0), metrics_button);
+                if response.clicked() {
+                    app.show_metrics = !app.show_metrics;
+                }
+
+                ui.separator();
+            });
         });
         ui.separator();
 
