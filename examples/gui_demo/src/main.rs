@@ -4,6 +4,7 @@ use filmr::{
     estimate_exposure_time, presets, process_image, FilmStock, OutputMode, SimulationConfig,
     WhiteBalanceMode, FilmMetrics,
 };
+use image::imageops::FilterType;
 use image::DynamicImage;
 
 fn main() -> eframe::Result<()> {
@@ -66,6 +67,8 @@ enum FilmPreset {
 struct FilmrApp {
     // State
     original_image: Option<DynamicImage>,
+    preview_image: Option<DynamicImage>,
+    developed_image: Option<DynamicImage>,
     processed_texture: Option<TextureHandle>,
     original_texture: Option<TextureHandle>,
     metrics: Option<FilmMetrics>,
@@ -99,6 +102,8 @@ impl FilmrApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self {
             original_image: None,
+            preview_image: None,
+            developed_image: None,
             processed_texture: None,
             original_texture: None,
             metrics: None,
@@ -180,7 +185,10 @@ impl FilmrApp {
     }
 
     fn process_and_update_texture(&mut self, ctx: &egui::Context) {
-        if let Some(img) = &self.original_image {
+        // Use preview image for GUI display to maintain responsiveness
+        let source_image = self.preview_image.as_ref().or(self.original_image.as_ref());
+
+        if let Some(img) = source_image {
             let rgb_img = img.to_rgb8();
 
             // Construct params
@@ -224,6 +232,51 @@ impl FilmrApp {
             self.metrics = Some(FilmMetrics::analyze(&processed));
         }
     }
+
+    fn develop_image(&mut self) {
+        if let Some(img) = &self.original_image {
+            self.status_msg = "Developing full resolution image...".to_owned();
+            
+            let rgb_img = img.to_rgb8();
+            let base_film = Self::get_preset_stock(self.selected_preset);
+            let mut film = base_film;
+            film.halation_strength = self.halation_strength;
+            film.halation_threshold = self.halation_threshold;
+            film.halation_sigma = self.halation_sigma;
+            film.r_curve.gamma *= self.gamma_boost;
+            film.g_curve.gamma *= self.gamma_boost;
+            film.b_curve.gamma *= self.gamma_boost;
+
+            let config = SimulationConfig {
+                exposure_time: self.exposure_time,
+                enable_grain: true,
+                output_mode: self.output_mode,
+                white_balance_mode: self.white_balance_mode,
+                white_balance_strength: self.white_balance_strength,
+            };
+
+            // This can be slow, ideally run in a separate thread but for simplicity here we block
+            let processed = process_image(&rgb_img, &film, &config);
+            self.developed_image = Some(DynamicImage::ImageRgb8(processed));
+            self.status_msg = "Development complete. Ready to save.".to_owned();
+        }
+    }
+
+    fn save_image(&mut self) {
+        if let Some(img) = &self.developed_image {
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("PNG Image", &["png"])
+                .add_filter("JPEG Image", &["jpg", "jpeg"])
+                .save_file() 
+            {
+                if let Err(e) = img.save(&path) {
+                    self.status_msg = format!("Failed to save image: {}", e);
+                } else {
+                    self.status_msg = format!("Saved to {:?}", path);
+                }
+            }
+        }
+    }
 }
 
 impl App for FilmrApp {
@@ -235,10 +288,20 @@ impl App for FilmrApp {
                 if let Some(path) = &file.path {
                     match image::open(path) {
                         Ok(img) => {
-                            self.original_image = Some(img);
+                            // Keep original full resolution image
+                            self.original_image = Some(img.clone());
                             
-                            // Load original texture
-                            if let Some(img) = &self.original_image {
+                            // Create preview for GUI (max 1920px)
+                            let preview = if img.width() > 1920 || img.height() > 1920 {
+                                img.resize(1920, 1920, FilterType::Triangle)
+                            } else {
+                                img
+                            };
+                            self.preview_image = Some(preview);
+                            self.developed_image = None;
+                            
+                            // Load original texture (from preview)
+                            if let Some(img) = &self.preview_image {
                                 let rgb_img = img.to_rgb8();
                                 let size = [rgb_img.width() as _, rgb_img.height() as _];
                                 let pixels = rgb_img.as_flat_samples();
@@ -251,7 +314,8 @@ impl App for FilmrApp {
                             }
                             
                             let preset = Self::get_preset_stock(self.selected_preset);
-                            let rgb_img = self.original_image.as_ref().unwrap().to_rgb8();
+                            // Use preview for exposure estimation (fast enough and accurate enough)
+                            let rgb_img = self.preview_image.as_ref().unwrap().to_rgb8();
                             self.exposure_time = estimate_exposure_time(&rgb_img, &preset);
                             self.status_msg = format!("Loaded: {:?}", path.file_name().unwrap());
                             // Reset view
@@ -587,6 +651,17 @@ impl App for FilmrApp {
                     [150.0, 40.0],
                     egui::Button::new("HOLD FOR METRICS").min_size(Vec2::new(150.0, 40.0)),
                 ).is_pointer_button_down_on();
+
+                ui.separator();
+
+                if ui.add_sized([100.0, 40.0], egui::Button::new("Develop")).clicked() {
+                    self.develop_image();
+                }
+
+                let save_btn = egui::Button::new("Save").min_size(Vec2::new(100.0, 40.0));
+                if ui.add_enabled(self.developed_image.is_some(), save_btn).clicked() {
+                    self.save_image();
+                }
             });
             ui.separator();
 

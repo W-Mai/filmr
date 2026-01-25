@@ -8,3 +8,4 @@ filmr = { path = "../../" }
 eframe = "0.33.3"
 egui = "0.33.3"
 image = "0.24"
+rfd = "0.17.2"
