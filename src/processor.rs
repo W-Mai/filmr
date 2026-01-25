@@ -624,7 +624,11 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
                 let t_b_min = physics::density_to_transmission((film.b_curve.d_max - film.b_curve.d_min).max(0.0));
                 let norm = |t: f32, t_min: f32, t_max: f32| {
                     let denom = (t_max - t_min).max(1e-6);
-                    (t_max - t).clamp(0.0, denom) / denom
+                    let n = (t_max - t).clamp(0.0, denom) / denom;
+                    // Apply Paper Gamma (Contrast Boost)
+                    // Standard Grade 2-3 paper has gamma ~2.0 relative to negative density range
+                    // This simulates the printing process where high-contrast paper restores scene contrast.
+                    n.powf(2.0)
                 };
                 (norm(t_r, t_r_min, t_r_max), norm(t_g, t_g_min, t_g_max), norm(t_b, t_b_min, t_b_max))
             }
