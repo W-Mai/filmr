@@ -97,6 +97,10 @@ struct FilmrApp {
 
     // Status
     status_msg: String,
+
+    // Metrics Display Options
+    hist_log_scale: bool,
+    hist_clamp_zeros: bool,
 }
 
 impl FilmrApp {
@@ -125,6 +129,9 @@ impl FilmrApp {
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
             status_msg: "Drag and drop an image here to start.".to_owned(),
+            
+            hist_log_scale: false,
+            hist_clamp_zeros: true,
         }
     }
 
@@ -705,6 +712,11 @@ impl App for FilmrApp {
                                     });
 
                                 ui.label("RGB Histogram:");
+                                ui.horizontal(|ui| {
+                                    ui.checkbox(&mut self.hist_log_scale, "Log Scale");
+                                    ui.checkbox(&mut self.hist_clamp_zeros, "Ignore Blacks (0)");
+                                });
+
                                 Plot::new("rgb_hist")
                                     .view_aspect(1.5)
                                     .legend(Legend::default())
@@ -714,11 +726,16 @@ impl App for FilmrApp {
                                             let points: PlotPoints = metrics.hist_rgb[*c]
                                                 .iter()
                                                 .enumerate()
-                                                .map(|(i, &v)| [i as f64, v as f64])
+                                                .filter(|(i, _)| !self.hist_clamp_zeros || *i > 0)
+                                                .map(|(i, &v)| {
+                                                    let val = if self.hist_log_scale {
+                                                        (v as f64 + 1.0).log10()
+                                                    } else {
+                                                        v as f64
+                                                    };
+                                                    [i as f64, val]
+                                                })
                                                 .collect();
-                                            
-                                            // Fill area with Polygon (approximate by closing loop)
-                                            // Removed to avoid linter issues with Polygon::new signature
                                             
                                             plot_ui.line(Line::new(format!("hist_{}", c), points).color(*color).name(match c { 0 => "Red", 1 => "Green", _ => "Blue" }));
                                         }
@@ -797,16 +814,12 @@ impl App for FilmrApp {
                                     });
                                     
                                 ui.label("GLCM (Co-occurrence):");
-                                Plot::new("glcm_stats")
-                                    .view_aspect(2.0)
-                                    .show_axes([true, true])
-                                    .show(ui, |plot_ui| {
-                                         let labels = ["Contrast", "Corr", "Energy", "Homog"];
-                                         let bars: Vec<Bar> = metrics.glcm_stats.iter().enumerate().map(|(i, &v)| {
-                                             Bar::new(i as f64, v as f64).name(labels[i]).fill(egui::Color32::GOLD).width(0.5)
-                                         }).collect();
-                                         plot_ui.bar_chart(BarChart::new("glcm_bars", bars));
-                                    });
+                                ui.horizontal(|ui| {
+                                    ui.label(format!("Contrast: {:.2}", metrics.glcm_stats[0]));
+                                });
+                                gauge(ui, "Correlation", metrics.glcm_stats[1], -1.0, 1.0, "", egui::Color32::LIGHT_BLUE);
+                                gauge(ui, "Energy", metrics.glcm_stats[2], 0.0, 1.0, "", egui::Color32::GOLD);
+                                gauge(ui, "Homogeneity", metrics.glcm_stats[3], 0.0, 1.0, "", egui::Color32::GREEN);
                             });
 
                             ui.separator();
