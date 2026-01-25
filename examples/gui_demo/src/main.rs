@@ -2,7 +2,7 @@ use eframe::{egui, App, Frame};
 use egui::{ColorImage, Pos2, Rect, Sense, TextureHandle, Vec2};
 use filmr::{
     estimate_exposure_time, presets, process_image, FilmStock, OutputMode, SimulationConfig,
-    WhiteBalanceMode,
+    WhiteBalanceMode, FilmMetrics,
 };
 use image::DynamicImage;
 
@@ -67,10 +67,13 @@ struct FilmrApp {
     // State
     original_image: Option<DynamicImage>,
     processed_texture: Option<TextureHandle>,
+    original_texture: Option<TextureHandle>,
+    metrics: Option<FilmMetrics>,
 
     // View State
     zoom: f32,
     offset: Vec2,
+    show_original: bool,
 
     // Parameters
     exposure_time: f32,
@@ -96,8 +99,11 @@ impl FilmrApp {
         Self {
             original_image: None,
             processed_texture: None,
+            original_texture: None,
+            metrics: None,
             zoom: 1.0,
             offset: Vec2::ZERO,
+            show_original: false,
             exposure_time: 1.0,
             gamma_boost: 1.0,
 
@@ -221,6 +227,9 @@ impl FilmrApp {
                 color_image,
                 egui::TextureOptions::LINEAR,
             ));
+            
+            // Calculate metrics
+            self.metrics = Some(FilmMetrics::analyze(&processed));
         }
     }
 }
@@ -235,6 +244,20 @@ impl App for FilmrApp {
                     match image::open(path) {
                         Ok(img) => {
                             self.original_image = Some(img);
+                            
+                            // Load original texture
+                            if let Some(img) = &self.original_image {
+                                let rgb_img = img.to_rgb8();
+                                let size = [rgb_img.width() as _, rgb_img.height() as _];
+                                let pixels = rgb_img.as_flat_samples();
+                                let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+                                self.original_texture = Some(ctx.load_texture(
+                                    "original_image",
+                                    color_image,
+                                    egui::TextureOptions::LINEAR,
+                                ));
+                            }
+                            
                             let preset = Self::get_preset_stock(self.selected_preset);
                             let rgb_img = self.original_image.as_ref().unwrap().to_rgb8();
                             self.exposure_time = estimate_exposure_time(&rgb_img, &preset);
@@ -547,6 +570,23 @@ impl App for FilmrApp {
             ui.label("- Scroll/Pinch to Zoom");
             ui.label("- Drag to Pan");
             ui.label("- Double Click to Reset View");
+            
+            ui.separator();
+            ui.checkbox(&mut self.show_original, "Show Original");
+
+            if let Some(metrics) = &self.metrics {
+                ui.separator();
+                ui.collapsing("Metrics", |ui| {
+                    ui.label(format!("Dynamic Range: {:.1} dB", metrics.dynamic_range));
+                    ui.label(format!("Entropy: {:.2}", metrics.entropy));
+                    ui.label(format!("Mean RGB: {:.0}/{:.0}/{:.0}", metrics.mean_rgb[0], metrics.mean_rgb[1], metrics.mean_rgb[2]));
+                    ui.label(format!("CCT: {:.0} K", metrics.cct_tint.0));
+                    ui.label(format!("Tint: {:.4}", metrics.cct_tint.1));
+                    ui.label(format!("Saturation: {:.1}", metrics.saturation_mean));
+                    ui.label(format!("Texture (Lap): {:.1}", metrics.laplacian_variance));
+                    ui.label(format!("Clipping: Z{:.1}% S{:.1}%", metrics.clipping_ratio[0]*100.0, metrics.clipping_ratio[1]*100.0));
+                });
+            }
 
             if changed {
                 self.process_and_update_texture(ctx);
@@ -555,7 +595,13 @@ impl App for FilmrApp {
 
         // Main Central Panel for Image
         egui::CentralPanel::default().show(ctx, |ui| {
-            if let Some(texture) = &self.processed_texture {
+            let texture_to_show = if self.show_original {
+                self.original_texture.as_ref()
+            } else {
+                self.processed_texture.as_ref()
+            };
+
+            if let Some(texture) = texture_to_show {
                 // Interactive Area
                 // We use ui.available_rect_before_wrap() to get the full area
                 let rect = ui.available_rect_before_wrap();
