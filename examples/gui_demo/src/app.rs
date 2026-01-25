@@ -5,8 +5,22 @@ use filmr::{
     SimulationConfig, WhiteBalanceMode,
 };
 use image::imageops::FilterType;
-use image::DynamicImage;
+use image::{DynamicImage, RgbImage};
 use crate::panels;
+use std::sync::Arc;
+use std::thread;
+use crossbeam_channel::{unbounded, Receiver, Sender};
+
+struct ProcessRequest {
+    image: Arc<RgbImage>,
+    film: FilmStock,
+    config: SimulationConfig,
+}
+
+struct ProcessResult {
+    image: RgbImage,
+    metrics: FilmMetrics,
+}
 
 pub struct FilmrApp {
     // State
@@ -18,6 +32,11 @@ pub struct FilmrApp {
     pub metrics_original: Option<FilmMetrics>,
     pub metrics_preview: Option<FilmMetrics>,
     pub metrics_developed: Option<FilmMetrics>,
+
+    // Async Processing
+    tx_req: Sender<ProcessRequest>,
+    rx_res: Receiver<ProcessResult>,
+    pub is_processing: bool,
 
     // View State
     pub zoom: f32,
@@ -51,8 +70,42 @@ pub struct FilmrApp {
 }
 
 impl FilmrApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let stocks = presets::get_all_stocks();
+        let (tx_req, rx_req) = unbounded::<ProcessRequest>();
+        let (tx_res, rx_res) = unbounded::<ProcessResult>();
+        
+        // Clone context for the thread
+        let ctx = cc.egui_ctx.clone();
+
+        // Spawn worker thread
+        thread::spawn(move || {
+            loop {
+                // Block until a request is received
+                if let Ok(mut req) = rx_req.recv() {
+                    // Drain any newer requests to skip intermediate states (debounce)
+                    while let Ok(newer) = rx_req.try_recv() {
+                        req = newer;
+                    }
+
+                    // Process
+                    let processed = process_image(&req.image, &req.film, &req.config);
+                    let metrics = FilmMetrics::analyze(&processed);
+
+                    // Send back result
+                    let _ = tx_res.send(ProcessResult {
+                        image: processed,
+                        metrics,
+                    });
+                    
+                    // Wake up the GUI
+                    ctx.request_repaint();
+                } else {
+                    break; // Channel disconnected
+                }
+            }
+        });
+
         Self {
             original_image: None,
             preview_image: None,
@@ -62,6 +115,11 @@ impl FilmrApp {
             metrics_original: None,
             metrics_preview: None,
             metrics_developed: None,
+            
+            tx_req,
+            rx_res,
+            is_processing: false,
+
             zoom: 1.0,
             offset: Vec2::ZERO,
             show_original: false,
@@ -110,7 +168,7 @@ impl FilmrApp {
         };
     }
 
-    pub fn process_and_update_texture(&mut self, ctx: &egui::Context) {
+    pub fn process_and_update_texture(&mut self, _ctx: &egui::Context) {
         // Use preview image for GUI display to maintain responsiveness
         let source_image = self.preview_image.as_ref().or(self.original_image.as_ref());
 
@@ -139,22 +197,17 @@ impl FilmrApp {
                 white_balance_strength: self.white_balance_strength,
             };
 
-            // Process
-            let processed = process_image(&rgb_img, &film, &config);
+            // Send request to worker
+            // We clone the image data into an Arc. For 1024x1024, this is cheap enough.
+            // Ideally we'd keep the Arc<RgbImage> in self.preview_image to avoid this copy.
+            let request = ProcessRequest {
+                image: Arc::new(rgb_img),
+                film,
+                config,
+            };
 
-            // Convert to egui texture
-            let size = [processed.width() as _, processed.height() as _];
-            let pixels = processed.as_flat_samples();
-            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
-
-            self.processed_texture = Some(ctx.load_texture(
-                "processed_image",
-                color_image,
-                egui::TextureOptions::LINEAR,
-            ));
-            
-            // Calculate metrics
-            self.metrics_preview = Some(FilmMetrics::analyze(&processed));
+            let _ = self.tx_req.send(request);
+            self.is_processing = true;
         }
     }
 
@@ -230,6 +283,23 @@ impl FilmrApp {
 
 impl App for FilmrApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut Frame) {
+        // Check for async results
+        if let Ok(result) = self.rx_res.try_recv() {
+            // Convert to egui texture
+            let size = [result.image.width() as _, result.image.height() as _];
+            let pixels = result.image.as_flat_samples();
+            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+
+            self.processed_texture = Some(ctx.load_texture(
+                "processed_image",
+                color_image,
+                egui::TextureOptions::LINEAR,
+            ));
+            
+            self.metrics_preview = Some(result.metrics);
+            self.is_processing = false;
+        }
+
         // Handle file drop
         if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
             let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());

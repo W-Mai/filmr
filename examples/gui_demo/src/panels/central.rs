@@ -40,6 +40,12 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
             app.processed_texture.as_ref()
         };
 
+        if app.is_processing {
+            ui.centered_and_justified(|ui| {
+                ui.spinner();
+            });
+        }
+
         if let Some(texture) = texture_to_show {
             // Interactive Area
             let rect = ui.available_rect_before_wrap();
