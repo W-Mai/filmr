@@ -479,7 +479,7 @@ impl App for FilmrApp {
         }
 
         if self.show_exit_dialog {
-            egui::Window::new("⚠️ Unsaved Custom Stock")
+            egui::Window::new("💾 Unsaved Custom Stock")
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
@@ -504,13 +504,6 @@ impl App for FilmrApp {
         panels::controls::render_controls(self, ctx);
 
         // Right Panel
-        // If in Studio Mode, show Studio Panel
-        // If Metrics enabled, show Metrics Panel (Studio takes precedence or stacks?)
-        // Let's make Studio Panel a Right Panel, and Metrics Panel also a Right Panel.
-        // If both are active, they will stack or we can use tabs.
-        // For simplicity, let's say Studio Mode hides Metrics Panel or Metrics is inside it?
-        // User asked for "open a new panel".
-        
         if self.mode == AppMode::Studio {
             panels::studio::render_studio_panel(self, ctx);
         }
@@ -518,6 +511,13 @@ impl App for FilmrApp {
         if self.show_metrics {
             panels::metrics::render_metrics(self, ctx);
         }
+
+        // Status Bar
+        egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(&self.status_msg);
+            });
+        });
         
         panels::central::render_central_panel(self, ctx);
     }
