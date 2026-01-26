@@ -100,6 +100,30 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             ui.label("Film Stock");
 
             if app.mode == AppMode::Standard {
+                if ui.button("✨ Create Custom Stock from Current").clicked() {
+                    let current_stock = app.get_current_stock();
+                    let new_stock = current_stock.clone();
+                    
+                    let base_name = app.stocks[app.selected_stock_idx].0;
+                    // Extract name without "Custom - " prefix if it already exists to avoid stacking
+                    let clean_name = base_name.strip_prefix("Custom - ").unwrap_or(base_name);
+                    let new_name = format!("Custom - {}", clean_name);
+                    
+                    let leaked_name: &'static str = Box::leak(new_name.into_boxed_str());
+                    
+                    app.stocks.push((leaked_name, new_stock.clone()));
+                    let new_idx = app.stocks.len() - 1;
+                    app.selected_stock_idx = new_idx;
+                    
+                    app.studio_stock = new_stock;
+                    app.studio_stock_idx = Some(new_idx);
+                    app.mode = AppMode::Studio;
+                    app.has_unsaved_changes = true;
+                    
+                    app.process_and_update_texture(ctx);
+                }
+                ui.add_space(5.0);
+
                 let mut preset_changed = false;
 
                 egui::ScrollArea::vertical()
