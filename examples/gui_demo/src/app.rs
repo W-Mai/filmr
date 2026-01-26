@@ -55,6 +55,12 @@ pub struct FilmrApp {
     pub halation_threshold: f32,
     pub halation_sigma: f32,
 
+    // Grain Parameters
+    pub grain_alpha: f32,
+    pub grain_sigma: f32,
+    pub grain_roughness: f32,
+    pub grain_blur_radius: f32,
+
     // Selection
     pub stocks: Vec<(&'static str, FilmStock)>,
     pub selected_stock_idx: usize,
@@ -130,6 +136,12 @@ impl FilmrApp {
             halation_threshold: 0.8,
             halation_sigma: 0.02,
 
+            // Default Grain params (will be overwritten by preset)
+            grain_alpha: 0.01,
+            grain_sigma: 0.01,
+            grain_roughness: 0.5,
+            grain_blur_radius: 0.5,
+
             stocks,
             selected_stock_idx: 0, // Default to first
             output_mode: OutputMode::Positive,
@@ -158,6 +170,11 @@ impl FilmrApp {
         self.halation_threshold = preset.halation_threshold;
         self.halation_sigma = preset.halation_sigma;
 
+        self.grain_alpha = preset.grain_model.alpha;
+        self.grain_sigma = preset.grain_model.sigma_read;
+        self.grain_roughness = preset.grain_model.roughness;
+        self.grain_blur_radius = preset.grain_model.blur_radius;
+
         let base_exposure = preset.r_curve.exposure_offset / 0.18;
         self.exposure_time = if let Some(img) = &self.original_image {
             estimate_exposure_time(&img.to_rgb8(), &preset)
@@ -180,6 +197,11 @@ impl FilmrApp {
             film.halation_strength = self.halation_strength;
             film.halation_threshold = self.halation_threshold;
             film.halation_sigma = self.halation_sigma;
+
+            film.grain_model.alpha = self.grain_alpha;
+            film.grain_model.sigma_read = self.grain_sigma;
+            film.grain_model.roughness = self.grain_roughness;
+            film.grain_model.blur_radius = self.grain_blur_radius;
 
             // Apply gamma boost to all channels
             film.r_curve.gamma *= self.gamma_boost;
