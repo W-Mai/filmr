@@ -107,6 +107,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             CliWhiteBalance::Off => WhiteBalanceMode::Off,
         },
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     println!("Processing...");

@@ -25,6 +25,7 @@ fn main() {
         output_mode: OutputMode::Positive, // Generate a positive image
         white_balance_mode: WhiteBalanceMode::Auto,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     println!("Starting simulation (Positive Mode)...");

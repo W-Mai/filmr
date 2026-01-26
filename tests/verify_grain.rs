@@ -26,6 +26,7 @@ mod tests {
             output_mode: OutputMode::Positive,
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
+            ..Default::default()
         };
 
         let output = process_image(&input, &film, &config);
@@ -78,6 +79,7 @@ mod tests {
             output_mode: OutputMode::Positive,
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
+            ..Default::default()
         };
 
         let output = process_image(&input, &film, &config);

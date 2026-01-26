@@ -62,6 +62,7 @@ fn main() {
             output_mode: *mode,
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 0.8,
+            ..Default::default()
         };
 
         let result = process_image(&img, stock, &config);

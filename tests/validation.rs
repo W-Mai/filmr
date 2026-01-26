@@ -25,6 +25,7 @@ fn test_neutral_axis_stability() {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Auto,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     // Estimate exposure to get a good brightness
@@ -89,6 +90,7 @@ fn test_channel_integrity() {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off, // Disable WB to check raw response
         white_balance_strength: 0.0,
+        ..Default::default()
     };
 
     let t = estimate_exposure_time(&input, &film);

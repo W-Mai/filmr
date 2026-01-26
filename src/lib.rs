@@ -1,5 +1,6 @@
 pub mod film;
 pub mod grain;
+pub mod light_leak;
 pub mod metrics;
 pub mod physics;
 pub mod pipeline;
@@ -14,3 +15,4 @@ pub use metrics::FilmMetrics;
 pub use processor::{
     estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
+pub use spectral::Spectrum;

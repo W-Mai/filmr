@@ -81,6 +81,7 @@ fn calibrate_film(stock: &mut FilmStock, _name: &str) -> (f32, f32) {
         output_mode: OutputMode::Positive, // Calibrate for positive
         white_balance_mode: WhiteBalanceMode::Auto,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     // Override the stock's offset for testing

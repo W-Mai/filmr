@@ -45,6 +45,7 @@ fn main() {
             output_mode: OutputMode::Positive, // Always use Positive for diagnosis
             white_balance_mode: WhiteBalanceMode::Auto, // Test Auto WB
             white_balance_strength: 1.0,
+            ..Default::default()
         };
 
         let result = process_image(&chart, stock, &config);
@@ -67,6 +68,7 @@ fn main() {
     generate_contact_sheet(&results, output_dir);
     println!("Contact sheet saved to {}/contact_sheet.jpg", output_dir);
 }
+
 
 fn generate_contact_sheet(
     data: &[(

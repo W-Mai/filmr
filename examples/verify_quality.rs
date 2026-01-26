@@ -208,6 +208,7 @@ fn check_reciprocity_failure(stock: &FilmStock) -> bool {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
     let out1 = process_image(&input, stock, &config1);
     let p1 = out1.get_pixel(0, 0);
@@ -224,6 +225,7 @@ fn check_reciprocity_failure(stock: &FilmStock) -> bool {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
     let out2 = process_image(&_input2, stock, &config2);
     let p2 = out2.get_pixel(0, 0);
@@ -283,6 +285,7 @@ fn check_illuminant_invariance(stock: &FilmStock) -> bool {
             output_mode: OutputMode::Positive,
             white_balance_mode: mode,
             white_balance_strength: 1.0,
+            ..Default::default()
         };
         let out = process_image(&input, stock, &config);
         let p = out.get_pixel(0, 0);
@@ -333,6 +336,7 @@ fn check_hd_curve(stock: &FilmStock) -> (f32, f32) {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
     let output = process_image(&input, stock, &config);
 
@@ -381,6 +385,7 @@ fn check_memory_color_shift(stock: &FilmStock) -> f32 {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
     let output = process_image(&input, stock, &config);
     let p = output.get_pixel(0, 0);
@@ -426,8 +431,9 @@ fn test_neutral_axis(stock: &FilmStock) -> ((f32, f32, f32), RgbImage) {
         exposure_time: t_est,
         enable_grain: false,
         output_mode: OutputMode::Positive,
-        white_balance_mode: WhiteBalanceMode::Off,
+        white_balance_mode: WhiteBalanceMode::Auto, // Use Auto WB for Neutral Axis check
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     let output = process_image(&input, stock, &config);
@@ -511,6 +517,7 @@ fn test_channel_integrity(stock: &FilmStock) -> ([[f32; 3]; 3], RgbImage) {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     let output = process_image(&input, stock, &config);
@@ -579,6 +586,7 @@ fn test_hue_consistency(stock: &FilmStock) -> (u32, RgbImage) {
         output_mode: OutputMode::Positive,
         white_balance_mode: WhiteBalanceMode::Off,
         white_balance_strength: 1.0,
+        ..Default::default()
     };
 
     let output = process_image(&input, stock, &config);

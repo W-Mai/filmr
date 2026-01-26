@@ -214,6 +214,7 @@ impl FilmrApp {
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
+                ..Default::default()
             };
 
             // Send request to worker
@@ -253,6 +254,7 @@ impl FilmrApp {
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
+                ..Default::default()
             };
 
             let request = ProcessRequest {

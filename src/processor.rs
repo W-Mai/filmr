@@ -1,5 +1,6 @@
 use crate::film::FilmStock;
 use crate::physics;
+use crate::light_leak::{LightLeakConfig, LightLeakStage};
 use crate::pipeline::{
     create_linear_image, create_output_image, DevelopStage, GrainStage, HalationStage, MtfStage,
     PipelineContext, PipelineStage,
@@ -14,6 +15,7 @@ pub struct SimulationConfig {
     pub output_mode: OutputMode,
     pub white_balance_mode: WhiteBalanceMode,
     pub white_balance_strength: f32,
+    pub light_leak: LightLeakConfig,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -38,6 +40,7 @@ impl Default for SimulationConfig {
             output_mode: OutputMode::Positive, // Default to what users expect
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
+            light_leak: LightLeakConfig::default(),
         }
     }
 }
@@ -184,6 +187,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
 
     // Sequential Stage Execution
     let stages: Vec<Box<dyn PipelineStage>> = vec![
+        Box::new(LightLeakStage), // Apply light leaks before halation so they contribute to halation
         Box::new(HalationStage),
         Box::new(MtfStage),
         Box::new(DevelopStage),
