@@ -20,6 +20,14 @@ struct Args {
     #[arg(short, long, default_value = "kodak-portra-400")]
     preset: String,
 
+    /// Export the selected preset to a JSON file
+    #[arg(long)]
+    export_preset: Option<PathBuf>,
+
+    /// Load a custom preset from a JSON file (overrides --preset)
+    #[arg(long)]
+    load_preset: Option<PathBuf>,
+
     /// Exposure time override (default: auto-estimated)
     #[arg(short, long)]
     exposure: Option<f32>,
@@ -55,8 +63,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Loading image: {:?}", args.input);
     let img = image::open(&args.input)?.to_rgb8();
 
-    let stock = find_preset(&args.preset).ok_or("Preset not found")?;
-    println!("Using preset: {}", args.preset);
+    let stock = if let Some(path) = &args.load_preset {
+        println!("Loading custom preset from: {:?}", path);
+        FilmStock::load_from_file(path)?
+    } else {
+        find_preset(&args.preset).ok_or("Preset not found")?
+    };
+
+    if let Some(export_path) = &args.export_preset {
+        println!("Exporting preset to: {:?}", export_path);
+        stock.save_to_file(export_path)?;
+    }
+
+    println!("Using preset: {}", if args.load_preset.is_some() { "Custom" } else { &args.preset });
 
     let exposure = match args.exposure {
         Some(t) => t,
