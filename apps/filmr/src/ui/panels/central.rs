@@ -1,4 +1,4 @@
-use crate::app::FilmrApp;
+use crate::ui::app::FilmrApp;
 use egui::{Context, Pos2, Rect, Sense, Vec2};
 
 pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {

@@ -1,4 +1,4 @@
-use crate::panels;
+use crate::ui::panels;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};

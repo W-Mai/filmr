@@ -1,10 +1,10 @@
-mod app;
-mod panels;
+pub mod app;
+pub mod panels;
 
 use app::FilmrApp;
 use eframe::egui;
 
-fn main() -> eframe::Result<()> {
+pub fn run() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1280.0, 720.0])

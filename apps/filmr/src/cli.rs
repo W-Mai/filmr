@@ -59,7 +59,7 @@ enum CliWhiteBalance {
     Off,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     println!("Loading image: {:?}", args.input);

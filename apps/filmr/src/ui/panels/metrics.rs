@@ -1,4 +1,4 @@
-use crate::app::FilmrApp;
+use crate::ui::app::FilmrApp;
 use egui::Context;
 use egui_plot::{Bar, BarChart, Legend, Line, Plot, PlotPoints, Points};
 

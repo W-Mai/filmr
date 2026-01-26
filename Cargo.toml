@@ -13,7 +13,7 @@ categories = ["multimedia::images", "rendering", "science"]
 [workspace]
 members = [
     ".",
-    "examples/gui_demo",
+    "apps/filmr",
 ]
 
 [dependencies]
@@ -25,7 +25,6 @@ rayon = "1.8" # For parallel processing of pixels
 palette = "0.7.6"
 rustfft = "6.4.1"
 serde = { version = "1.0.228", features = ["derive"] }
-clap = { version = "4.5.54", features = ["derive"] }
 serde_json = "1.0.149"
 
 [dev-dependencies]

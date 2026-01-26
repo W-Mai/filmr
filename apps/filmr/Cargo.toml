@@ -1,0 +1,47 @@
+[package]
+name = "filmr_app"
+version = "0.2.0"
+edition = "2021"
+authors = ["Benign X <1341398182@qq.com>", "W-Mai"]
+description = "CLI and GUI application for filmr, a high-fidelity film simulation engine."
+readme = "../../README.md"
+repository = "https://github.com/W-Mai/filmr"
+license = "MIT"
+keywords = ["film", "simulation", "gui", "cli", "photography"]
+categories = ["multimedia::images", "command-line-utilities", "gui"]
+
+[dependencies]
+filmr = { version = "0.2.0", path = "../../" }
+image = "0.24"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+
+# CLI dependencies
+clap = { version = "4.5.54", features = ["derive"], optional = true }
+
+# UI dependencies
+eframe = { version = "0.33.3", optional = true }
+egui = { version = "0.33.3", optional = true }
+rfd = { version = "0.17.2", optional = true }
+egui_plot = { version = "0.34.0", optional = true }
+crossbeam-channel = { version = "0.5.15", optional = true }
+
+[features]
+default = ["cli", "ui"]
+cli = ["dep:clap"]
+ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:crossbeam-channel"]
+
+[[bin]]
+name = "filmr"
+path = "src/bin/filmr.rs"
+required-features = ["cli", "ui"]
+
+[[bin]]
+name = "filmr-cli"
+path = "src/bin/filmr-cli.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "filmr-ui"
+path = "src/bin/filmr-ui.rs"
+required-features = ["ui"]
