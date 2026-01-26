@@ -1,3 +1,5 @@
+use crate::panels;
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};
 use filmr::{
@@ -6,10 +8,8 @@ use filmr::{
 };
 use image::imageops::FilterType;
 use image::{DynamicImage, RgbImage};
-use crate::panels;
 use std::sync::Arc;
 use std::thread;
-use crossbeam_channel::{unbounded, Receiver, Sender};
 
 struct ProcessRequest {
     image: Arc<RgbImage>,
@@ -64,7 +64,7 @@ pub struct FilmrApp {
     // Selection
     pub stocks: Vec<(&'static str, FilmStock)>,
     pub selected_stock_idx: usize,
-    
+
     pub output_mode: OutputMode,
     pub white_balance_mode: WhiteBalanceMode,
     pub white_balance_strength: f32,
@@ -82,7 +82,7 @@ impl FilmrApp {
         let stocks = presets::get_all_stocks();
         let (tx_req, rx_req) = unbounded::<ProcessRequest>();
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
-        
+
         // Clone context for the thread
         let ctx = cc.egui_ctx.clone();
 
@@ -104,7 +104,7 @@ impl FilmrApp {
                     metrics,
                     is_preview: req.is_preview,
                 });
-                
+
                 // Wake up the GUI
                 ctx.request_repaint();
             }
@@ -119,7 +119,7 @@ impl FilmrApp {
             metrics_original: None,
             metrics_preview: None,
             metrics_developed: None,
-            
+
             tx_req,
             rx_res,
             is_processing: false,
@@ -148,7 +148,7 @@ impl FilmrApp {
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
             status_msg: "Drag and drop an image here to start.".to_owned(),
-            
+
             hist_log_scale: false,
             hist_clamp_zeros: true,
         }
@@ -210,7 +210,7 @@ impl FilmrApp {
 
             let config = SimulationConfig {
                 exposure_time: self.exposure_time,
-                enable_grain: true, 
+                enable_grain: true,
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
@@ -233,11 +233,11 @@ impl FilmrApp {
     pub fn develop_image(&mut self, _ctx: &egui::Context) {
         if let Some(img) = &self.original_image {
             self.status_msg = "Developing full resolution image...".to_owned();
-            
+
             // This might still take a bit of time to clone/convert, but it's unavoidable for full-res develop
             // unless we also keep full-res as RgbImage (memory intensive).
             let rgb_img = Arc::new(img.to_rgb8());
-            
+
             let base_film = self.get_current_stock();
             let mut film = base_film;
             film.halation_strength = self.halation_strength;
@@ -261,7 +261,7 @@ impl FilmrApp {
                 config,
                 is_preview: false,
             };
-            
+
             let _ = self.tx_req.send(request);
             self.is_processing = true;
         }
@@ -272,7 +272,7 @@ impl FilmrApp {
             if let Some(path) = rfd::FileDialog::new()
                 .add_filter("PNG Image", &["png"])
                 .add_filter("JPEG Image", &["jpg", "jpeg"])
-                .save_file() 
+                .save_file()
             {
                 if let Err(e) = img.save(&path) {
                     self.status_msg = format!("Failed to save image: {}", e);
@@ -299,7 +299,7 @@ impl App for FilmrApp {
                     color_image,
                     egui::TextureOptions::LINEAR,
                 ));
-                
+
                 self.metrics_preview = Some(result.metrics);
             } else {
                 // Handle Development Result
@@ -311,9 +311,11 @@ impl App for FilmrApp {
 
                 // Update texture with developed result (resize for display if too large)
                 let display_img = if processed.width() > 1024 || processed.height() > 1024 {
-                     DynamicImage::ImageRgb8(processed.clone()).resize(1024, 1024, FilterType::Triangle).to_rgb8()
+                    DynamicImage::ImageRgb8(processed.clone())
+                        .resize(1024, 1024, FilterType::Triangle)
+                        .to_rgb8()
                 } else {
-                     processed.clone()
+                    processed.clone()
                 };
 
                 let size = [display_img.width() as _, display_img.height() as _];
@@ -341,7 +343,7 @@ impl App for FilmrApp {
                         Ok(img) => {
                             // Keep original full resolution image
                             self.original_image = Some(img.clone());
-                            
+
                             // Create preview for GUI (max 1024px)
                             let preview = if img.width() > 1024 || img.height() > 1024 {
                                 img.resize(1024, 1024, FilterType::Triangle)
@@ -351,7 +353,7 @@ impl App for FilmrApp {
                             self.preview_image = Some(Arc::new(preview.to_rgb8()));
                             self.metrics_developed = None;
                             self.developed_image = None;
-                            
+
                             // Load original texture (from preview)
                             if let Some(rgb_img) = &self.preview_image {
                                 let size = [rgb_img.width() as _, rgb_img.height() as _];
@@ -362,11 +364,13 @@ impl App for FilmrApp {
                                     color_image,
                                     egui::TextureOptions::LINEAR,
                                 ));
-                                
+
                                 // Calculate original metrics (from full res image if possible but here using loaded image)
-                                self.metrics_original = Some(FilmMetrics::analyze(&self.original_image.as_ref().unwrap().to_rgb8()));
+                                self.metrics_original = Some(FilmMetrics::analyze(
+                                    &self.original_image.as_ref().unwrap().to_rgb8(),
+                                ));
                             }
-                            
+
                             let preset = self.get_current_stock();
                             // Use preview for exposure estimation (fast enough and accurate enough)
                             // preview_image is now Arc<RgbImage>

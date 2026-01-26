@@ -1,7 +1,9 @@
 use clap::{Parser, ValueEnum};
-use filmr::presets;
-use filmr::processor::{estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
 use filmr::film::FilmStock;
+use filmr::presets;
+use filmr::processor::{
+    estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
+};
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -75,7 +77,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         stock.save_to_file(export_path)?;
     }
 
-    println!("Using preset: {}", if args.load_preset.is_some() { "Custom" } else { &args.preset });
+    println!(
+        "Using preset: {}",
+        if args.load_preset.is_some() {
+            "Custom"
+        } else {
+            &args.preset
+        }
+    );
 
     let exposure = match args.exposure {
         Some(t) => t,
@@ -115,10 +124,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn find_preset(name: &str) -> Option<FilmStock> {
     let stocks = presets::get_all_stocks();
     let normalized_name = name.to_lowercase().replace("-", " ");
-    
+
     for (stock_name, stock) in stocks {
-        if stock_name.to_lowercase() == normalized_name || 
-           stock_name.to_lowercase().replace(" ", "-") == name.to_lowercase() {
+        if stock_name.to_lowercase() == normalized_name
+            || stock_name.to_lowercase().replace(" ", "-") == name.to_lowercase()
+        {
             return Some(stock);
         }
     }

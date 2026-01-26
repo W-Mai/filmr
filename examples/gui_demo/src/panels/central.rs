@@ -1,24 +1,32 @@
-use egui::{Context, Vec2, Pos2, Rect, Sense};
 use crate::app::FilmrApp;
+use egui::{Context, Pos2, Rect, Sense, Vec2};
 
 pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
     egui::CentralPanel::default().show(ctx, |ui| {
         // Toolbar Overlay
         ui.horizontal(|ui| {
             // Hold to Compare (Larger and Conspicuous)
-            app.show_original = ui.add_sized(
-                [150.0, 40.0],
-                egui::Button::new("HOLD TO COMPARE").min_size(Vec2::new(150.0, 40.0)),
-            ).is_pointer_button_down_on();
-            
+            app.show_original = ui
+                .add_sized(
+                    [150.0, 40.0],
+                    egui::Button::new("HOLD TO COMPARE").min_size(Vec2::new(150.0, 40.0)),
+                )
+                .is_pointer_button_down_on();
+
             ui.separator();
 
-            if ui.add_sized([100.0, 40.0], egui::Button::new("Develop")).clicked() {
+            if ui
+                .add_sized([100.0, 40.0], egui::Button::new("Develop"))
+                .clicked()
+            {
                 app.develop_image(ctx);
             }
 
             let save_btn = egui::Button::new("Save").min_size(Vec2::new(100.0, 40.0));
-            if ui.add_enabled(app.developed_image.is_some(), save_btn).clicked() {
+            if ui
+                .add_enabled(app.developed_image.is_some(), save_btn)
+                .clicked()
+            {
                 app.save_image();
             }
 
@@ -49,8 +57,7 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
         if let Some(texture) = texture_to_show {
             // Interactive Area
             let rect = ui.available_rect_before_wrap();
-            let response =
-                ui.interact(rect, ui.id().with("image_area"), Sense::click_and_drag());
+            let response = ui.interact(rect, ui.id().with("image_area"), Sense::click_and_drag());
 
             // 1. Handle Zoom (Pinch or Ctrl+Scroll)
             let zoom_delta = ctx.input(|i| i.zoom_delta());

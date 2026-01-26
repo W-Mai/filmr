@@ -41,7 +41,7 @@ impl SegmentedCurve {
     pub fn map_erf(&self, log_e: f32) -> f32 {
         let log_e0 = self.exposure_offset.log10();
         let range = self.d_max - self.d_min;
-        
+
         if range <= 0.0 {
             return self.d_min;
         }
@@ -52,12 +52,12 @@ impl SegmentedCurve {
         // At z=0, D' = range / (sigma * sqrt(pi))
         // So Gamma = range / (sigma * sqrt(pi))
         // Sigma = range / (Gamma * sqrt(pi))
-        
+
         let sqrt_pi = 1.772_453_9;
         let sigma = range / (self.gamma * sqrt_pi);
-        
+
         let z = (log_e - log_e0) / sigma;
-        
+
         let val = 0.5 * (1.0 + physics::erf(z));
         self.d_min + range * val
     }
@@ -252,16 +252,32 @@ mod tests {
     fn test_segmented_curve_monotonicity() {
         let curve = SegmentedCurve::new(0.1, 2.5, 0.8, 1.0);
         let mut prev_d = curve.map(-5.0); // Very low exposure
-        
+
         // Test a range of log exposures
         for i in -50..50 {
             let log_e = i as f32 / 10.0;
             let d = curve.map(log_e);
-            
-            assert!(d >= prev_d, "Curve must be monotonic increasing. At log_e={}, d={}, prev_d={}", log_e, d, prev_d);
-            assert!(d >= curve.d_min - 1e-6, "Density {} below d_min {}", d, curve.d_min);
-            assert!(d <= curve.d_max + 1e-6, "Density {} above d_max {}", d, curve.d_max);
-            
+
+            assert!(
+                d >= prev_d,
+                "Curve must be monotonic increasing. At log_e={}, d={}, prev_d={}",
+                log_e,
+                d,
+                prev_d
+            );
+            assert!(
+                d >= curve.d_min - 1e-6,
+                "Density {} below d_min {}",
+                d,
+                curve.d_min
+            );
+            assert!(
+                d <= curve.d_max + 1e-6,
+                "Density {} above d_max {}",
+                d,
+                curve.d_max
+            );
+
             prev_d = d;
         }
     }
@@ -272,32 +288,44 @@ mod tests {
         let gamma = 1.5;
         let offset = 10.0;
         let curve = SegmentedCurve::new(0.0, 3.0, gamma, offset);
-        
+
         let log_e0 = offset.log10();
         let epsilon = 0.001;
-        
+
         let _d_center = curve.map(log_e0);
         let d_plus = curve.map(log_e0 + epsilon);
         let d_minus = curve.map(log_e0 - epsilon);
-        
+
         let slope = (d_plus - d_minus) / (2.0 * epsilon);
-        
+
         // The slope in the ERF model should be close to gamma.
         // Let's check how close.
         let diff = (slope - gamma).abs();
-        assert!(diff < 0.05, "Slope at midpoint {} should be close to gamma {}, diff {}", slope, gamma, diff);
+        assert!(
+            diff < 0.05,
+            "Slope at midpoint {} should be close to gamma {}, diff {}",
+            slope,
+            gamma,
+            diff
+        );
     }
 
     #[test]
     fn test_segmented_curve_limits() {
         let curve = SegmentedCurve::new(0.2, 2.8, 1.0, 1.0);
-        
+
         // Test asymptotic limits
         let d_low = curve.map(-10.0);
         let d_high = curve.map(10.0);
-        
-        assert!((d_low - curve.d_min).abs() < 0.01, "Should approach d_min at low exposure");
-        assert!((d_high - curve.d_max).abs() < 0.01, "Should approach d_max at high exposure");
+
+        assert!(
+            (d_low - curve.d_min).abs() < 0.01,
+            "Should approach d_min at low exposure"
+        );
+        assert!(
+            (d_high - curve.d_max).abs() < 0.01,
+            "Should approach d_max at high exposure"
+        );
     }
 
     #[test]
@@ -306,15 +334,20 @@ mod tests {
         let stock = FilmStock::new(
             FilmType::ColorNegative,
             100.0,
-            curve, curve, curve,
+            curve,
+            curve,
+            curve,
             [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
             FilmSpectralParams::new_panchromatic(),
             GrainModel::medium_grain(),
             100.0,
             0.1,
-            0.0, 0.0, 0.0, [0.0, 0.0, 0.0]
+            0.0,
+            0.0,
+            0.0,
+            [0.0, 0.0, 0.0],
         );
-        
+
         assert_eq!(stock.iso, 100.0);
         assert_eq!(stock.film_type, FilmType::ColorNegative);
     }

@@ -135,7 +135,6 @@ impl CameraSensitivities {
         // Area ~= peak * sigma.
         // Using sharper sigmas for better color separation: B=15, G=15, R=15.
         // This reduces cross-talk significantly.
-        
 
         // Normalize to D65 energy conservation
         // Uplifting (1, 1, 1) should result in a spectrum that resembles D65 in terms of total energy

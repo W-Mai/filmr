@@ -1,5 +1,7 @@
 use filmr::presets;
-use filmr::processor::{estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
+use filmr::processor::{
+    estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
+};
 use image::{Rgb, RgbImage};
 
 #[test]

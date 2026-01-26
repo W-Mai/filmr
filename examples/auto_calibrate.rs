@@ -1,6 +1,6 @@
-use filmr::{process_image, FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode};
 use filmr::presets::get_all_stocks;
-use image::{RgbImage};
+use filmr::{process_image, FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode};
+use image::RgbImage;
 
 /// Calibration Target: 18% Mid-Gray input should result in ~50% Luminance output.
 /// In sRGB, 50% Luminance is approx 128/255.
@@ -15,25 +15,31 @@ const MAX_ITERATIONS: usize = 100;
 fn main() {
     println!("=== Film Stock Auto-Calibration Tool ===");
     println!("Target Mid-Tone Luminance: {:.1}", TARGET_LUMINANCE);
-    
+
     let stocks = get_all_stocks();
     let mut results = Vec::new();
 
     for (name, mut stock) in stocks {
         let (optimal_offset, final_lum) = calibrate_film(&mut stock, name);
-        
+
         results.push((name, stock.iso, optimal_offset, final_lum));
-        
+
         if (final_lum - TARGET_LUMINANCE).abs() > TOLERANCE {
-            println!("Calibrating {} (ISO {:.0}) -> WARNING: Final Lum {:.1} (Offset {:.5})", name, stock.iso, final_lum, optimal_offset);
+            println!(
+                "Calibrating {} (ISO {:.0}) -> WARNING: Final Lum {:.1} (Offset {:.5})",
+                name, stock.iso, final_lum, optimal_offset
+            );
         } else {
-            println!("Calibrating {} (ISO {:.0}) -> Success! Offset {:.5}", name, stock.iso, optimal_offset);
+            println!(
+                "Calibrating {} (ISO {:.0}) -> Success! Offset {:.5}",
+                name, stock.iso, optimal_offset
+            );
         }
     }
 
     println!("\n=== Calibration Report ===");
     println!("Please manually update src/presets.rs with these values:\n");
-    
+
     for (name, _iso, offset, _lum) in results {
         println!("Film: {}", name);
         println!("exposure_offset: {:.5},", offset);
@@ -50,7 +56,7 @@ fn calibrate_film(stock: &mut FilmStock, _name: &str) -> (f32, f32) {
     // So we should feed it an image with sRGB pixel value corresponding to linear 0.18.
     // 0.18 linear ~ 117/255 sRGB.
     let gray_pixel_val = (linear_to_srgb(0.18) * 255.0).round() as u8;
-    
+
     let width = 16;
     let height = 16;
     let mut input = RgbImage::new(width, height);
@@ -62,12 +68,12 @@ fn calibrate_film(stock: &mut FilmStock, _name: &str) -> (f32, f32) {
     // exposure_offset controls the "speed point" of the curve.
     // Higher offset = Shift curve to right = Needs more light = Darker output for same exposure.
     // Lower offset = Shift curve to left = Needs less light = Brighter output.
-    
+
     // Range: 0.0001 (Very bright) to 10000.0 (Very dark)
     let mut low = 0.0001;
     let mut high = 10000.0;
     let mut current_offset = stock.r_curve.exposure_offset;
-    
+
     // Initial config
     let config = SimulationConfig {
         exposure_time: 1.0, // Standard 1s exposure
@@ -79,14 +85,14 @@ fn calibrate_film(stock: &mut FilmStock, _name: &str) -> (f32, f32) {
 
     // Override the stock's offset for testing
     // We assume R, G, B offsets are linked for ISO calibration
-    
+
     let mut final_lum = 0.0;
 
     for _i in 0..MAX_ITERATIONS {
         stock.r_curve.exposure_offset = current_offset;
         stock.g_curve.exposure_offset = current_offset;
         stock.b_curve.exposure_offset = current_offset;
-        
+
         let output = process_image(&input, stock, &config);
         let lum = calculate_mean_luminance(&output);
         final_lum = lum;
@@ -107,7 +113,7 @@ fn calibrate_film(stock: &mut FilmStock, _name: &str) -> (f32, f32) {
             // Too Dark -> Need Brighter -> Lower Offset
             high = current_offset;
         }
-        
+
         current_offset = (low + high) / 2.0;
     }
 

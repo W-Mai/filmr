@@ -1,6 +1,6 @@
+use crate::app::FilmrApp;
 use egui::Context;
 use filmr::{OutputMode, WhiteBalanceMode};
-use crate::app::FilmrApp;
 
 use rfd::FileDialog;
 
@@ -16,60 +16,64 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 ui.label("Preset Management");
                 ui.horizontal(|ui| {
                     if ui.button("Import JSON").clicked() {
-                        if let Some(path) = FileDialog::new().add_filter("JSON", &["json"]).pick_file() {
-                             if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
-                                 let name = path.file_stem().unwrap().to_string_lossy().to_string();
-                                 
-                                 // Update UI sliders to match the loaded stock
-                                 app.halation_strength = stock.halation_strength;
-                                 app.halation_threshold = stock.halation_threshold;
-                                 app.halation_sigma = stock.halation_sigma;
-                                 
-                                 app.grain_alpha = stock.grain_model.alpha;
-                                 app.grain_sigma = stock.grain_model.sigma_read;
-                                 app.grain_roughness = stock.grain_model.roughness;
-                                 app.grain_blur_radius = stock.grain_model.blur_radius;
-                                 
-                                 // Add the loaded stock to the list and select it
-                                 // Note: We use Box::leak to extend the 'static lifetime for the demo
-                                 let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                                 app.stocks.push((leaked_name, stock));
-                                 app.selected_stock_idx = app.stocks.len() - 1;
-                                 
-                                 app.load_preset_values();
-                                 changed = true;
-                                 app.status_msg = format!("Loaded preset: {}", leaked_name);
-                             } else {
-                                 app.status_msg = "Failed to load preset".to_string();
-                             }
+                        if let Some(path) =
+                            FileDialog::new().add_filter("JSON", &["json"]).pick_file()
+                        {
+                            if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
+                                let name = path.file_stem().unwrap().to_string_lossy().to_string();
+
+                                // Update UI sliders to match the loaded stock
+                                app.halation_strength = stock.halation_strength;
+                                app.halation_threshold = stock.halation_threshold;
+                                app.halation_sigma = stock.halation_sigma;
+
+                                app.grain_alpha = stock.grain_model.alpha;
+                                app.grain_sigma = stock.grain_model.sigma_read;
+                                app.grain_roughness = stock.grain_model.roughness;
+                                app.grain_blur_radius = stock.grain_model.blur_radius;
+
+                                // Add the loaded stock to the list and select it
+                                // Note: We use Box::leak to extend the 'static lifetime for the demo
+                                let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                                app.stocks.push((leaked_name, stock));
+                                app.selected_stock_idx = app.stocks.len() - 1;
+
+                                app.load_preset_values();
+                                changed = true;
+                                app.status_msg = format!("Loaded preset: {}", leaked_name);
+                            } else {
+                                app.status_msg = "Failed to load preset".to_string();
+                            }
                         }
                     }
 
                     if ui.button("Export JSON").clicked() {
-                        if let Some(path) = FileDialog::new().add_filter("JSON", &["json"]).save_file() {
-                             // Create a new stock based on current selection and UI adjustments
-                             let base = app.get_current_stock();
-                             let mut current_stock = base;
-                             
-                             // Apply current UI parameters
-                             current_stock.halation_strength = app.halation_strength;
-                             current_stock.halation_threshold = app.halation_threshold;
-                             current_stock.halation_sigma = app.halation_sigma;
-                             current_stock.grain_model.alpha = app.grain_alpha;
-                             current_stock.grain_model.sigma_read = app.grain_sigma;
-                             current_stock.grain_model.roughness = app.grain_roughness;
-                             current_stock.grain_model.blur_radius = app.grain_blur_radius;
-                             
-                             // Apply Gamma Boost to curves for visual consistency
-                             current_stock.r_curve.gamma *= app.gamma_boost;
-                             current_stock.g_curve.gamma *= app.gamma_boost;
-                             current_stock.b_curve.gamma *= app.gamma_boost;
+                        if let Some(path) =
+                            FileDialog::new().add_filter("JSON", &["json"]).save_file()
+                        {
+                            // Create a new stock based on current selection and UI adjustments
+                            let base = app.get_current_stock();
+                            let mut current_stock = base;
 
-                             if current_stock.save_to_file(&path).is_ok() {
-                                 app.status_msg = format!("Saved preset to {:?}", path);
-                             } else {
-                                 app.status_msg = "Failed to save preset".to_string();
-                             }
+                            // Apply current UI parameters
+                            current_stock.halation_strength = app.halation_strength;
+                            current_stock.halation_threshold = app.halation_threshold;
+                            current_stock.halation_sigma = app.halation_sigma;
+                            current_stock.grain_model.alpha = app.grain_alpha;
+                            current_stock.grain_model.sigma_read = app.grain_sigma;
+                            current_stock.grain_model.roughness = app.grain_roughness;
+                            current_stock.grain_model.blur_radius = app.grain_blur_radius;
+
+                            // Apply Gamma Boost to curves for visual consistency
+                            current_stock.r_curve.gamma *= app.gamma_boost;
+                            current_stock.g_curve.gamma *= app.gamma_boost;
+                            current_stock.b_curve.gamma *= app.gamma_boost;
+
+                            if current_stock.save_to_file(&path).is_ok() {
+                                app.status_msg = format!("Saved preset to {:?}", path);
+                            } else {
+                                app.status_msg = "Failed to save preset".to_string();
+                            }
                         }
                     }
                 });
@@ -97,9 +101,14 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 .max_height(400.0)
                 .show(ui, |ui| {
                     // Group stocks by brand (first word)
-                    let mut groups: std::collections::BTreeMap<String, Vec<usize>> = Default::default();
+                    let mut groups: std::collections::BTreeMap<String, Vec<usize>> =
+                        Default::default();
                     for (idx, (name, _)) in app.stocks.iter().enumerate() {
-                        let brand = name.split_whitespace().next().unwrap_or("Other").to_string();
+                        let brand = name
+                            .split_whitespace()
+                            .next()
+                            .unwrap_or("Other")
+                            .to_string();
                         groups.entry(brand).or_default().push(idx);
                     }
 
@@ -107,7 +116,10 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                         ui.collapsing(brand, |ui| {
                             for idx in indices {
                                 let (name, _) = app.stocks[idx];
-                                if ui.selectable_value(&mut app.selected_stock_idx, idx, name).clicked() {
+                                if ui
+                                    .selectable_value(&mut app.selected_stock_idx, idx, name)
+                                    .clicked()
+                                {
                                     preset_changed = true;
                                 }
                             }
@@ -140,19 +152,13 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 changed = true;
             }
             if ui
-                .add(
-                    egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0)
-                        .text("Threshold"),
-                )
+                .add(egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"))
                 .changed()
             {
                 changed = true;
             }
             if ui
-                .add(
-                    egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1)
-                        .text("Sigma (Spread)"),
-                )
+                .add(egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1).text("Sigma (Spread)"))
                 .changed()
             {
                 changed = true;
@@ -160,24 +166,36 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
             ui.group(|ui| {
                 ui.label("Grain (Editable)");
-                
+
                 ui.label("Alpha (Intensity)");
-                if ui.add(egui::Slider::new(&mut app.grain_alpha, 0.0..=0.05).step_by(0.001)).changed() {
+                if ui
+                    .add(egui::Slider::new(&mut app.grain_alpha, 0.0..=0.05).step_by(0.001))
+                    .changed()
+                {
                     changed = true;
                 }
 
                 ui.label("Sigma (Base Noise)");
-                if ui.add(egui::Slider::new(&mut app.grain_sigma, 0.0..=0.05).step_by(0.001)).changed() {
+                if ui
+                    .add(egui::Slider::new(&mut app.grain_sigma, 0.0..=0.05).step_by(0.001))
+                    .changed()
+                {
                     changed = true;
                 }
 
                 ui.label("Roughness");
-                if ui.add(egui::Slider::new(&mut app.grain_roughness, 0.0..=1.0)).changed() {
+                if ui
+                    .add(egui::Slider::new(&mut app.grain_roughness, 0.0..=1.0))
+                    .changed()
+                {
                     changed = true;
                 }
 
                 ui.label("Blur Radius");
-                if ui.add(egui::Slider::new(&mut app.grain_blur_radius, 0.0..=2.0)).changed() {
+                if ui
+                    .add(egui::Slider::new(&mut app.grain_blur_radius, 0.0..=2.0))
+                    .changed()
+                {
                     changed = true;
                 }
             });

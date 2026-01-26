@@ -1,4 +1,4 @@
-use crate::film::{FilmStock, SegmentedCurve, FilmType};
+use crate::film::{FilmStock, FilmType, SegmentedCurve};
 use crate::grain::GrainModel;
 use crate::spectral::FilmSpectralParams;
 
@@ -76,7 +76,7 @@ pub const KODAK_TRI_X_400: FilmStock = FilmStock {
         alpha: 0.0289,
         sigma_read: 0.02,
         monochrome: true,
-        blur_radius:  1.2,
+        blur_radius: 1.2,
         roughness: 0.7,
     }, // RMS 17
     resolution_lp_mm: 100.0,
@@ -127,7 +127,7 @@ pub const FUJIFILM_VELVIA_50: FilmStock = FilmStock {
         alpha: 0.0081,
         sigma_read: 0.005,
         monochrome: false,
-        blur_radius:  0.4,
+        blur_radius: 0.4,
         roughness: 0.4,
     }, // RMS 9
     resolution_lp_mm: 160.0,
@@ -323,7 +323,7 @@ pub const KODAK_T_MAX_3200: FilmStock = FilmStock {
         alpha: 0.0324,
         sigma_read: 0.03,
         monochrome: true,
-        blur_radius:  1.5,
+        blur_radius: 1.5,
         roughness: 0.8,
     },
     resolution_lp_mm: 80.0,
@@ -370,7 +370,7 @@ pub const ILFORD_DELTA_100: FilmStock = FilmStock {
         alpha: 0.0049,
         sigma_read: 0.005,
         monochrome: true,
-        blur_radius:  0.4,
+        blur_radius: 0.4,
         roughness: 0.4,
     },
     resolution_lp_mm: 160.0,
@@ -470,7 +470,7 @@ pub const FUJIFILM_VELVIA_100F: FilmStock = FilmStock {
         alpha: 0.0064,
         sigma_read: 0.005,
         monochrome: false,
-        blur_radius:  0.4,
+        blur_radius: 0.4,
         roughness: 0.4,
     },
     resolution_lp_mm: 160.0,
@@ -515,7 +515,7 @@ pub const FUJIFILM_VELVIA_100: FilmStock = FilmStock {
         alpha: 0.0081,
         sigma_read: 0.005,
         monochrome: false,
-        blur_radius:  0.4,
+        blur_radius: 0.4,
         roughness: 0.4,
     },
     resolution_lp_mm: 160.0,
@@ -1157,7 +1157,7 @@ pub const ILFORD_PAN_F_PLUS: FilmStock = FilmStock {
         alpha: 0.0025,
         sigma_read: 0.003,
         monochrome: true,
-        blur_radius:  0.3,
+        blur_radius: 0.3,
         roughness: 0.3,
     },
     resolution_lp_mm: 180.0,

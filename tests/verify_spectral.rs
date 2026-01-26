@@ -206,10 +206,10 @@ mod tests {
         let gray_spectrum = Spectrum::new_flat(1.0);
         let film_params = FilmSpectralParams::new_panchromatic();
         let mut film_sens = FilmSensitivities::from_params(film_params);
-        
+
         // Calibrate to the flat spectrum so we expect balanced response
         film_sens.calibrate_to_white_point(&gray_spectrum);
-        
+
         let hb = film_sens.b_sensitivity.integrate_product(&gray_spectrum) * film_sens.b_factor;
         let hg = film_sens.g_sensitivity.integrate_product(&gray_spectrum) * film_sens.g_factor;
         let hr = film_sens.r_sensitivity.integrate_product(&gray_spectrum) * film_sens.r_factor;
@@ -224,10 +224,10 @@ mod tests {
         let gray_spectrum = Spectrum::new_flat(1.0);
         let film_params = FilmSpectralParams::new_panchromatic();
         let mut film_sens = FilmSensitivities::from_params(film_params);
-        
+
         // Calibrate to the flat spectrum so we expect balanced response
         film_sens.calibrate_to_white_point(&gray_spectrum);
-        
+
         let exposure = film_sens.expose(&gray_spectrum);
         let r_response = exposure[0];
         let g_response = exposure[1];

@@ -26,10 +26,26 @@ fn main() {
     println!("Image loaded: {}x{}", img.width(), img.height());
 
     let stocks = [
-        ("Kodak_Tri-X_400", presets::KODAK_TRI_X_400, OutputMode::Positive),
-        ("Fujifilm_Velvia_50", presets::FUJIFILM_VELVIA_50, OutputMode::Positive),
-        ("Ilford_HP5_Plus", presets::ILFORD_HP5_PLUS, OutputMode::Positive),
-        ("Kodak_Portra_400", presets::KODAK_PORTRA_400, OutputMode::Positive),
+        (
+            "Kodak_Tri-X_400",
+            presets::KODAK_TRI_X_400,
+            OutputMode::Positive,
+        ),
+        (
+            "Fujifilm_Velvia_50",
+            presets::FUJIFILM_VELVIA_50,
+            OutputMode::Positive,
+        ),
+        (
+            "Ilford_HP5_Plus",
+            presets::ILFORD_HP5_PLUS,
+            OutputMode::Positive,
+        ),
+        (
+            "Kodak_Portra_400",
+            presets::KODAK_PORTRA_400,
+            OutputMode::Positive,
+        ),
     ];
 
     for (name, stock, mode) in stocks.iter() {

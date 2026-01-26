@@ -88,11 +88,11 @@ impl PipelineStage for MtfStage {
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
         let film = context.film;
         let width = image.width();
-        
+
         // Assuming 35mm film width = 36mm.
         let pixels_per_mm = width as f32 / 36.0;
         let mtf_sigma = (0.5 / film.resolution_lp_mm) * pixels_per_mm;
-        
+
         if mtf_sigma > 0.5 {
             utils::apply_gaussian_blur(image, mtf_sigma);
         }
@@ -139,10 +139,10 @@ impl PipelineStage for DevelopStage {
                     let x = i % width;
                     let y = i / width;
                     let p = image.get_pixel(x, y).0;
-                    
+
                     let scene_spectrum = apply_illuminant(camera_sens.uplift(p[0], p[1], p[2]));
                     let exposure_vals = film_sens.expose(&scene_spectrum);
-                    
+
                     sum_r += exposure_vals[0];
                     sum_g += exposure_vals[1];
                     sum_b += exposure_vals[2];
@@ -155,11 +155,11 @@ impl PipelineStage for DevelopStage {
                     let avg_b = sum_b / count;
                     let lum = (avg_r + avg_g + avg_b) / 3.0;
                     let eps = 1e-9;
-                    
+
                     let gain_r = lum / avg_r.max(eps);
                     let gain_g = lum / avg_g.max(eps);
                     let gain_b = lum / avg_b.max(eps);
-                    
+
                     let s = config.white_balance_strength.clamp(0.0, 1.0);
                     [
                         1.0 + (gain_r - 1.0) * s,
@@ -169,7 +169,7 @@ impl PipelineStage for DevelopStage {
                 } else {
                     [1.0, 1.0, 1.0]
                 }
-            },
+            }
             _ => [1.0, 1.0, 1.0],
         };
 
@@ -180,7 +180,8 @@ impl PipelineStage for DevelopStage {
             // Current pixel is Linear RGB
             let lin_pixel = [pixel[0], pixel[1], pixel[2]];
 
-            let scene_spectrum = apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
+            let scene_spectrum =
+                apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
             let exposure_vals = film_sens.expose(&scene_spectrum);
 
             let r_balanced = exposure_vals[0] * wb_gains[0];
@@ -223,42 +224,48 @@ impl PipelineStage for GrainStage {
         let height = image.height();
 
         let mut grain_noise: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
-        
-        grain_noise.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
-            let x = (i as u32) % width;
-            let y = (i as u32) / width;
-            let densities = image.get_pixel(x, y).0;
-            let mut rng = rand::thread_rng();
 
-            if film.grain_model.monochrome {
-                let d = densities[1];
-                let noise = film.grain_model.sample_noise(d, &mut rng);
-                pixel[0] = noise;
-                pixel[1] = noise;
-                pixel[2] = noise;
-            } else {
-                let n_r = film.grain_model.sample_noise(densities[0], &mut rng);
-                let n_g = film.grain_model.sample_noise(densities[1], &mut rng);
-                let n_b = film.grain_model.sample_noise(densities[2], &mut rng);
-                
-                let n_lum = (n_r + n_g + n_b) / 3.0;
-                let chroma_scale = 0.3;
-                
-                pixel[0] = n_lum + (n_r - n_lum) * chroma_scale;
-                pixel[1] = n_lum + (n_g - n_lum) * chroma_scale;
-                pixel[2] = n_lum + (n_b - n_lum) * chroma_scale;
-            }
-        });
+        grain_noise
+            .par_chunks_mut(3)
+            .enumerate()
+            .for_each(|(i, pixel)| {
+                let x = (i as u32) % width;
+                let y = (i as u32) / width;
+                let densities = image.get_pixel(x, y).0;
+                let mut rng = rand::thread_rng();
+
+                if film.grain_model.monochrome {
+                    let d = densities[1];
+                    let noise = film.grain_model.sample_noise(d, &mut rng);
+                    pixel[0] = noise;
+                    pixel[1] = noise;
+                    pixel[2] = noise;
+                } else {
+                    let n_r = film.grain_model.sample_noise(densities[0], &mut rng);
+                    let n_g = film.grain_model.sample_noise(densities[1], &mut rng);
+                    let n_b = film.grain_model.sample_noise(densities[2], &mut rng);
+
+                    let n_lum = (n_r + n_g + n_b) / 3.0;
+                    let chroma_scale = 0.3;
+
+                    pixel[0] = n_lum + (n_r - n_lum) * chroma_scale;
+                    pixel[1] = n_lum + (n_g - n_lum) * chroma_scale;
+                    pixel[2] = n_lum + (n_b - n_lum) * chroma_scale;
+                }
+            });
 
         if film.grain_model.blur_radius > 0.0 {
-             utils::apply_gaussian_blur(&mut grain_noise, film.grain_model.blur_radius);
+            utils::apply_gaussian_blur(&mut grain_noise, film.grain_model.blur_radius);
         }
 
-        image.pixels_mut().zip(grain_noise.pixels()).for_each(|(d, n)| {
-            d[0] = (d[0] + n[0]).max(0.0);
-            d[1] = (d[1] + n[1]).max(0.0);
-            d[2] = (d[2] + n[2]).max(0.0);
-        });
+        image
+            .pixels_mut()
+            .zip(grain_noise.pixels())
+            .for_each(|(d, n)| {
+                d[0] = (d[0] + n[0]).max(0.0);
+                d[1] = (d[1] + n[1]).max(0.0);
+                d[2] = (d[2] + n[2]).max(0.0);
+            });
     }
 }
 
@@ -281,7 +288,11 @@ pub fn create_output_image(
                 let t_r = physics::density_to_transmission(net_r);
                 let t_g = physics::density_to_transmission(net_g);
                 let t_b = physics::density_to_transmission(net_b);
-                (t_r.clamp(0.0, 1.0), t_g.clamp(0.0, 1.0), t_b.clamp(0.0, 1.0))
+                (
+                    t_r.clamp(0.0, 1.0),
+                    t_g.clamp(0.0, 1.0),
+                    t_b.clamp(0.0, 1.0),
+                )
             }
             OutputMode::Positive => {
                 let t_r = physics::density_to_transmission(net_r);
@@ -290,9 +301,15 @@ pub fn create_output_image(
                 let t_r_max = physics::density_to_transmission(0.0);
                 let t_g_max = physics::density_to_transmission(0.0);
                 let t_b_max = physics::density_to_transmission(0.0);
-                let t_r_min = physics::density_to_transmission((film.r_curve.d_max - film.r_curve.d_min).max(0.0));
-                let t_g_min = physics::density_to_transmission((film.g_curve.d_max - film.g_curve.d_min).max(0.0));
-                let t_b_min = physics::density_to_transmission((film.b_curve.d_max - film.b_curve.d_min).max(0.0));
+                let t_r_min = physics::density_to_transmission(
+                    (film.r_curve.d_max - film.r_curve.d_min).max(0.0),
+                );
+                let t_g_min = physics::density_to_transmission(
+                    (film.g_curve.d_max - film.g_curve.d_min).max(0.0),
+                );
+                let t_b_min = physics::density_to_transmission(
+                    (film.b_curve.d_max - film.b_curve.d_min).max(0.0),
+                );
                 let norm = |t: f32, t_min: f32, t_max: f32| {
                     let denom = (t_max - t_min).max(1e-6);
                     let n = (t_max - t).clamp(0.0, denom) / denom;
@@ -302,7 +319,11 @@ pub fn create_output_image(
                     };
                     n.powf(paper_gamma)
                 };
-                (norm(t_r, t_r_min, t_r_max), norm(t_g, t_g_min, t_g_max), norm(t_b, t_b_min, t_b_max))
+                (
+                    norm(t_r, t_r_min, t_r_max),
+                    norm(t_g, t_g_min, t_g_max),
+                    norm(t_b, t_b_min, t_b_max),
+                )
             }
         }
     };
@@ -313,9 +334,9 @@ pub fn create_output_image(
         let x = (i as u32) % width;
         let y = (i as u32) / width;
         let d = image.get_pixel(x, y).0;
-        
+
         let (r_lin, g_lin, b_lin) = map_densities(d);
-        
+
         let r_out = physics::linear_to_srgb(r_lin.clamp(0.0, 1.0));
         let g_out = physics::linear_to_srgb(g_lin.clamp(0.0, 1.0));
         let b_out = physics::linear_to_srgb(b_lin.clamp(0.0, 1.0));

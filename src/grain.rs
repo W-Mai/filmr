@@ -16,7 +16,13 @@ pub struct GrainModel {
 }
 
 impl GrainModel {
-    pub fn new(alpha: f32, sigma_read: f32, monochrome: bool, blur_radius: f32, roughness: f32) -> Self {
+    pub fn new(
+        alpha: f32,
+        sigma_read: f32,
+        monochrome: bool,
+        blur_radius: f32,
+        roughness: f32,
+    ) -> Self {
         Self {
             alpha,
             sigma_read,
@@ -41,15 +47,15 @@ impl GrainModel {
     pub fn sample_noise<R: Rng>(&self, d: f32, rng: &mut R) -> f32 {
         // Organic Grain: Use D^1.5 to suppress noise in low-density areas (shadows in positive)
         // and concentrate it in high-density areas (highlights), matching physical silver distribution.
-        
+
         // Roughness modulation:
         // High roughness increases variance in mid-tones
         // Adjusted Variance = Base_Variance * (1.0 + roughness * sin(pi * d))
         let base_variance = self.alpha * d.powf(1.5) + self.sigma_read.powi(2);
-        
+
         // Ensure d is reasonable for modulation
         let modulation = 1.0 + self.roughness * (std::f32::consts::PI * d.clamp(0.0, 1.0)).sin();
-        
+
         let variance = base_variance * modulation;
         let std_dev = variance.sqrt().max(0.0);
 

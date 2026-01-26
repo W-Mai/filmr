@@ -30,22 +30,34 @@ pub fn generate_test_chart(width: u32, height: u32) -> RgbImage {
             // Top 20%: Primary Colors & Saturation
             if u < 0.166 {
                 // Red
-                r = 1.0; g = 0.0; b = 0.0;
+                r = 1.0;
+                g = 0.0;
+                b = 0.0;
             } else if u < 0.333 {
                 // Green
-                r = 0.0; g = 1.0; b = 0.0;
+                r = 0.0;
+                g = 1.0;
+                b = 0.0;
             } else if u < 0.5 {
                 // Blue
-                r = 0.0; g = 0.0; b = 1.0;
+                r = 0.0;
+                g = 0.0;
+                b = 1.0;
             } else if u < 0.666 {
                 // Yellow
-                r = 1.0; g = 1.0; b = 0.0;
+                r = 1.0;
+                g = 1.0;
+                b = 0.0;
             } else if u < 0.833 {
                 // Cyan
-                r = 0.0; g = 1.0; b = 1.0;
+                r = 0.0;
+                g = 1.0;
+                b = 1.0;
             } else {
                 // Magenta
-                r = 1.0; g = 0.0; b = 1.0;
+                r = 1.0;
+                g = 0.0;
+                b = 1.0;
             }
         } else {
             // Center: Hue Wheel / Saturation
@@ -68,13 +80,17 @@ pub fn generate_test_chart(width: u32, height: u32) -> RgbImage {
                 b = bh;
             } else if dist < 0.28 {
                 // Ring border - Neutral
-                r = 0.5; g = 0.5; b = 0.5;
+                r = 0.5;
+                g = 0.5;
+                b = 0.5;
             } else {
                 // Outside: Gradient
                 // Left to right: Red -> White
                 // Top to Bottom: Black -> White
                 // Just keep neutral gray background
-                r = 0.18; g = 0.18; b = 0.18; // 18% Gray background
+                r = 0.18;
+                g = 0.18;
+                b = 0.18; // 18% Gray background
             }
         }
 
@@ -91,7 +107,9 @@ pub fn generate_test_chart(width: u32, height: u32) -> RgbImage {
 
 #[allow(dead_code)]
 fn main() {
-    println!("This file is a module used by other examples. Run 'chart_diagnosis' example instead.");
+    println!(
+        "This file is a module used by other examples. Run 'chart_diagnosis' example instead."
+    );
 }
 
 fn srgb_encode(v: f32) -> f32 {
