@@ -82,6 +82,11 @@ pub struct FilmrApp {
     // App Mode
     pub mode: AppMode,
     pub studio_stock: FilmStock,
+
+    // Studio State
+    pub studio_stock_idx: Option<usize>,
+    pub has_unsaved_changes: bool,
+    pub show_exit_dialog: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -169,6 +174,10 @@ impl FilmrApp {
 
             mode: AppMode::Standard,
             studio_stock: presets::STANDARD_DAYLIGHT,
+
+            studio_stock_idx: None,
+            has_unsaved_changes: false,
+            show_exit_dialog: false,
         }
     }
 
@@ -455,13 +464,41 @@ impl App for FilmrApp {
                         self.process_and_update_texture(ctx);
                     }
                     if ui.selectable_value(&mut self.mode, AppMode::Studio, "Stock Studio").clicked() {
-                        // Initialize studio stock with current selection
-                        self.studio_stock = self.get_current_stock();
                         self.process_and_update_texture(ctx);
                     }
                 });
             });
         });
+
+        // Handle Exit Dialog
+        if ctx.input(|i| i.viewport().close_requested()) {
+            if self.has_unsaved_changes {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.show_exit_dialog = true;
+            }
+        }
+
+        if self.show_exit_dialog {
+            egui::Window::new("⚠️ Unsaved Custom Stock")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
+                .show(ctx, |ui| {
+                    ui.label("You have created a custom film stock that hasn't been exported.");
+                    ui.label("Are you sure you want to quit?");
+                    ui.add_space(10.0);
+                    ui.horizontal(|ui| {
+                        if ui.button("Quit Anyway").clicked() {
+                            self.has_unsaved_changes = false;
+                            self.show_exit_dialog = false;
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        }
+                        if ui.button("Cancel").clicked() {
+                            self.show_exit_dialog = false;
+                        }
+                    });
+                });
+        }
 
         // Left Panel (Controls) - Always show, but content adapts
         panels::controls::render_controls(self, ctx);
