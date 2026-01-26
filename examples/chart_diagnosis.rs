@@ -70,6 +70,30 @@ fn main() {
 }
 
 
+fn load_system_font() -> Vec<u8> {
+    let paths = [
+        "/System/Library/Fonts/Monaco.ttf",
+        "/System/Library/Fonts/Menlo.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
+        "C:\\Windows\\Fonts\\consola.ttf",
+        "C:\\Windows\\Fonts\\arial.ttf",
+    ];
+
+    for path in paths {
+        if Path::new(path).exists() {
+            if let Ok(bytes) = fs::read(path) {
+                return bytes;
+            }
+        }
+    }
+    
+    // If no font found, we can try to download one or just panic with a clear message
+    // For this example, we'll try to use a fallback if possible, but rusttype needs data.
+    // Let's assume one of the above exists or fail.
+    panic!("No suitable system font found for chart diagnosis. Please ensure one of the following exists: {:?}", paths);
+}
+
 fn generate_contact_sheet(
     data: &[(
         &str,
@@ -104,8 +128,8 @@ fn generate_contact_sheet(
         *p = Rgb([30, 30, 30]);
     }
 
-    let font_data = include_bytes!("/System/Library/Fonts/Monaco.ttf");
-    let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
+    let font_data = load_system_font();
+    let font = Font::try_from_vec(font_data).expect("Error constructing Font");
     let scale_title = Scale { x: 20.0, y: 20.0 };
     let scale_text = Scale { x: 13.0, y: 13.0 }; // Slightly smaller text
 
