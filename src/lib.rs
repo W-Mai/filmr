@@ -5,6 +5,8 @@ pub mod presets;
 pub mod processor;
 pub mod spectral;
 pub mod metrics;
+pub mod pipeline;
+pub mod utils;
 
 pub use film::FilmStock;
 pub use grain::GrainModel;
