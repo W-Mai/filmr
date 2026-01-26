@@ -6,8 +6,9 @@ use crate::spectral::{FilmSensitivities, FilmSpectralParams};
 ///
 /// Handles Characteristic Curves (H-D Curves) and Color Coupling.
 /// Section 3 & 5 of the technical document.
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SegmentedCurve {
     pub d_min: f32,
     pub d_max: f32,
@@ -84,14 +85,14 @@ impl SegmentedCurve {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum FilmType {
     ColorNegative,
     ColorSlide,
     BwNegative,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct FilmStock {
     /// Film Type (affects processing pipeline)
     pub film_type: FilmType,

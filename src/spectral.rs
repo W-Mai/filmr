@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::ops::{Add, Mul};
 
 /// Wavelength range for simulation (Visible Spectrum)
@@ -182,7 +183,7 @@ pub struct FilmSensitivities {
 }
 
 /// Parameters to generate spectral sensitivities
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct FilmSpectralParams {
     pub r_peak: f32,
     pub r_width: f32,
