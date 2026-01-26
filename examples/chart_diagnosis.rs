@@ -217,8 +217,8 @@ fn draw_rgb_histogram(img: &RgbImage, width: u32, height: u32) -> RgbImage {
     let scale_x = width as f32 / 256.0;
     
     for i in 0..255 {
-        let x1 = (i as f32 * scale_x) as f32;
-        let x2 = ((i + 1) as f32 * scale_x) as f32;
+        let x1 = i as f32 * scale_x;
+        let x2 = (i + 1) as f32 * scale_x;
         
         let mut draw_channel = |hist: &[u32; 256], color: Rgb<u8>| {
             let val1 = (hist[i] as f32).min(norm_max);
@@ -283,8 +283,8 @@ fn draw_lbp_histogram(hist: &[f32; 10], width: u32, height: u32) -> RgbImage {
     let bar_width = width as f32 / 10.0;
     let scale_y = if max_val > 0.0 { (height - 10) as f32 / max_val } else { 0.0 };
     
-    for i in 0..10 {
-        let h = hist[i] * scale_y;
+    for (i, &val) in hist.iter().enumerate().take(10) {
+        let h = val * scale_y;
         if h >= 1.0 {
             let x = i as f32 * bar_width;
             let y = height as f32 - h;
