@@ -149,20 +149,6 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
             });
 
             ui.add_space(20.0);
-            if ui.button("Export Stock...").clicked() {
-                if let Some(path) = rfd::FileDialog::new()
-                    .add_filter("Film Stock", &["json"])
-                    .set_file_name("custom_stock.json")
-                    .save_file() 
-                {
-                    if let Err(e) = app.studio_stock.save_to_file(&path) {
-                        app.status_msg = format!("Failed to save stock: {}", e);
-                    } else {
-                        app.status_msg = format!("Stock saved to {:?}", path);
-                        app.has_unsaved_changes = false;
-                    }
-                }
-            }
             
             if changed {
                 // Sync back to the stock list if we are editing a linked stock
