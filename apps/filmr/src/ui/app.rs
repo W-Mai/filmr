@@ -3,8 +3,8 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};
 use filmr::{
-    estimate_exposure_time, presets, process_image, FilmMetrics, FilmStock, OutputMode,
-    SimulationConfig, WhiteBalanceMode,
+    estimate_exposure_time, light_leak::LightLeakConfig, presets, process_image, FilmMetrics,
+    FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
 use image::imageops::FilterType;
 use image::{DynamicImage, RgbImage};
@@ -60,6 +60,9 @@ pub struct FilmrApp {
     pub grain_sigma: f32,
     pub grain_roughness: f32,
     pub grain_blur_radius: f32,
+
+    // Light Leak Parameters
+    pub light_leak_config: LightLeakConfig,
 
     // Selection
     pub stocks: Vec<(&'static str, FilmStock)>,
@@ -142,6 +145,8 @@ impl FilmrApp {
             grain_roughness: 0.5,
             grain_blur_radius: 0.5,
 
+            light_leak_config: LightLeakConfig::default(),
+
             stocks,
             selected_stock_idx: 0, // Default to first
             output_mode: OutputMode::Positive,
@@ -214,6 +219,7 @@ impl FilmrApp {
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
+                light_leak: self.light_leak_config.clone(),
                 ..Default::default()
             };
 
@@ -254,6 +260,7 @@ impl FilmrApp {
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
+                light_leak: self.light_leak_config.clone(),
                 ..Default::default()
             };
 

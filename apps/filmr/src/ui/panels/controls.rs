@@ -1,5 +1,6 @@
 use crate::ui::app::FilmrApp;
 use egui::Context;
+use filmr::light_leak::{LightLeak, LightLeakShape};
 use filmr::{OutputMode, WhiteBalanceMode};
 
 use rfd::FileDialog;
@@ -163,6 +164,115 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             {
                 changed = true;
             }
+
+            ui.group(|ui| {
+                ui.label("Light Leaks");
+                if ui
+                    .checkbox(&mut app.light_leak_config.enabled, "Enable Light Leaks")
+                    .changed()
+                {
+                    changed = true;
+                }
+
+                if app.light_leak_config.enabled {
+                    ui.horizontal(|ui| {
+                        if ui.button("Add Leak").clicked() {
+                            app.light_leak_config.leaks.push(LightLeak {
+                                position: (0.5, 0.5),
+                                color: [1.0, 0.8, 0.6], // Warm default
+                                radius: 0.5,
+                                intensity: 0.5,
+                                shape: LightLeakShape::Circle,
+                            });
+                            changed = true;
+                        }
+                        if ui.button("Clear All").clicked() {
+                            app.light_leak_config.leaks.clear();
+                            changed = true;
+                        }
+                    });
+
+                    let mut leaks_to_remove = Vec::new();
+                    for (i, leak) in app.light_leak_config.leaks.iter_mut().enumerate() {
+                        ui.collapsing(format!("Leak #{}", i + 1), |ui| {
+                            ui.horizontal(|ui| {
+                                ui.label("Pos:");
+                                if ui
+                                    .add(egui::Slider::new(&mut leak.position.0, 0.0..=1.0).text("X"))
+                                    .changed()
+                                {
+                                    changed = true;
+                                }
+                                if ui
+                                    .add(egui::Slider::new(&mut leak.position.1, 0.0..=1.0).text("Y"))
+                                    .changed()
+                                {
+                                    changed = true;
+                                }
+                            });
+
+                            ui.horizontal(|ui| {
+                                ui.label("Color:");
+                                if ui.color_edit_button_rgb(&mut leak.color).changed() {
+                                    changed = true;
+                                }
+                            });
+
+                            if ui
+                                .add(egui::Slider::new(&mut leak.radius, 0.0..=1.5).text("Radius"))
+                                .changed()
+                            {
+                                changed = true;
+                            }
+                            if ui
+                                .add(
+                                    egui::Slider::new(&mut leak.intensity, 0.0..=2.0)
+                                        .text("Intensity"),
+                                )
+                                .changed()
+                            {
+                                changed = true;
+                            }
+
+                            egui::ComboBox::from_id_salt(format!("shape_{}", i))
+                                .selected_text(format!("{:?}", leak.shape))
+                                .show_ui(ui, |ui| {
+                                    if ui
+                                        .selectable_value(
+                                            &mut leak.shape,
+                                            LightLeakShape::Circle,
+                                            "Circle",
+                                        )
+                                        .clicked()
+                                    {
+                                        changed = true;
+                                    }
+                                    if ui
+                                        .selectable_value(
+                                            &mut leak.shape,
+                                            LightLeakShape::Linear,
+                                            "Linear",
+                                        )
+                                        .clicked()
+                                    {
+                                        changed = true;
+                                    }
+                                });
+
+                            if ui.button("Remove").clicked() {
+                                leaks_to_remove.push(i);
+                                changed = true;
+                            }
+                        });
+                    }
+
+                    if !leaks_to_remove.is_empty() {
+                        for i in leaks_to_remove.into_iter().rev() {
+                            app.light_leak_config.leaks.remove(i);
+                        }
+                    }
+                }
+            });
 
             ui.group(|ui| {
                 ui.label("Grain (Editable)");
