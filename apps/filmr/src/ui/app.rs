@@ -78,6 +78,16 @@ pub struct FilmrApp {
     // Metrics Display Options
     pub hist_log_scale: bool,
     pub hist_clamp_zeros: bool,
+
+    // App Mode
+    pub mode: AppMode,
+    pub studio_stock: FilmStock,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum AppMode {
+    Standard,
+    Studio,
 }
 
 impl FilmrApp {
@@ -156,6 +166,9 @@ impl FilmrApp {
 
             hist_log_scale: false,
             hist_clamp_zeros: true,
+
+            mode: AppMode::Standard,
+            studio_stock: presets::STANDARD_DAYLIGHT,
         }
     }
 
@@ -196,22 +209,29 @@ impl FilmrApp {
         if let Some(img) = source_image {
             // Construct params
             // Use preset as base and modify
-            let base_film = self.get_current_stock();
+            let base_film = if self.mode == AppMode::Studio {
+                self.studio_stock
+            } else {
+                self.get_current_stock()
+            };
 
             let mut film = base_film; // Copy
-            film.halation_strength = self.halation_strength;
-            film.halation_threshold = self.halation_threshold;
-            film.halation_sigma = self.halation_sigma;
+            if self.mode == AppMode::Standard {
+                // Only apply UI overrides in Standard mode
+                film.halation_strength = self.halation_strength;
+                film.halation_threshold = self.halation_threshold;
+                film.halation_sigma = self.halation_sigma;
 
-            film.grain_model.alpha = self.grain_alpha;
-            film.grain_model.sigma_read = self.grain_sigma;
-            film.grain_model.roughness = self.grain_roughness;
-            film.grain_model.blur_radius = self.grain_blur_radius;
+                film.grain_model.alpha = self.grain_alpha;
+                film.grain_model.sigma_read = self.grain_sigma;
+                film.grain_model.roughness = self.grain_roughness;
+                film.grain_model.blur_radius = self.grain_blur_radius;
 
-            // Apply gamma boost to all channels
-            film.r_curve.gamma *= self.gamma_boost;
-            film.g_curve.gamma *= self.gamma_boost;
-            film.b_curve.gamma *= self.gamma_boost;
+                // Apply gamma boost to all channels
+                film.r_curve.gamma *= self.gamma_boost;
+                film.g_curve.gamma *= self.gamma_boost;
+                film.b_curve.gamma *= self.gamma_boost;
+            }
 
             let config = SimulationConfig {
                 exposure_time: self.exposure_time,
@@ -245,14 +265,21 @@ impl FilmrApp {
             // unless we also keep full-res as RgbImage (memory intensive).
             let rgb_img = Arc::new(img.to_rgb8());
 
-            let base_film = self.get_current_stock();
+            let base_film = if self.mode == AppMode::Studio {
+                self.studio_stock
+            } else {
+                self.get_current_stock()
+            };
             let mut film = base_film;
-            film.halation_strength = self.halation_strength;
-            film.halation_threshold = self.halation_threshold;
-            film.halation_sigma = self.halation_sigma;
-            film.r_curve.gamma *= self.gamma_boost;
-            film.g_curve.gamma *= self.gamma_boost;
-            film.b_curve.gamma *= self.gamma_boost;
+            
+            if self.mode == AppMode::Standard {
+                film.halation_strength = self.halation_strength;
+                film.halation_threshold = self.halation_threshold;
+                film.halation_sigma = self.halation_sigma;
+                film.r_curve.gamma *= self.gamma_boost;
+                film.g_curve.gamma *= self.gamma_boost;
+                film.b_curve.gamma *= self.gamma_boost;
+            }
 
             let config = SimulationConfig {
                 exposure_time: self.exposure_time,
@@ -308,100 +335,97 @@ impl App for FilmrApp {
                     color_image,
                     egui::TextureOptions::LINEAR,
                 ));
-
                 self.metrics_preview = Some(result.metrics);
+                self.is_processing = false;
             } else {
-                // Handle Development Result
-                let processed = result.image;
-                // Calculate developed metrics (metrics already calculated in worker)
-                self.metrics_developed = Some(result.metrics.clone());
-                // Also update preview metrics
-                self.metrics_preview = Some(result.metrics);
-
-                // Update texture with developed result (resize for display if too large)
-                let display_img = if processed.width() > 1024 || processed.height() > 1024 {
-                    DynamicImage::ImageRgb8(processed.clone())
-                        .resize(1024, 1024, FilterType::Triangle)
-                        .to_rgb8()
-                } else {
-                    processed.clone()
-                };
-
-                let size = [display_img.width() as _, display_img.height() as _];
-                let pixels = display_img.as_flat_samples();
-                let color_image = ColorImage::from_rgb(size, pixels.as_slice());
-
-                self.processed_texture = Some(ctx.load_texture(
-                    "processed_image",
-                    color_image,
-                    egui::TextureOptions::LINEAR,
-                ));
-
-                self.developed_image = Some(DynamicImage::ImageRgb8(processed));
-                self.status_msg = "Development complete. Ready to save.".to_owned();
+                self.developed_image = Some(DynamicImage::ImageRgb8(result.image));
+                self.metrics_developed = Some(result.metrics);
+                self.is_processing = false;
+                self.status_msg = "Development complete.".to_owned();
+                
+                // If in studio mode, we might want to auto-save or something, but for now just notify
             }
-            self.is_processing = false;
         }
 
-        // Handle file drop
-        if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
-            let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
-            if let Some(file) = dropped_files.first() {
-                if let Some(path) = &file.path {
-                    match image::open(path) {
-                        Ok(img) => {
-                            // Keep original full resolution image
-                            self.original_image = Some(img.clone());
+        // Top Menu Bar
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                ui.menu_button("File", |ui| {
+                    if ui.button("Open Image...").clicked() {
+                        if let Some(path) = rfd::FileDialog::new()
+                            .add_filter("Images", &["png", "jpg", "jpeg", "tif", "tiff"])
+                            .pick_file()
+                        {
+                            if let Ok(img) = image::open(&path) {
+                                self.original_image = Some(img.clone());
+                                self.status_msg = format!("Loaded {:?}", path);
 
-                            // Create preview for GUI (max 1024px)
-                            let preview = if img.width() > 1024 || img.height() > 1024 {
-                                img.resize(1024, 1024, FilterType::Triangle)
-                            } else {
-                                img
-                            };
-                            self.preview_image = Some(Arc::new(preview.to_rgb8()));
-                            self.metrics_developed = None;
-                            self.developed_image = None;
-
-                            // Load original texture (from preview)
-                            if let Some(rgb_img) = &self.preview_image {
-                                let size = [rgb_img.width() as _, rgb_img.height() as _];
-                                let pixels = rgb_img.as_flat_samples();
+                                // Create original texture
+                                let rgb = img.to_rgb8();
+                                let size = [rgb.width() as _, rgb.height() as _];
+                                let pixels = rgb.as_flat_samples();
                                 let color_image = ColorImage::from_rgb(size, pixels.as_slice());
                                 self.original_texture = Some(ctx.load_texture(
-                                    "original_image",
+                                    "original",
                                     color_image,
                                     egui::TextureOptions::LINEAR,
                                 ));
+                                self.metrics_original = Some(FilmMetrics::analyze(&rgb));
 
-                                // Calculate original metrics (from full res image if possible but here using loaded image)
-                                self.metrics_original = Some(FilmMetrics::analyze(
-                                    &self.original_image.as_ref().unwrap().to_rgb8(),
-                                ));
-                            }
+                                // Generate preview
+                                // Resize for performance
+                                let preview = img.resize(1280, 720, FilterType::Lanczos3).to_rgb8();
+                                self.preview_image = Some(Arc::new(preview));
 
-                            let preset = self.get_current_stock();
-                            // Use preview for exposure estimation (fast enough and accurate enough)
-                            // preview_image is now Arc<RgbImage>
-                            if let Some(rgb_img) = &self.preview_image {
-                                self.exposure_time = estimate_exposure_time(rgb_img, &preset);
+                                if self.mode == AppMode::Standard {
+                                    // Estimate exposure for the loaded image if in standard mode
+                                    let stock = self.get_current_stock();
+                                    self.exposure_time =
+                                        estimate_exposure_time(&self.preview_image.as_ref().unwrap(), &stock);
+                                }
+                                
+                                self.process_and_update_texture(ctx);
                             }
-                            self.status_msg = format!("Loaded: {:?}", path.file_name().unwrap());
-                            // Reset view
-                            self.zoom = 1.0;
-                            self.offset = Vec2::ZERO;
-                            self.process_and_update_texture(ctx);
                         }
-                        Err(err) => {
-                            self.status_msg = format!("Error loading file: {}", err);
-                        }
+                        ui.close_menu();
                     }
-                }
-            }
+
+                    if ui.button("Save Image...").clicked() {
+                        self.save_image();
+                        ui.close_menu();
+                    }
+
+                    ui.separator();
+                    if ui.button("Quit").clicked() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                });
+                
+                ui.separator();
+                
+                // Mode Switcher
+                ui.horizontal(|ui| {
+                    ui.label("Mode:");
+                    if ui.selectable_value(&mut self.mode, AppMode::Standard, "Standard").clicked() {
+                        self.process_and_update_texture(ctx);
+                    }
+                    if ui.selectable_value(&mut self.mode, AppMode::Studio, "Stock Studio").clicked() {
+                        self.process_and_update_texture(ctx);
+                    }
+                });
+            });
+        });
+
+        // Left Panel (Controls)
+        match self.mode {
+            AppMode::Standard => panels::controls::render_controls(self, ctx),
+            AppMode::Studio => panels::studio::render_studio_panel(self, ctx),
         }
 
-        panels::controls::render_controls(self, ctx);
-        panels::metrics::render_metrics(self, ctx);
+        // Right Panel (Metrics)
+        if self.show_metrics {
+            panels::metrics::render_metrics(self, ctx);
+        }
         panels::central::render_central_panel(self, ctx);
     }
 }
