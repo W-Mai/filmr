@@ -321,7 +321,52 @@ impl FilmrApp {
 }
 
 impl App for FilmrApp {
+    #[allow(deprecated)]
     fn update(&mut self, ctx: &egui::Context, _frame: &mut Frame) {
+        // Handle File Drops
+        if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
+            let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
+            if let Some(file) = dropped_files.first() {
+                if let Some(path) = &file.path {
+                    match image::open(path) {
+                        Ok(img) => {
+                            self.original_image = Some(img.clone());
+                            self.status_msg = format!("Loaded {:?}", path);
+
+                            // Create original texture
+                            let rgb = img.to_rgb8();
+                            let size = [rgb.width() as _, rgb.height() as _];
+                            let pixels = rgb.as_flat_samples();
+                            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+                            self.original_texture = Some(ctx.load_texture(
+                                "original",
+                                color_image,
+                                egui::TextureOptions::LINEAR,
+                            ));
+                            self.metrics_original = Some(FilmMetrics::analyze(&rgb));
+
+                            // Generate preview
+                            // Resize for performance
+                            let preview = img.resize(1280, 720, FilterType::Lanczos3).to_rgb8();
+                            self.preview_image = Some(Arc::new(preview));
+
+                            if self.mode == AppMode::Standard {
+                                // Estimate exposure for the loaded image if in standard mode
+                                let stock = self.get_current_stock();
+                                self.exposure_time =
+                                    estimate_exposure_time(&self.preview_image.as_ref().unwrap(), &stock);
+                            }
+                            
+                            self.process_and_update_texture(ctx);
+                        }
+                        Err(e) => {
+                             self.status_msg = format!("Failed to load image: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+
         // Check for async results
         if let Ok(result) = self.rx_res.try_recv() {
             if result.is_preview {
@@ -351,7 +396,7 @@ impl App for FilmrApp {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("Open Image...").clicked() {
+                    if ui.add(egui::Button::new("Open Image...").shortcut_text("Ctrl+O")).clicked() {
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("Images", &["png", "jpg", "jpeg", "tif", "tiff"])
                             .pick_file()
@@ -387,12 +432,12 @@ impl App for FilmrApp {
                                 self.process_and_update_texture(ctx);
                             }
                         }
-                        ui.close_menu();
+                        ui.close();
                     }
 
                     if ui.button("Save Image...").clicked() {
                         self.save_image();
-                        ui.close_menu();
+                        ui.close();
                     }
 
                     ui.separator();
@@ -410,22 +455,33 @@ impl App for FilmrApp {
                         self.process_and_update_texture(ctx);
                     }
                     if ui.selectable_value(&mut self.mode, AppMode::Studio, "Stock Studio").clicked() {
+                        // Initialize studio stock with current selection
+                        self.studio_stock = self.get_current_stock();
                         self.process_and_update_texture(ctx);
                     }
                 });
             });
         });
 
-        // Left Panel (Controls)
-        match self.mode {
-            AppMode::Standard => panels::controls::render_controls(self, ctx),
-            AppMode::Studio => panels::studio::render_studio_panel(self, ctx),
+        // Left Panel (Controls) - Always show, but content adapts
+        panels::controls::render_controls(self, ctx);
+
+        // Right Panel
+        // If in Studio Mode, show Studio Panel
+        // If Metrics enabled, show Metrics Panel (Studio takes precedence or stacks?)
+        // Let's make Studio Panel a Right Panel, and Metrics Panel also a Right Panel.
+        // If both are active, they will stack or we can use tabs.
+        // For simplicity, let's say Studio Mode hides Metrics Panel or Metrics is inside it?
+        // User asked for "open a new panel".
+        
+        if self.mode == AppMode::Studio {
+            panels::studio::render_studio_panel(self, ctx);
         }
 
-        // Right Panel (Metrics)
         if self.show_metrics {
             panels::metrics::render_metrics(self, ctx);
         }
+        
         panels::central::render_central_panel(self, ctx);
     }
 }
