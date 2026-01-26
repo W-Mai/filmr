@@ -3,7 +3,7 @@ use crate::ui::app::FilmrApp;
 use filmr::film::{FilmType, SegmentedCurve};
 
 pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
-    egui::SidePanel::left("studio_panel")
+    egui::SidePanel::right("studio_panel")
         .resizable(true)
         .default_width(350.0)
         .show(ctx, |ui| {
@@ -101,6 +101,9 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
         .include_x(750.0)
         .include_y(0.0)
         .include_y(1.0)
+        .allow_drag(false)
+        .allow_zoom(false)
+        .allow_scroll(false)
         .show(ui, |plot_ui| {
             plot_ui.line(r_line);
             plot_ui.line(g_line);
@@ -156,11 +159,20 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                         app.status_msg = format!("Failed to save stock: {}", e);
                     } else {
                         app.status_msg = format!("Stock saved to {:?}", path);
+                        app.has_unsaved_changes = false;
                     }
                 }
             }
             
             if changed {
+                // Sync back to the stock list if we are editing a linked stock
+                if let Some(idx) = app.studio_stock_idx {
+                    if idx < app.stocks.len() {
+                        app.stocks[idx].1 = app.studio_stock.clone();
+                    }
+                }
+                
+                app.has_unsaved_changes = true;
                 app.process_and_update_texture(ctx);
             }
         });
@@ -181,6 +193,9 @@ fn render_curve_editor(ui: &mut Ui, curve: &mut SegmentedCurve, id_salt: &str) -
     
     Plot::new(id_salt)
         .view_aspect(2.0)
+        .allow_drag(false)
+        .allow_zoom(false)
+        .allow_scroll(false)
         .show(ui, |plot_ui| plot_ui.line(line));
 
     if ui.add(Slider::new(&mut curve.d_min, 0.0..=1.0).text("D Min")).changed() { changed = true; }
