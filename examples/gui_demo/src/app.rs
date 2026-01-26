@@ -82,30 +82,25 @@ impl FilmrApp {
 
         // Spawn worker thread
         thread::spawn(move || {
-            loop {
-                // Block until a request is received
-                if let Ok(mut req) = rx_req.recv() {
-                    // Drain any newer requests to skip intermediate states (debounce)
-                    while let Ok(newer) = rx_req.try_recv() {
-                        req = newer;
-                    }
-
-                    // Process
-                    let processed = process_image(&req.image, &req.film, &req.config);
-                    let metrics = FilmMetrics::analyze(&processed);
-
-                    // Send back result
-                    let _ = tx_res.send(ProcessResult {
-                        image: processed,
-                        metrics,
-                        is_preview: req.is_preview,
-                    });
-                    
-                    // Wake up the GUI
-                    ctx.request_repaint();
-                } else {
-                    break; // Channel disconnected
+            while let Ok(mut req) = rx_req.recv() {
+                // Drain any newer requests to skip intermediate states (debounce)
+                while let Ok(newer) = rx_req.try_recv() {
+                    req = newer;
                 }
+
+                // Process
+                let processed = process_image(&req.image, &req.film, &req.config);
+                let metrics = FilmMetrics::analyze(&processed);
+
+                // Send back result
+                let _ = tx_res.send(ProcessResult {
+                    image: processed,
+                    metrics,
+                    is_preview: req.is_preview,
+                });
+                
+                // Wake up the GUI
+                ctx.request_repaint();
             }
         });
 

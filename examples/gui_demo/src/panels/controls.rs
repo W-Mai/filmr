@@ -96,8 +96,10 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             ui.group(|ui| {
                 let stock = app.get_current_stock();
                 ui.label("Grain (From Preset)");
-                ui.label(format!("Alpha: {:.3}", stock.grain_model.alpha));
-                ui.label(format!("Sigma: {:.3}", stock.grain_model.sigma_read));
+                ui.label(format!("Alpha: {:.4}", stock.grain_model.alpha));
+                ui.label(format!("Sigma: {:.4}", stock.grain_model.sigma_read));
+                ui.label(format!("Roughness: {:.2}", stock.grain_model.roughness));
+                ui.label(format!("Blur Radius: {:.2}", stock.grain_model.blur_radius));
             });
 
             ui.group(|ui| {
