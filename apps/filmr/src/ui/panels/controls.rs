@@ -18,7 +18,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 ui.group(|ui| {
                     ui.label("Preset Management");
                     ui.horizontal(|ui| {
-                        if ui.button("Import JSON").clicked() {
+                        if ui.button("Import Preset").clicked() {
                             if let Some(path) =
                                 FileDialog::new().add_filter("JSON", &["json"]).pick_file()
                             {
@@ -50,7 +50,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                             }
                         }
 
-                        if ui.button("Export JSON").clicked() {
+                        if ui.button("Export Preset").clicked() {
                             if let Some(path) =
                                 FileDialog::new().add_filter("JSON", &["json"]).save_file()
                             {
@@ -164,7 +164,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 // Studio Mode: Show only the temporary stock
                 ui.group(|ui| {
                     ui.vertical_centered(|ui| {
-                        ui.label(egui::RichText::new("🧪 Custom Studio Stock").strong().color(egui::Color32::LIGHT_BLUE));
+                        ui.label(egui::RichText::new("🛠️ Custom Studio Stock").strong().color(egui::Color32::LIGHT_BLUE));
                         ui.label("Editing in Right Panel 👉");
                     });
                 });
