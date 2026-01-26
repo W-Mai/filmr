@@ -194,6 +194,22 @@ impl FilmStock {
         self
     }
 
+    /// Save the film stock to a JSON file
+    pub fn save_to_file<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), std::io::Error> {
+        let file = std::fs::File::create(path)?;
+        let writer = std::io::BufWriter::new(file);
+        serde_json::to_writer_pretty(writer, self)?;
+        Ok(())
+    }
+
+    /// Load a film stock from a JSON file
+    pub fn load_from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let stock = serde_json::from_reader(reader)?;
+        Ok(stock)
+    }
+
     /// Apply the film simulation to RGB log-exposures
     pub fn map_log_exposure(&self, log_e: [f32; 3]) -> [f32; 3] {
         // 1. Map each channel through its curve (Simulates Section 3)
