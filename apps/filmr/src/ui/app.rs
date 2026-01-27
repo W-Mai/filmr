@@ -10,6 +10,7 @@ use filmr::{
 };
 use image::imageops::FilterType;
 use image::{DynamicImage, RgbImage};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
 
@@ -24,6 +25,15 @@ struct ProcessResult {
     image: RgbImage,
     metrics: FilmMetrics,
     is_preview: bool,
+}
+
+struct LoadRequest {
+    path: PathBuf,
+}
+
+struct LoadResult {
+    path: PathBuf,
+    image: Result<DynamicImage, String>,
 }
 
 pub struct FilmrApp {
@@ -41,6 +51,11 @@ pub struct FilmrApp {
     tx_req: Sender<ProcessRequest>,
     rx_res: Receiver<ProcessResult>,
     pub is_processing: bool,
+
+    // Async Loading
+    tx_load: Sender<LoadRequest>,
+    rx_load: Receiver<LoadResult>,
+    pub is_loading: bool,
 
     // View State
     pub zoom: f32,
@@ -150,11 +165,14 @@ impl FilmrApp {
 
         let (tx_req, rx_req) = unbounded::<ProcessRequest>();
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
+        let (tx_load, rx_load) = unbounded::<LoadRequest>();
+        let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
 
         // Clone context for the thread
-        let ctx = cc.egui_ctx.clone();
+        let ctx_process = cc.egui_ctx.clone();
+        let ctx_load = cc.egui_ctx.clone();
 
-        // Spawn worker thread
+        // Spawn worker thread for processing
         thread::spawn(move || {
             while let Ok(mut req) = rx_req.recv() {
                 // Drain any newer requests to skip intermediate states (debounce)
@@ -174,7 +192,25 @@ impl FilmrApp {
                 });
 
                 // Wake up the GUI
-                ctx.request_repaint();
+                ctx_process.request_repaint();
+            }
+        });
+
+        // Spawn worker thread for loading
+        thread::spawn(move || {
+            while let Ok(req) = rx_load.recv() {
+                let res = match image::open(&req.path) {
+                    Ok(img) => LoadResult {
+                        path: req.path,
+                        image: Ok(img),
+                    },
+                    Err(e) => LoadResult {
+                        path: req.path,
+                        image: Err(e.to_string()),
+                    },
+                };
+                let _ = tx_load_res.send(res);
+                ctx_load.request_repaint();
             }
         });
 
@@ -191,6 +227,10 @@ impl FilmrApp {
             tx_req,
             rx_res,
             is_processing: false,
+
+            tx_load,
+            rx_load: rx_load_res,
+            is_loading: false,
 
             zoom: 1.0,
             offset: Vec2::ZERO,
@@ -387,43 +427,61 @@ impl App for FilmrApp {
             let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
             if let Some(file) = dropped_files.first() {
                 if let Some(path) = &file.path {
-                    match image::open(path) {
-                        Ok(img) => {
-                            self.original_image = Some(img.clone());
-                            self.status_msg = format!("Loaded {:?}", path);
+                    self.status_msg = format!("Loading {:?}...", path);
+                    self.is_loading = true;
+                    let _ = self.tx_load.send(LoadRequest {
+                        path: path.to_path_buf(),
+                    });
+                }
+            }
+        }
 
-                            // Create original texture
-                            let rgb = img.to_rgb8();
-                            let size = [rgb.width() as _, rgb.height() as _];
-                            let pixels = rgb.as_flat_samples();
-                            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
-                            self.original_texture = Some(ctx.load_texture(
-                                "original",
-                                color_image,
-                                egui::TextureOptions::LINEAR,
-                            ));
-                            self.metrics_original = Some(FilmMetrics::analyze(&rgb));
+        // Handle File Loading Results
+        if let Ok(result) = self.rx_load.try_recv() {
+            self.is_loading = false;
+            match result.image {
+                Ok(img) => {
+                    self.original_image = Some(img.clone());
+                    self.status_msg = format!("Loaded {:?}", result.path);
 
-                            // Generate preview
-                            // Resize for performance
-                            let preview = img.resize(1280, 720, FilterType::Lanczos3).to_rgb8();
-                            self.preview_image = Some(Arc::new(preview));
+                    // Create original texture
+                    let rgb = img.to_rgb8();
+                    let size = [rgb.width() as _, rgb.height() as _];
+                    let pixels = rgb.as_flat_samples();
+                    let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+                    self.original_texture = Some(ctx.load_texture(
+                        "original",
+                        color_image,
+                        egui::TextureOptions::LINEAR,
+                    ));
+                    self.metrics_original = Some(FilmMetrics::analyze(&rgb));
 
-                            if self.mode == AppMode::Standard {
-                                // Estimate exposure for the loaded image if in standard mode
-                                let stock = self.get_current_stock();
-                                self.exposure_time = estimate_exposure_time(
-                                    self.preview_image.as_ref().unwrap(),
-                                    &stock,
-                                );
-                            }
+                    // Generate preview
+                    // Resize for performance, ensuring high quality for both landscape and portrait
+                    let preview = img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8();
+                    self.preview_image = Some(Arc::new(preview));
 
-                            self.process_and_update_texture(ctx);
-                        }
-                        Err(e) => {
-                            self.status_msg = format!("Failed to load image: {}", e);
-                        }
+                    // Initially show the raw preview image (unprocessed)
+                    // This matches the requirement: "Show scaled photo initially"
+                    let preview_rgb = self.preview_image.as_ref().unwrap();
+                    let p_size = [preview_rgb.width() as _, preview_rgb.height() as _];
+                    let p_pixels = preview_rgb.as_flat_samples();
+                    let p_color_image = ColorImage::from_rgb(p_size, p_pixels.as_slice());
+                    self.processed_texture = Some(ctx.load_texture(
+                        "preview_raw",
+                        p_color_image,
+                        egui::TextureOptions::LINEAR,
+                    ));
+
+                    if self.mode == AppMode::Standard {
+                        // Estimate exposure for the loaded image if in standard mode
+                        let stock = self.get_current_stock();
+                        self.exposure_time =
+                            estimate_exposure_time(self.preview_image.as_ref().unwrap(), &stock);
                     }
+                }
+                Err(e) => {
+                    self.status_msg = format!("Failed to load image: {}", e);
                 }
             }
         }
@@ -444,12 +502,22 @@ impl App for FilmrApp {
                 self.metrics_preview = Some(result.metrics);
                 self.is_processing = false;
             } else {
-                self.developed_image = Some(DynamicImage::ImageRgb8(result.image));
+                let img = result.image;
+                // Convert to egui texture for display (Full Resolution)
+                let size = [img.width() as _, img.height() as _];
+                let pixels = img.as_flat_samples();
+                let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+
+                self.processed_texture = Some(ctx.load_texture(
+                    "developed_image",
+                    color_image,
+                    egui::TextureOptions::LINEAR,
+                ));
+
+                self.developed_image = Some(DynamicImage::ImageRgb8(img));
                 self.metrics_developed = Some(result.metrics);
                 self.is_processing = false;
                 self.status_msg = "Development complete.".to_owned();
-
-                // If in studio mode, we might want to auto-save or something, but for now just notify
             }
         }
 
@@ -465,38 +533,9 @@ impl App for FilmrApp {
                             .add_filter("Images", &["png", "jpg", "jpeg", "tif", "tiff"])
                             .pick_file()
                         {
-                            if let Ok(img) = image::open(&path) {
-                                self.original_image = Some(img.clone());
-                                self.status_msg = format!("Loaded {:?}", path);
-
-                                // Create original texture
-                                let rgb = img.to_rgb8();
-                                let size = [rgb.width() as _, rgb.height() as _];
-                                let pixels = rgb.as_flat_samples();
-                                let color_image = ColorImage::from_rgb(size, pixels.as_slice());
-                                self.original_texture = Some(ctx.load_texture(
-                                    "original",
-                                    color_image,
-                                    egui::TextureOptions::LINEAR,
-                                ));
-                                self.metrics_original = Some(FilmMetrics::analyze(&rgb));
-
-                                // Generate preview
-                                // Resize for performance, ensuring high quality for both landscape and portrait
-                                let preview = img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8();
-                                self.preview_image = Some(Arc::new(preview));
-
-                                if self.mode == AppMode::Standard {
-                                    // Estimate exposure for the loaded image if in standard mode
-                                    let stock = self.get_current_stock();
-                                    self.exposure_time = estimate_exposure_time(
-                                        self.preview_image.as_ref().unwrap(),
-                                        &stock,
-                                    );
-                                }
-
-                                self.process_and_update_texture(ctx);
-                            }
+                            self.status_msg = format!("Loading {:?}...", path);
+                            self.is_loading = true;
+                            let _ = self.tx_load.send(LoadRequest { path });
                         }
                         ui.close();
                     }

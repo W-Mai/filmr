@@ -48,12 +48,6 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
             app.processed_texture.as_ref()
         };
 
-        if app.is_processing {
-            ui.centered_and_justified(|ui| {
-                ui.spinner();
-            });
-        }
-
         if let Some(texture) = texture_to_show {
             // Interactive Area
             let rect = ui.available_rect_before_wrap();
@@ -98,21 +92,32 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
             };
 
             let current_scale = base_scale * app.zoom;
-            let displayed_size = image_size * current_scale;
+            let new_size = image_size * current_scale;
 
             let center = rect.center() + app.offset;
-            let image_rect = Rect::from_center_size(center, displayed_size);
+            let image_rect = Rect::from_center_size(center, new_size);
 
             let painter = ui.painter_at(rect);
             painter.image(
                 texture.id(),
                 image_rect,
-                Rect::from_min_max(Pos2::new(0.0, 0.0), Pos2::new(1.0, 1.0)),
+                Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 egui::Color32::WHITE,
             );
-        } else {
+        }
+
+        if app.is_processing || app.is_loading {
+            let rect = ui.available_rect_before_wrap();
+            ui.put(
+                rect,
+                egui::Label::new(
+                    egui::RichText::new("⏳ Processing...")
+                        .heading()
+                        .color(egui::Color32::WHITE),
+                ),
+            );
             ui.centered_and_justified(|ui| {
-                ui.label("Drag and drop an image file here");
+                ui.add(egui::Spinner::new().size(40.0));
             });
         }
     });
