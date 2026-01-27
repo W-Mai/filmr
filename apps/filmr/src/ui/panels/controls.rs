@@ -430,9 +430,6 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             });
 
             ui.separator();
-            ui.label(&app.status_msg);
-
-            ui.separator();
             ui.small("Instructions:");
             ui.label("- Drag & Drop image");
             ui.label("- Scroll/Pinch to Zoom");

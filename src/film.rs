@@ -8,6 +8,11 @@ use crate::spectral::{FilmSensitivities, FilmSpectralParams};
 /// Section 3 & 5 of the technical document.
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilmStockCollection {
+    pub stocks: std::collections::HashMap<String, FilmStock>,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SegmentedCurve {
     pub d_min: f32,
