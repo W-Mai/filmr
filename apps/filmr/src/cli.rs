@@ -1,5 +1,5 @@
 use clap::{Parser, ValueEnum};
-use filmr::film::FilmStock;
+use filmr::film::{FilmStock, FilmStockCollection};
 use filmr::presets;
 use filmr::processor::{
     estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
@@ -67,7 +67,29 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let stock = if let Some(path) = &args.load_preset {
         println!("Loading custom preset from: {:?}", path);
-        FilmStock::load_from_file(path)?
+        // Try to load as collection first
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        
+        if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
+            println!("Detected preset collection.");
+            // Try to find the preset specified by --preset argument
+            if let Some(s) = collection.stocks.get(&args.preset) {
+                println!("Using preset '{}' from collection.", args.preset);
+                *s // FilmStock is Copy
+            } else {
+                // If not found, list available keys
+                let keys: Vec<_> = collection.stocks.keys().collect();
+                return Err(format!(
+                    "Preset '{}' not found in collection. Available presets: {:?}",
+                    args.preset, keys
+                )
+                .into());
+            }
+        } else {
+            // Fallback to single stock
+            FilmStock::load_from_file(path)?
+        }
     } else {
         find_preset(&args.preset).ok_or("Preset not found")?
     };
