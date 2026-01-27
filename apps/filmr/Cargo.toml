@@ -9,6 +9,13 @@ repository = "https://github.com/W-Mai/filmr"
 license = "MIT"
 keywords = ["film", "simulation", "gui", "cli", "photography"]
 categories = ["multimedia::images", "command-line-utilities", "gui"]
+homepage = "https://benign.host/"
+
+[package.metadata.wix]
+upgrade-guid = "BD2F561E-0A9B-49FE-B68D-72036EAB193F"
+path-guid = "9549CC2F-B9E6-488F-A630-5821D6D02B5B"
+license = false
+eula = false
 
 [dependencies]
 filmr = { version = "0.3.2", path = "../../" }
@@ -46,3 +53,8 @@ required-features = ["cli"]
 name = "filmr-ui"
 path = "src/bin/filmr-ui.rs"
 required-features = ["ui"]
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

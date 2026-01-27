@@ -9,6 +9,7 @@ repository = "https://github.com/W-Mai/filmr"
 license = "MIT"
 keywords = ["film", "simulation", "photography", "image-processing", "analog"]
 categories = ["multimedia::images", "rendering", "science"]
+homepage = "https://benign.host/"
 
 [workspace]
 members = [
@@ -30,3 +31,8 @@ serde_json = "1.0.149"
 [dev-dependencies]
 imageproc = "0.23.0"
 rusttype = "0.9.3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
