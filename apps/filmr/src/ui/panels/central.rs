@@ -108,16 +108,27 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
 
         if app.is_processing || app.is_loading {
             let rect = ui.available_rect_before_wrap();
-            ui.put(
-                rect,
-                egui::Label::new(
-                    egui::RichText::new("⏳ Processing...")
-                        .heading()
-                        .color(egui::Color32::WHITE),
-                ),
-            );
-            ui.centered_and_justified(|ui| {
-                ui.add(egui::Spinner::new().size(40.0));
+            ui.painter()
+                .rect_filled(rect, 0.0, egui::Color32::from_black_alpha(150));
+            ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
+                ui.centered_and_justified(|ui| {
+                    ui.vertical(|ui| {
+                        ui.add(egui::Spinner::new().size(48.0));
+                        ui.add_space(10.0);
+                        let text = if app.is_loading {
+                            "Loading Image..."
+                        } else if app.is_processing && app.status_msg.contains("Developing") {
+                            "Developing Full Resolution..."
+                        } else {
+                            "Processing Preview..."
+                        };
+                        ui.label(
+                            egui::RichText::new(text)
+                                .heading()
+                                .color(egui::Color32::WHITE),
+                        );
+                    });
+                });
             });
         }
     });
