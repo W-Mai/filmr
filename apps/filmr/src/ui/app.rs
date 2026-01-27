@@ -29,6 +29,7 @@ struct ProcessResult {
 
 struct LoadRequest {
     path: PathBuf,
+    stock: Option<FilmStock>,
 }
 
 struct LoadResultData {
@@ -37,6 +38,7 @@ struct LoadResultData {
     metrics: FilmMetrics,
     preview: Arc<RgbImage>,
     preview_texture_data: ColorImage,
+    estimated_exposure: Option<f32>,
 }
 
 struct LoadResult {
@@ -130,7 +132,7 @@ impl FilmrApp {
         fonts.font_data.insert(
             "ark-pixel".to_owned(),
             std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
-                "../../statics/ark-pixel-12px-monospaced-zh_cn.otf"
+                "../../static/ark-pixel-12px-monospaced-zh_cn.otf"
             ))),
         );
         fonts
@@ -234,12 +236,17 @@ impl FilmrApp {
                             preview_rgb.as_flat_samples().as_slice(),
                         );
 
+                        let estimated_exposure = req
+                            .stock
+                            .map(|stock| estimate_exposure_time(&preview_rgb, &stock));
+
                         Ok(LoadResultData {
                             image: img,
                             texture_data,
                             metrics,
                             preview: Arc::new(preview_rgb),
                             preview_texture_data,
+                            estimated_exposure,
                         })
                     }
                     Err(e) => Err(e.to_string()),
@@ -469,8 +476,14 @@ impl App for FilmrApp {
                 if let Some(path) = &file.path {
                     self.status_msg = format!("Loading {:?}...", path);
                     self.is_loading = true;
+                    let stock = if self.mode == AppMode::Standard {
+                        Some(self.get_current_stock())
+                    } else {
+                        None
+                    };
                     let _ = self.tx_load.send(LoadRequest {
                         path: path.to_path_buf(),
+                        stock,
                     });
                 }
             }
@@ -508,9 +521,15 @@ impl App for FilmrApp {
 
                     if self.mode == AppMode::Standard {
                         // Estimate exposure for the loaded image if in standard mode
-                        let stock = self.get_current_stock();
-                        self.exposure_time =
-                            estimate_exposure_time(self.preview_image.as_ref().unwrap(), &stock);
+                        if let Some(exposure) = data.estimated_exposure {
+                            self.exposure_time = exposure;
+                        } else {
+                            let stock = self.get_current_stock();
+                            self.exposure_time = estimate_exposure_time(
+                                self.preview_image.as_ref().unwrap(),
+                                &stock,
+                            );
+                        }
                     }
 
                     // Auto-process logic: Immediately process the preview after loading
@@ -571,7 +590,12 @@ impl App for FilmrApp {
                         {
                             self.status_msg = format!("Loading {:?}...", path);
                             self.is_loading = true;
-                            let _ = self.tx_load.send(LoadRequest { path });
+                            let stock = if self.mode == AppMode::Standard {
+                                Some(self.get_current_stock())
+                            } else {
+                                None
+                            };
+                            let _ = self.tx_load.send(LoadRequest { path, stock });
                         }
                         ui.close();
                     }

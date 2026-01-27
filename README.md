@@ -1,7 +1,7 @@
 # Filmr
 
 <p align="center">
-  <img src="statics/filmr.svg" alt="filmr logo" width="160"/>
+  <img src="static/filmr.svg" alt="filmr logo" width="160"/>
 </p>
 
 <p align="center">

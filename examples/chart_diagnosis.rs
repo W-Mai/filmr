@@ -103,7 +103,7 @@ fn generate_contact_sheet(
         *p = Rgb([30, 30, 30]);
     }
 
-    let font_data = include_bytes!("../apps/filmr/statics/ark-pixel-12px-monospaced-zh_cn.otf");
+    let font_data = include_bytes!("../apps/filmr/static/ark-pixel-12px-monospaced-zh_cn.otf");
     let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
     let scale_title = Scale { x: 20.0, y: 20.0 };
     let scale_text = Scale { x: 13.0, y: 13.0 }; // Slightly smaller text
