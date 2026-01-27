@@ -99,6 +99,7 @@ pub struct FilmrApp {
     // App Mode
     pub mode: AppMode,
     pub studio_stock: FilmStock,
+    pub builtin_stock_count: usize,
 
     // Studio State
     pub studio_stock_idx: Option<usize>,
@@ -136,6 +137,7 @@ impl FilmrApp {
         cc.egui_ctx.set_fonts(fonts);
 
         let mut stocks = presets::get_all_stocks();
+        let builtin_stock_count = stocks.len();
         let config_manager = ConfigManager::init();
 
         // Load custom stocks
@@ -264,6 +266,7 @@ impl FilmrApp {
 
             mode: AppMode::Standard,
             studio_stock: presets::STANDARD_DAYLIGHT,
+            builtin_stock_count,
 
             studio_stock_idx: None,
             has_unsaved_changes: false,
@@ -563,9 +566,13 @@ impl App for FilmrApp {
                         self.process_and_update_texture(ctx);
                     }
                     if ui
-                        .selectable_value(&mut self.mode, AppMode::Studio, "Stock Studio")
+                        .add_enabled(
+                            self.studio_stock_idx.is_some(),
+                            egui::SelectableLabel::new(self.mode == AppMode::Studio, "Stock Studio"),
+                        )
                         .clicked()
                     {
+                        self.mode = AppMode::Studio;
                         self.process_and_update_texture(ctx);
                     }
                 });

@@ -139,6 +139,20 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
                     app.process_and_update_texture(ctx);
                 }
+
+                // Allow editing if it is a custom stock (imported or created)
+                if app.selected_stock_idx >= app.builtin_stock_count
+                    && ui.button("📝 Edit in Stock Studio").clicked()
+                {
+                    app.studio_stock = app.stocks[app.selected_stock_idx].1;
+                    app.studio_stock_idx = Some(app.selected_stock_idx);
+                    app.mode = AppMode::Studio;
+                    // Editing existing stock implies potential changes
+                    app.has_unsaved_changes = true;
+
+                    app.process_and_update_texture(ctx);
+                }
+
                 ui.add_space(5.0);
 
                 let mut preset_changed = false;
