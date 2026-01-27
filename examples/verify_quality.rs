@@ -637,7 +637,7 @@ fn generate_contact_sheet(
         *p = Rgb([255, 255, 255]);
     }
 
-    let font_data = include_bytes!("/System/Library/Fonts/Monaco.ttf");
+    let font_data = include_bytes!("../statics/ark-pixel-12px-monospaced-zh_cn.otf");
     let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
     let scale_header = Scale { x: 20.0, y: 20.0 };
     let scale_text = Scale { x: 16.0, y: 16.0 };

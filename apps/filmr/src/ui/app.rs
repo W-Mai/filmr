@@ -97,6 +97,25 @@ pub enum AppMode {
 
 impl FilmrApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let mut fonts = egui::FontDefinitions::default();
+        fonts.font_data.insert(
+            "ark-pixel".to_owned(),
+            std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
+                "../../../../statics/ark-pixel-12px-monospaced-zh_cn.otf"
+            ))),
+        );
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .insert(0, "ark-pixel".to_owned());
+        fonts
+            .families
+            .entry(egui::FontFamily::Monospace)
+            .or_default()
+            .insert(0, "ark-pixel".to_owned());
+        cc.egui_ctx.set_fonts(fonts);
+
         let stocks = presets::get_all_stocks();
         let (tx_req, rx_req) = unbounded::<ProcessRequest>();
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
