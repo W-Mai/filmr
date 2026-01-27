@@ -554,6 +554,12 @@ impl App for FilmrApp {
                     }
 
                     ui.separator();
+
+                    if ui.button("Settings...").clicked() {
+                        self.show_settings = true;
+                        ui.close();
+                    }
+
                     if ui.button("Quit").clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
