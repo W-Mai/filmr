@@ -104,7 +104,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             if app.mode == AppMode::Standard {
                 if ui.button("✨ Create Custom Stock from Current").clicked() {
                     let current_stock = app.get_current_stock();
-                    let new_stock = current_stock.clone();
+                    let new_stock = current_stock;
 
                     let base_name = app.stocks[app.selected_stock_idx].0;
                     // Extract name without "Custom - " prefix if it already exists to avoid stacking
@@ -113,7 +113,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
                     let leaked_name: &'static str = Box::leak(new_name.into_boxed_str());
 
-                    app.stocks.push((leaked_name, new_stock.clone()));
+                    app.stocks.push((leaked_name, new_stock));
                     let new_idx = app.stocks.len() - 1;
                     app.selected_stock_idx = new_idx;
 

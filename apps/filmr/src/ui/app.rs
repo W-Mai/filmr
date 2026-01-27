@@ -268,7 +268,6 @@ impl FilmrApp {
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
                 light_leak: self.light_leak_config.clone(),
-                ..Default::default()
             };
 
             // Send request to worker
@@ -316,7 +315,6 @@ impl FilmrApp {
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
                 light_leak: self.light_leak_config.clone(),
-                ..Default::default()
             };
 
             let request = ProcessRequest {
@@ -382,7 +380,7 @@ impl App for FilmrApp {
                                 // Estimate exposure for the loaded image if in standard mode
                                 let stock = self.get_current_stock();
                                 self.exposure_time = estimate_exposure_time(
-                                    &self.preview_image.as_ref().unwrap(),
+                                    self.preview_image.as_ref().unwrap(),
                                     &stock,
                                 );
                             }
@@ -459,7 +457,7 @@ impl App for FilmrApp {
                                     // Estimate exposure for the loaded image if in standard mode
                                     let stock = self.get_current_stock();
                                     self.exposure_time = estimate_exposure_time(
-                                        &self.preview_image.as_ref().unwrap(),
+                                        self.preview_image.as_ref().unwrap(),
                                         &stock,
                                     );
                                 }
@@ -503,11 +501,9 @@ impl App for FilmrApp {
         });
 
         // Handle Exit Dialog
-        if ctx.input(|i| i.viewport().close_requested()) {
-            if self.has_unsaved_changes {
-                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-                self.show_exit_dialog = true;
-            }
+        if ctx.input(|i| i.viewport().close_requested()) && self.has_unsaved_changes {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.show_exit_dialog = true;
         }
 
         if self.show_exit_dialog {

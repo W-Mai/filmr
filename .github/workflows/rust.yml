@@ -22,13 +22,13 @@ jobs:
         components: clippy, rustfmt
 
     - name: Check formatting
-      run: cargo fmt -- --check
+      run: cargo fmt -p filmr -- --check && cargo fmt -p filmr_app -- --check
 
     - name: Build
-      run: cargo build --verbose --all-features --all-targets
+      run: cargo build -p filmr --verbose --all-features --all-targets && cargo build -p filmr_app --verbose --all-features --all-targets
 
     - name: Run tests
-      run: cargo test --verbose --all-features --all-targets
+      run: cargo test -p filmr --verbose --all-features --all-targets && cargo test -p filmr_app --verbose --all-features --all-targets
 
     - name: Clippy
-      run: cargo clippy --all-features --all-targets -- -D warnings
+      run: cargo clippy -p filmr --all-features --all-targets -- -D warnings && cargo clippy -p filmr_app --all-features --all-targets -- -D warnings
