@@ -1,7 +1,9 @@
 use crate::ui::panels;
+use crate::config::ConfigManager;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};
+use filmr::film::FilmStockCollection;
 use filmr::{
     estimate_exposure_time, light_leak::LightLeakConfig, presets, process_image, FilmMetrics,
     FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode,
@@ -87,6 +89,8 @@ pub struct FilmrApp {
     pub studio_stock_idx: Option<usize>,
     pub has_unsaved_changes: bool,
     pub show_exit_dialog: bool,
+
+    pub config_manager: Option<ConfigManager>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -116,7 +120,34 @@ impl FilmrApp {
             .insert(0, "ark-pixel".to_owned());
         cc.egui_ctx.set_fonts(fonts);
 
-        let stocks = presets::get_all_stocks();
+        let mut stocks = presets::get_all_stocks();
+        let config_manager = ConfigManager::init();
+
+        // Load custom stocks
+        if let Some(cm) = &config_manager {
+             if let Ok(entries) = std::fs::read_dir(&cm.config.custom_stocks_path) {
+                 for entry in entries.flatten() {
+                     let path = entry.path();
+                     if path.extension().map_or(false, |ext| ext == "json") {
+                         // Try collection first
+                         if let Ok(file) = std::fs::File::open(&path) {
+                             let reader = std::io::BufReader::new(file);
+                             if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
+                                 for (name, stock) in collection.stocks {
+                                      let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                                      stocks.push((leaked_name, stock));
+                                 }
+                             } else if let Ok(stock) = FilmStock::load_from_file(&path) {
+                                 let name = path.file_stem().unwrap().to_string_lossy().to_string();
+                                 let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                                 stocks.push((leaked_name, stock));
+                             }
+                         }
+                     }
+                 }
+             }
+        }
+
         let (tx_req, rx_req) = unbounded::<ProcessRequest>();
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
 
@@ -197,6 +228,8 @@ impl FilmrApp {
             studio_stock_idx: None,
             has_unsaved_changes: false,
             show_exit_dialog: false,
+
+            config_manager,
         }
     }
 

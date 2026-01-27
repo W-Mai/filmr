@@ -1,5 +1,6 @@
 use crate::ui::app::{AppMode, FilmrApp};
 use egui::Context;
+use filmr::film::FilmStockCollection;
 use filmr::light_leak::{LightLeak, LightLeakShape};
 use filmr::{OutputMode, WhiteBalanceMode};
 
@@ -22,32 +23,44 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                             if let Some(path) =
                                 FileDialog::new().add_filter("JSON", &["json"]).pick_file()
                             {
-                                if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
-                                    let name =
-                                        path.file_stem().unwrap().to_string_lossy().to_string();
+                                // Try opening file
+                                if let Ok(file) = std::fs::File::open(&path) {
+                                    let reader = std::io::BufReader::new(file);
+                                    // Try collection first
+                                    if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
+                                        for (name, stock) in collection.stocks {
+                                             let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                                             app.stocks.push((leaked_name, stock));
+                                        }
+                                        app.status_msg = "Loaded preset collection".to_string();
+                                        changed = true;
+                                    } else if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
+                                        let name =
+                                            path.file_stem().unwrap().to_string_lossy().to_string();
 
-                                    // Update UI sliders to match the loaded stock
-                                    app.halation_strength = stock.halation_strength;
-                                    app.halation_threshold = stock.halation_threshold;
-                                    app.halation_sigma = stock.halation_sigma;
+                                        // Update UI sliders to match the loaded stock
+                                        app.halation_strength = stock.halation_strength;
+                                        app.halation_threshold = stock.halation_threshold;
+                                        app.halation_sigma = stock.halation_sigma;
 
-                                    app.grain_alpha = stock.grain_model.alpha;
-                                    app.grain_sigma = stock.grain_model.sigma_read;
-                                    app.grain_roughness = stock.grain_model.roughness;
-                                    app.grain_blur_radius = stock.grain_model.blur_radius;
+                                        app.grain_alpha = stock.grain_model.alpha;
+                                        app.grain_sigma = stock.grain_model.sigma_read;
+                                        app.grain_roughness = stock.grain_model.roughness;
+                                        app.grain_blur_radius = stock.grain_model.blur_radius;
 
-                                    // Add the loaded stock to the list and select it
-                                    // Note: We use Box::leak to extend the 'static lifetime for the demo
-                                    let leaked_name: &'static str =
-                                        Box::leak(name.into_boxed_str());
-                                    app.stocks.push((leaked_name, stock));
-                                    app.selected_stock_idx = app.stocks.len() - 1;
+                                        // Add the loaded stock to the list and select it
+                                        // Note: We use Box::leak to extend the 'static lifetime for the demo
+                                        let leaked_name: &'static str =
+                                            Box::leak(name.into_boxed_str());
+                                        app.stocks.push((leaked_name, stock));
+                                        app.selected_stock_idx = app.stocks.len() - 1;
 
-                                    app.load_preset_values();
-                                    changed = true;
-                                    app.status_msg = format!("Loaded preset: {}", leaked_name);
-                                } else {
-                                    app.status_msg = "Failed to load preset".to_string();
+                                        app.load_preset_values();
+                                        changed = true;
+                                        app.status_msg = format!("Loaded preset: {}", leaked_name);
+                                    } else {
+                                        app.status_msg = "Failed to load preset".to_string();
+                                    }
                                 }
                             }
                         }
