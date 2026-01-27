@@ -101,7 +101,7 @@ impl FilmrApp {
         fonts.font_data.insert(
             "ark-pixel".to_owned(),
             std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
-                "../../../../statics/ark-pixel-12px-monospaced-zh_cn.otf"
+                "../../statics/ark-pixel-12px-monospaced-zh_cn.otf"
             ))),
         );
         fonts
