@@ -280,7 +280,7 @@ impl FilmrApp {
                 self.get_current_stock()
             };
             let mut film = base_film;
-            
+
             if self.mode == AppMode::Standard {
                 film.halation_strength = self.halation_strength;
                 film.halation_threshold = self.halation_threshold;
@@ -362,14 +362,16 @@ impl App for FilmrApp {
                             if self.mode == AppMode::Standard {
                                 // Estimate exposure for the loaded image if in standard mode
                                 let stock = self.get_current_stock();
-                                self.exposure_time =
-                                    estimate_exposure_time(&self.preview_image.as_ref().unwrap(), &stock);
+                                self.exposure_time = estimate_exposure_time(
+                                    &self.preview_image.as_ref().unwrap(),
+                                    &stock,
+                                );
                             }
-                            
+
                             self.process_and_update_texture(ctx);
                         }
                         Err(e) => {
-                             self.status_msg = format!("Failed to load image: {}", e);
+                            self.status_msg = format!("Failed to load image: {}", e);
                         }
                     }
                 }
@@ -396,7 +398,7 @@ impl App for FilmrApp {
                 self.metrics_developed = Some(result.metrics);
                 self.is_processing = false;
                 self.status_msg = "Development complete.".to_owned();
-                
+
                 // If in studio mode, we might want to auto-save or something, but for now just notify
             }
         }
@@ -405,7 +407,10 @@ impl App for FilmrApp {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.add(egui::Button::new("Open Image...").shortcut_text("Ctrl+O")).clicked() {
+                    if ui
+                        .add(egui::Button::new("Open Image...").shortcut_text("Ctrl+O"))
+                        .clicked()
+                    {
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("Images", &["png", "jpg", "jpeg", "tif", "tiff"])
                             .pick_file()
@@ -434,10 +439,12 @@ impl App for FilmrApp {
                                 if self.mode == AppMode::Standard {
                                     // Estimate exposure for the loaded image if in standard mode
                                     let stock = self.get_current_stock();
-                                    self.exposure_time =
-                                        estimate_exposure_time(&self.preview_image.as_ref().unwrap(), &stock);
+                                    self.exposure_time = estimate_exposure_time(
+                                        &self.preview_image.as_ref().unwrap(),
+                                        &stock,
+                                    );
                                 }
-                                
+
                                 self.process_and_update_texture(ctx);
                             }
                         }
@@ -454,16 +461,22 @@ impl App for FilmrApp {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
-                
+
                 ui.separator();
-                
+
                 // Mode Switcher
                 ui.horizontal(|ui| {
                     ui.label("Mode:");
-                    if ui.selectable_value(&mut self.mode, AppMode::Standard, "Standard").clicked() {
+                    if ui
+                        .selectable_value(&mut self.mode, AppMode::Standard, "Standard")
+                        .clicked()
+                    {
                         self.process_and_update_texture(ctx);
                     }
-                    if ui.selectable_value(&mut self.mode, AppMode::Studio, "Stock Studio").clicked() {
+                    if ui
+                        .selectable_value(&mut self.mode, AppMode::Studio, "Stock Studio")
+                        .clicked()
+                    {
                         self.process_and_update_texture(ctx);
                     }
                 });
@@ -518,7 +531,7 @@ impl App for FilmrApp {
                 ui.label(&self.status_msg);
             });
         });
-        
+
         panels::central::render_central_panel(self, ctx);
     }
 }

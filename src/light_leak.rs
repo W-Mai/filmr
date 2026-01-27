@@ -35,7 +35,7 @@ pub struct LightLeak {
 pub enum LightLeakShape {
     Circle,
     Linear, // A line/streak
-    // RandomBlob, // Could be added later with noise
+            // RandomBlob, // Could be added later with noise
 }
 
 pub struct LightLeakStage;
@@ -83,7 +83,7 @@ impl PipelineStage for LightLeakStage {
                                 (1.0 - t).max(0.0).powf(2.0)
                             }
                         };
-                        
+
                         let factor = falloff * leak.intensity;
 
                         let pixel = image.get_pixel_mut(x, y);

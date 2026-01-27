@@ -69,7 +69,6 @@ fn main() {
     println!("Contact sheet saved to {}/contact_sheet.jpg", output_dir);
 }
 
-
 fn load_system_font() -> Vec<u8> {
     let paths = [
         "/System/Library/Fonts/Monaco.ttf",
@@ -87,7 +86,7 @@ fn load_system_font() -> Vec<u8> {
             }
         }
     }
-    
+
     // If no font found, we can try to download one or just panic with a clear message
     // For this example, we'll try to use a fallback if possible, but rusttype needs data.
     // Let's assume one of the above exists or fail.

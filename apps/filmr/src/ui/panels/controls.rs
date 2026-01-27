@@ -23,7 +23,8 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                                 FileDialog::new().add_filter("JSON", &["json"]).pick_file()
                             {
                                 if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
-                                    let name = path.file_stem().unwrap().to_string_lossy().to_string();
+                                    let name =
+                                        path.file_stem().unwrap().to_string_lossy().to_string();
 
                                     // Update UI sliders to match the loaded stock
                                     app.halation_strength = stock.halation_strength;
@@ -37,7 +38,8 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
                                     // Add the loaded stock to the list and select it
                                     // Note: We use Box::leak to extend the 'static lifetime for the demo
-                                    let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                                    let leaked_name: &'static str =
+                                        Box::leak(name.into_boxed_str());
                                     app.stocks.push((leaked_name, stock));
                                     app.selected_stock_idx = app.stocks.len() - 1;
 
@@ -103,23 +105,23 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 if ui.button("✨ Create Custom Stock from Current").clicked() {
                     let current_stock = app.get_current_stock();
                     let new_stock = current_stock.clone();
-                    
+
                     let base_name = app.stocks[app.selected_stock_idx].0;
                     // Extract name without "Custom - " prefix if it already exists to avoid stacking
                     let clean_name = base_name.strip_prefix("Custom - ").unwrap_or(base_name);
                     let new_name = format!("Custom - {}", clean_name);
-                    
+
                     let leaked_name: &'static str = Box::leak(new_name.into_boxed_str());
-                    
+
                     app.stocks.push((leaked_name, new_stock.clone()));
                     let new_idx = app.stocks.len() - 1;
                     app.selected_stock_idx = new_idx;
-                    
+
                     app.studio_stock = new_stock;
                     app.studio_stock_idx = Some(new_idx);
                     app.mode = AppMode::Studio;
                     app.has_unsaved_changes = true;
-                    
+
                     app.process_and_update_texture(ctx);
                 }
                 ui.add_space(5.0);
@@ -164,7 +166,11 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 // Studio Mode: Show only the temporary stock
                 ui.group(|ui| {
                     ui.vertical_centered(|ui| {
-                        ui.label(egui::RichText::new("🛠️ Custom Studio Stock").strong().color(egui::Color32::LIGHT_BLUE));
+                        ui.label(
+                            egui::RichText::new("🛠️ Custom Studio Stock")
+                                .strong()
+                                .color(egui::Color32::LIGHT_BLUE),
+                        );
                         ui.label("Editing in Right Panel 👉");
                     });
                 });
@@ -192,13 +198,18 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                     changed = true;
                 }
                 if ui
-                    .add(egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"))
+                    .add(
+                        egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"),
+                    )
                     .changed()
                 {
                     changed = true;
                 }
                 if ui
-                    .add(egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1).text("Sigma (Spread)"))
+                    .add(
+                        egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1)
+                            .text("Sigma (Spread)"),
+                    )
                     .changed()
                 {
                     changed = true;
@@ -238,13 +249,19 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                             ui.horizontal(|ui| {
                                 ui.label("Pos:");
                                 if ui
-                                    .add(egui::Slider::new(&mut leak.position.0, 0.0..=1.0).text("X"))
+                                    .add(
+                                        egui::Slider::new(&mut leak.position.0, 0.0..=1.0)
+                                            .text("X"),
+                                    )
                                     .changed()
                                 {
                                     changed = true;
                                 }
                                 if ui
-                                    .add(egui::Slider::new(&mut leak.position.1, 0.0..=1.0).text("Y"))
+                                    .add(
+                                        egui::Slider::new(&mut leak.position.1, 0.0..=1.0)
+                                            .text("Y"),
+                                    )
                                     .changed()
                                 {
                                     changed = true;
@@ -326,30 +343,30 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                         changed = true;
                     }
 
-                ui.label("Sigma (Base Noise)");
-                if ui
-                    .add(egui::Slider::new(&mut app.grain_sigma, 0.0..=0.05).step_by(0.001))
-                    .changed()
-                {
-                    changed = true;
-                }
+                    ui.label("Sigma (Base Noise)");
+                    if ui
+                        .add(egui::Slider::new(&mut app.grain_sigma, 0.0..=0.05).step_by(0.001))
+                        .changed()
+                    {
+                        changed = true;
+                    }
 
-                ui.label("Roughness");
-                if ui
-                    .add(egui::Slider::new(&mut app.grain_roughness, 0.0..=1.0))
-                    .changed()
-                {
-                    changed = true;
-                }
+                    ui.label("Roughness");
+                    if ui
+                        .add(egui::Slider::new(&mut app.grain_roughness, 0.0..=1.0))
+                        .changed()
+                    {
+                        changed = true;
+                    }
 
-                ui.label("Blur Radius");
-                if ui
-                    .add(egui::Slider::new(&mut app.grain_blur_radius, 0.0..=2.0))
-                    .changed()
-                {
-                    changed = true;
-                }
-            });
+                    ui.label("Blur Radius");
+                    if ui
+                        .add(egui::Slider::new(&mut app.grain_blur_radius, 0.0..=2.0))
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                });
             }
 
             ui.group(|ui| {
