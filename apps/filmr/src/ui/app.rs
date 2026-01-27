@@ -105,6 +105,7 @@ pub struct FilmrApp {
     pub studio_stock_idx: Option<usize>,
     pub has_unsaved_changes: bool,
     pub show_exit_dialog: bool,
+    pub show_settings: bool,
 
     pub config_manager: Option<ConfigManager>,
 }
@@ -271,6 +272,7 @@ impl FilmrApp {
             studio_stock_idx: None,
             has_unsaved_changes: false,
             show_exit_dialog: false,
+            show_settings: false,
 
             config_manager,
         }
@@ -617,6 +619,10 @@ impl App for FilmrApp {
 
         if self.show_metrics {
             panels::metrics::render_metrics(self, ctx);
+        }
+
+        if self.show_settings {
+            panels::settings::render_settings_window(self, ctx);
         }
 
         // Status Bar
