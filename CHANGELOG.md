@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-01-27
+
+### 🚀 Features
+
+- **UI**: Implemented settings window and persistent configuration management.
+- **UI**: Enhanced preview logic with initial, interaction, and develop states.
+- **UI**: Improved Stock Studio with "Edit" capability for imported stocks.
+- **UI**: Added semi-transparent spinner overlay with dynamic status text.
+
+## [0.3.5] - 2026-01-27
+
+### 🚀 Features
+
+- **Core**: Enhanced Light Leak simulation with organic/plasma shapes and rotation support.
+- **UI**: Added controls for Light Leak configuration (Shape, Rotation, Intensity).
+
+### 🐛 Fixes
+
+- **UI**: Fixed portrait image blur by increasing preview texture resolution.
+
+## [0.3.4] - 2026-01-27
+
+### 🚀 Features
+
+- **Core/UI**: Implemented `ConfigManager` for persistent settings.
+- **Core**: Added support for `FilmStockCollection` and loading custom presets from JSON.
+- **UI**: Added ability to import and auto-load custom film collections.
+
+## [0.3.3] - 2026-01-27
+
+### 💄 Style
+
+- **UI**: Changed default font to `ark-pixel` for better legibility.
+
+## [0.3.2] - 2026-01-27
+
+### 🚀 Features
+
+- **UI**: Added "Stock Studio" for custom film creation and editing.
+- **UI**: Implemented "Exit Dialog" to warn about unsaved changes.
+- **UI**: Added "Status Bar" for displaying application state.
+- **UI**: Enabled "Sync" of studio edits to the stock list.
+- **UI**: Added "Create Custom Stock" from current selection.
+
+### 🐛 Fixes
+
+- **UI**: Restored drag-and-drop functionality.
+
+## [0.3.0] - 2026-01-26
+
+### 🚀 Features
+
+- **Core**: Added Light Leak simulation with configurable parameters.
+- **CLI**: Introduced `filmr-cli` command line tool.
+- **Core**: Implemented advanced RMS grain roughness simulation.
+- **Core**: Added Serde serialization for film types and preset management (Save/Load/Export/Import).
+- **Architecture**: Restructured project into a workspace with core library and unified app.
+
 ## [0.2.0] - 2026-01-26
 
 ### 🚀 Features
