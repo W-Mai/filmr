@@ -464,9 +464,18 @@ impl App for FilmrApp {
                     ));
                     self.metrics_original = Some(FilmMetrics::analyze(&rgb));
 
+                    // Reset developed status on new image load
+                    self.developed_image = None;
+
                     // Generate preview
                     // Resize for performance, ensuring high quality for both landscape and portrait
-                    let preview = img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8();
+                    let width = img.width();
+                    let height = img.height();
+                    let preview = if width > 2048 || height > 2048 {
+                        img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8()
+                    } else {
+                        img.to_rgb8()
+                    };
                     self.preview_image = Some(Arc::new(preview));
 
                     // Initially show the raw preview image (unprocessed)
@@ -487,6 +496,9 @@ impl App for FilmrApp {
                         self.exposure_time =
                             estimate_exposure_time(self.preview_image.as_ref().unwrap(), &stock);
                     }
+
+                    // Auto-process logic: Immediately process the preview after loading
+                    self.process_and_update_texture(ctx);
                 }
                 Err(e) => {
                     self.status_msg = format!("Failed to load image: {}", e);
