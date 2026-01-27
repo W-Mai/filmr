@@ -53,8 +53,3 @@ required-features = ["cli"]
 name = "filmr-ui"
 path = "src/bin/filmr-ui.rs"
 required-features = ["ui"]
-
-# The profile that 'dist' will build with
-[profile.dist]
-inherits = "release"
-lto = "thin"

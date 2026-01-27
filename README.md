@@ -50,7 +50,7 @@ Filmr implements a comprehensive imaging pipeline that models the physical behav
 The interactive GUI allows you to drag-and-drop images and tweak simulation parameters in real-time.
 
 ```bash
-cargo run -p gui_demo --release
+cargo run -p filmr_app --bin filmr_ui --release
 ```
 
 ### 2. Generate Diagnostic Charts
@@ -63,10 +63,29 @@ cargo run --example chart_diagnosis --release
 
 ## 📦 Installation
 
-### Prerequisites
+### Install from Binary
+
+#### MacOS (Homebrew)
+```bash
+brew install W-Mai/cellar/filmr_app
+```
+
+#### Windows (PowerShell)
+```powershell
+irm https://github.com/W-Mai/filmr/releases/latest/download/filmr_app-installer.ps1 | iex
+```
+
+#### Linux / MacOS (Shell)
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/W-Mai/filmr/releases/latest/download/filmr_app-installer.sh | sh
+```
+
+### Build from Source
+
+#### Prerequisites
 - [Rust Toolchain](https://www.rust-lang.org/tools/install) (1.70 or later)
 
-### Steps
+#### Steps
 
 1. **Clone the repository**
    ```bash
