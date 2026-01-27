@@ -20,13 +20,20 @@ pub struct LightLeak {
     pub intensity: f32,
     /// Type of shape
     pub shape: LightLeakShape,
+    /// Rotation angle in radians
+    #[serde(default)]
+    pub rotation: f32,
+    /// Roughness/Noise factor (0.0 to 1.0)
+    #[serde(default)]
+    pub roughness: f32,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum LightLeakShape {
     Circle,
     Linear, // A line/streak
-            // RandomBlob, // Could be added later with noise
+    Organic, // Perlin-like noise blob
+    Plasma,  // Interference-like pattern
 }
 
 pub struct LightLeakStage;
@@ -65,13 +72,42 @@ impl PipelineStage for LightLeakStage {
                             LightLeakShape::Circle => {
                                 // Smoothstep-like falloff
                                 let t = dist / radius_px;
-                                (1.0 - t).powf(2.0)
+                                (1.0 - t).max(0.0).powf(2.0)
                             }
                             LightLeakShape::Linear => {
-                                // For linear, we interpret position as center, and radius as width/length?
-                                // Simplified: Linear vertical streak for now
-                                let t = dx.abs() / radius_px;
+                                // Rotated linear gradient
+                                // Project (dx, dy) onto the normal vector of the line
+                                // Normal vector: (-sin(rot), cos(rot))
+                                let nx = -leak.rotation.sin();
+                                let ny = leak.rotation.cos();
+                                let dist_normal = (dx * nx + dy * ny).abs();
+                                
+                                let t = dist_normal / radius_px;
                                 (1.0 - t).max(0.0).powf(2.0)
+                            }
+                            LightLeakShape::Organic => {
+                                // Fire-like / Organic
+                                // Use noise to distort the distance field
+                                let noise_scale = 0.05; // Frequency
+                                let n = pseudo_noise(x as f32 * noise_scale, y as f32 * noise_scale);
+                                
+                                // Distort radius based on noise and roughness
+                                let distorted_radius = radius_px * (1.0 - leak.roughness * 0.5 + n * leak.roughness);
+                                let t = dist / distorted_radius;
+                                
+                                // Sharper falloff for fire
+                                (1.0 - t).max(0.0).powf(3.0)
+                            }
+                            LightLeakShape::Plasma => {
+                                // Interference pattern
+                                let freq = 0.1 / (leak.radius + 0.01);
+                                let phase = leak.rotation * 5.0;
+                                let v = ((x as f32 * freq + phase).sin() + (y as f32 * freq + phase).cos()) * 0.5 + 0.5;
+                                
+                                let t = dist / radius_px;
+                                let base_falloff = (1.0 - t).max(0.0).powf(2.0);
+                                
+                                base_falloff * (1.0 - leak.roughness + v * leak.roughness)
                             }
                         };
 
@@ -87,4 +123,9 @@ impl PipelineStage for LightLeakStage {
             }
         }
     }
+}
+
+// Simple pseudo-random noise function
+fn pseudo_noise(x: f32, y: f32) -> f32 {
+    ((x * 12.9898 + y * 78.233).sin() * 43758.5453).fract().abs()
 }
