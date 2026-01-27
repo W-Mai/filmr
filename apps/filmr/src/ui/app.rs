@@ -482,8 +482,8 @@ impl App for FilmrApp {
                                 self.metrics_original = Some(FilmMetrics::analyze(&rgb));
 
                                 // Generate preview
-                                // Resize for performance
-                                let preview = img.resize(1280, 720, FilterType::Lanczos3).to_rgb8();
+                                // Resize for performance, ensuring high quality for both landscape and portrait
+                                let preview = img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8();
                                 self.preview_image = Some(Arc::new(preview));
 
                                 if self.mode == AppMode::Standard {
