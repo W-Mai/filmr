@@ -22,6 +22,8 @@
 
 **Filmr** is a high-fidelity, physics-based film simulation engine written in Rust. Unlike simple LUT-based filters, Filmr simulates the physical properties of photographic film—from spectral sensitivity and grain structure to chemical development curves—to produce authentic, organic results.
 
+<img src="static/snapshot_001.jpeg" alt="snapshot 001"/>
+
 ## 📖 Table of Contents
 
 - [Core Features](#-core-features)
