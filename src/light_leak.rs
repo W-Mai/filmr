@@ -2,19 +2,10 @@ use crate::pipeline::{PipelineContext, PipelineStage};
 use image::{ImageBuffer, Rgb};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LightLeakConfig {
     pub enabled: bool,
     pub leaks: Vec<LightLeak>,
-}
-
-impl Default for LightLeakConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            leaks: Vec::new(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
