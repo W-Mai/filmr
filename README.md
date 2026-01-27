@@ -1,8 +1,7 @@
 # Filmr
 
 <p align="center">
-  <img src="statics/filmr.svg#gh-light-mode-only" alt="filmr logo" width="160"/>
-  <img src="statics/filmr.svg#gh-dark-mode-only" alt="filmr logo" width="160"/>
+  <img src="statics/filmr.svg" alt="filmr logo" width="160"/>
 </p>
 
 <p align="center">

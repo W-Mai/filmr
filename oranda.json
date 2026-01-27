@@ -1,0 +1,11 @@
+{
+  "components": {
+    "artifacts": {
+      "auto": true,
+      "cargo_dist": true
+    }
+  },
+  "styles": {
+    "theme": "cupcake"
+  }
+}
