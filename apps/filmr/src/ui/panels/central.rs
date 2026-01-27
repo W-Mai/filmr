@@ -109,27 +109,30 @@ pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
         if app.is_processing || app.is_loading {
             let rect = ui.available_rect_before_wrap();
             ui.painter()
-                .rect_filled(rect, 0.0, egui::Color32::from_black_alpha(150));
-            ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
-                ui.centered_and_justified(|ui| {
-                    ui.vertical(|ui| {
-                        ui.add(egui::Spinner::new().size(48.0));
-                        ui.add_space(10.0);
-                        let text = if app.is_loading {
-                            "Loading Image..."
-                        } else if app.is_processing && app.status_msg.contains("Developing") {
-                            "Developing Full Resolution..."
-                        } else {
-                            "Processing Preview..."
-                        };
-                        ui.label(
-                            egui::RichText::new(text)
-                                .heading()
-                                .color(egui::Color32::WHITE),
-                        );
-                    });
-                });
-            });
+                .rect_filled(rect, 0.0, egui::Color32::from_black_alpha(40));
+            let text = if app.is_loading {
+                "Loading Image..."
+            } else if app.is_processing && app.status_msg.contains("Developing") {
+                "Developing Full Resolution..."
+            } else {
+                "Processing Preview..."
+            };
+
+            let spinner_chars = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];
+            let time = ctx.input(|i| i.time);
+            let index = (time * 8.0) as usize % spinner_chars.len();
+            let spinner = spinner_chars[index];
+
+            ui.put(
+                rect,
+                egui::Label::new(
+                    egui::RichText::new(format!("{} {}", spinner, text))
+                        .heading()
+                        .size(32.0)
+                        .color(egui::Color32::WHITE),
+                ),
+            );
+            ctx.request_repaint();
         }
     });
 }
