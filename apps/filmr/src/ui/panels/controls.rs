@@ -17,6 +17,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             // Preset Management (Standard Mode Only)
             if app.mode == AppMode::Standard {
                 ui.group(|ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label("Preset Management");
                     ui.horizontal(|ui| {
                         if ui.button("Import Preset").clicked() {
@@ -99,6 +100,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             }
 
             ui.group(|ui| {
+                ui.set_min_width(ui.available_width());
                 ui.label("Physics");
                 if ui
                     .add(
@@ -178,6 +180,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             } else {
                 // Studio Mode: Show only the temporary stock
                 ui.group(|ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.vertical_centered(|ui| {
                         ui.label(
                             egui::RichText::new("🛠️ Custom Studio Stock")
@@ -201,35 +204,40 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 }
 
                 ui.label("Halation");
-                if ui
-                    .add(
-                        egui::Slider::new(&mut app.halation_strength, 0.0..=2.0)
-                            .text("Strength (Glow)"),
-                    )
-                    .changed()
-                {
-                    changed = true;
-                }
-                if ui
-                    .add(
-                        egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"),
-                    )
-                    .changed()
-                {
-                    changed = true;
-                }
-                if ui
-                    .add(
-                        egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1)
-                            .text("Sigma (Spread)"),
-                    )
-                    .changed()
-                {
-                    changed = true;
-                }
+                // Wrap Halation in a group for consistency
+                ui.group(|ui| {
+                    ui.set_min_width(ui.available_width());
+                    if ui
+                        .add(
+                            egui::Slider::new(&mut app.halation_strength, 0.0..=2.0)
+                                .text("Strength (Glow)"),
+                        )
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                    if ui
+                        .add(
+                            egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"),
+                        )
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                    if ui
+                        .add(
+                            egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1)
+                                .text("Sigma (Spread)"),
+                        )
+                        .changed()
+                    {
+                        changed = true;
+                    }
+                });
             }
 
             ui.group(|ui| {
+                ui.set_min_width(ui.available_width());
                 ui.label("Light Leaks");
                 if ui
                     .checkbox(&mut app.light_leak_config.enabled, "Enable Light Leaks")
@@ -247,6 +255,8 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                                 radius: 0.5,
                                 intensity: 0.5,
                                 shape: LightLeakShape::Circle,
+                                rotation: 0.0,
+                                roughness: 0.0,
                             });
                             changed = true;
                         }
@@ -303,6 +313,14 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                             {
                                 changed = true;
                             }
+                            
+                            if ui.add(egui::Slider::new(&mut leak.rotation, 0.0..=std::f32::consts::TAU).text("Rotation")).changed() {
+                                changed = true;
+                            }
+                            
+                            if ui.add(egui::Slider::new(&mut leak.roughness, 0.0..=1.0).text("Roughness")).changed() {
+                                changed = true;
+                            }
 
                             egui::ComboBox::from_id_salt(format!("shape_{}", i))
                                 .selected_text(format!("{:?}", leak.shape))
@@ -327,6 +345,26 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                                     {
                                         changed = true;
                                     }
+                                    if ui
+                                        .selectable_value(
+                                            &mut leak.shape,
+                                            LightLeakShape::Organic,
+                                            "Organic",
+                                        )
+                                        .clicked()
+                                    {
+                                        changed = true;
+                                    }
+                                    if ui
+                                        .selectable_value(
+                                            &mut leak.shape,
+                                            LightLeakShape::Plasma,
+                                            "Plasma",
+                                        )
+                                        .clicked()
+                                    {
+                                        changed = true;
+                                    }
                                 });
 
                             if ui.button("Remove").clicked() {
@@ -346,6 +384,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
             if app.mode == AppMode::Standard {
                 ui.group(|ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label("Grain (Editable)");
 
                     ui.label("Alpha (Intensity)");
@@ -383,6 +422,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             }
 
             ui.group(|ui| {
+                ui.set_min_width(ui.available_width());
                 ui.label("Output");
                 ui.horizontal(|ui| {
                     if ui
@@ -400,6 +440,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 });
             });
             ui.group(|ui| {
+                ui.set_min_width(ui.available_width());
                 ui.label("White Balance");
                 ui.horizontal(|ui| {
                     if ui
