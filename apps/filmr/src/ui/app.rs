@@ -31,9 +31,17 @@ struct LoadRequest {
     path: PathBuf,
 }
 
+struct LoadResultData {
+    image: DynamicImage,
+    texture_data: ColorImage,
+    metrics: FilmMetrics,
+    preview: Arc<RgbImage>,
+    preview_texture_data: ColorImage,
+}
+
 struct LoadResult {
     path: PathBuf,
-    image: Result<DynamicImage, String>,
+    result: Result<LoadResultData, String>,
 }
 
 pub struct FilmrApp {
@@ -205,17 +213,41 @@ impl FilmrApp {
         // Spawn worker thread for loading
         thread::spawn(move || {
             while let Ok(req) = rx_load.recv() {
-                let res = match image::open(&req.path) {
-                    Ok(img) => LoadResult {
-                        path: req.path,
-                        image: Ok(img),
-                    },
-                    Err(e) => LoadResult {
-                        path: req.path,
-                        image: Err(e.to_string()),
-                    },
+                let result = match image::open(&req.path) {
+                    Ok(img) => {
+                        let rgb = img.to_rgb8();
+                        let metrics = FilmMetrics::analyze(&rgb);
+                        let texture_data = ColorImage::from_rgb(
+                            [rgb.width() as _, rgb.height() as _],
+                            rgb.as_flat_samples().as_slice(),
+                        );
+
+                        let width = img.width();
+                        let height = img.height();
+                        let preview_rgb = if width > 2048 || height > 2048 {
+                            img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8()
+                        } else {
+                            rgb.clone()
+                        };
+                        let preview_texture_data = ColorImage::from_rgb(
+                            [preview_rgb.width() as _, preview_rgb.height() as _],
+                            preview_rgb.as_flat_samples().as_slice(),
+                        );
+
+                        Ok(LoadResultData {
+                            image: img,
+                            texture_data,
+                            metrics,
+                            preview: Arc::new(preview_rgb),
+                            preview_texture_data,
+                        })
+                    }
+                    Err(e) => Err(e.to_string()),
                 };
-                let _ = tx_load_res.send(res);
+                let _ = tx_load_res.send(LoadResult {
+                    path: req.path,
+                    result,
+                });
                 ctx_load.request_repaint();
             }
         });
@@ -447,46 +479,30 @@ impl App for FilmrApp {
         // Handle File Loading Results
         if let Ok(result) = self.rx_load.try_recv() {
             self.is_loading = false;
-            match result.image {
-                Ok(img) => {
-                    self.original_image = Some(img.clone());
+            match result.result {
+                Ok(data) => {
+                    self.original_image = Some(data.image);
                     self.status_msg = format!("Loaded {:?}", result.path);
 
                     // Create original texture
-                    let rgb = img.to_rgb8();
-                    let size = [rgb.width() as _, rgb.height() as _];
-                    let pixels = rgb.as_flat_samples();
-                    let color_image = ColorImage::from_rgb(size, pixels.as_slice());
                     self.original_texture = Some(ctx.load_texture(
                         "original",
-                        color_image,
+                        data.texture_data,
                         egui::TextureOptions::LINEAR,
                     ));
-                    self.metrics_original = Some(FilmMetrics::analyze(&rgb));
+                    self.metrics_original = Some(data.metrics);
 
                     // Reset developed status on new image load
                     self.developed_image = None;
 
                     // Generate preview
-                    // Resize for performance, ensuring high quality for both landscape and portrait
-                    let width = img.width();
-                    let height = img.height();
-                    let preview = if width > 2048 || height > 2048 {
-                        img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8()
-                    } else {
-                        img.to_rgb8()
-                    };
-                    self.preview_image = Some(Arc::new(preview));
+                    self.preview_image = Some(data.preview);
 
                     // Initially show the raw preview image (unprocessed)
                     // This matches the requirement: "Show scaled photo initially"
-                    let preview_rgb = self.preview_image.as_ref().unwrap();
-                    let p_size = [preview_rgb.width() as _, preview_rgb.height() as _];
-                    let p_pixels = preview_rgb.as_flat_samples();
-                    let p_color_image = ColorImage::from_rgb(p_size, p_pixels.as_slice());
                     self.processed_texture = Some(ctx.load_texture(
                         "preview_raw",
-                        p_color_image,
+                        data.preview_texture_data,
                         egui::TextureOptions::LINEAR,
                     ));
 
