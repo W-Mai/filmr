@@ -1,5 +1,5 @@
-use crate::ui::panels;
 use crate::config::ConfigManager;
+use crate::ui::panels;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};
@@ -143,27 +143,30 @@ impl FilmrApp {
 
         // Load custom stocks
         if let Some(cm) = &config_manager {
-             if let Ok(entries) = std::fs::read_dir(&cm.config.custom_stocks_path) {
-                 for entry in entries.flatten() {
-                     let path = entry.path();
-                     if path.extension().is_some_and(|ext| ext == "json") {
-                         // Try collection first
-                         if let Ok(file) = std::fs::File::open(&path) {
-                             let reader = std::io::BufReader::new(file);
-                             if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
-                                 for (name, stock) in collection.stocks {
-                                      let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                                      stocks.push((leaked_name, stock));
-                                 }
-                             } else if let Ok(stock) = FilmStock::load_from_file(&path) {
-                                 let name = path.file_stem().unwrap().to_string_lossy().to_string();
-                                 let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                                 stocks.push((leaked_name, stock));
-                             }
-                         }
-                     }
-                 }
-             }
+            if let Ok(entries) = std::fs::read_dir(&cm.config.custom_stocks_path) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.extension().is_some_and(|ext| ext == "json") {
+                        // Try collection first
+                        if let Ok(file) = std::fs::File::open(&path) {
+                            let reader = std::io::BufReader::new(file);
+                            if let Ok(collection) =
+                                serde_json::from_reader::<_, FilmStockCollection>(reader)
+                            {
+                                for (name, stock) in collection.stocks {
+                                    let leaked_name: &'static str =
+                                        Box::leak(name.into_boxed_str());
+                                    stocks.push((leaked_name, stock));
+                                }
+                            } else if let Ok(stock) = FilmStock::load_from_file(&path) {
+                                let name = path.file_stem().unwrap().to_string_lossy().to_string();
+                                let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                                stocks.push((leaked_name, stock));
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         let (tx_req, rx_req) = unbounded::<ProcessRequest>();
@@ -570,7 +573,10 @@ impl App for FilmrApp {
                     if ui
                         .add_enabled(
                             self.studio_stock_idx.is_some(),
-                            egui::SelectableLabel::new(self.mode == AppMode::Studio, "Stock Studio"),
+                            egui::SelectableLabel::new(
+                                self.mode == AppMode::Studio,
+                                "Stock Studio",
+                            ),
                         )
                         .clicked()
                     {

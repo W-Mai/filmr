@@ -70,7 +70,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         // Try to load as collection first
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
-        
+
         if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
             println!("Detected preset collection.");
             // Try to find the preset specified by --preset argument

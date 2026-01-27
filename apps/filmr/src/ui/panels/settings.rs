@@ -15,7 +15,7 @@ pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
                 ui.heading("General");
                 ui.separator();
                 ui.add_space(5.0);
-                
+
                 ui.heading("Paths");
                 ui.group(|ui| {
                     ui.label("Custom Films Directory:");
@@ -25,9 +25,9 @@ pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
                         ui.label(
                             egui::RichText::new(&*path_str)
                                 .monospace()
-                                .background_color(ui.visuals().code_bg_color)
+                                .background_color(ui.visuals().code_bg_color),
                         );
-                        
+
                         if ui.button("📂 Browse...").clicked() {
                             if let Some(path) = FileDialog::new().pick_folder() {
                                 config_manager.config.custom_stocks_path = path;
@@ -35,12 +35,18 @@ pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
                             }
                         }
                     });
-                    ui.label(egui::RichText::new("Note: You may need to restart the app for changes to take effect.").weak().small());
+                    ui.label(
+                        egui::RichText::new(
+                            "Note: You may need to restart the app for changes to take effect.",
+                        )
+                        .weak()
+                        .small(),
+                    );
                 });
             } else {
                 ui.label("Config manager not available.");
             }
-            
+
             ui.add_space(10.0);
             ui.separator();
             ui.horizontal(|ui| {

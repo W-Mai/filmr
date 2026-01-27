@@ -55,7 +55,7 @@ impl ConfigManager {
             config_path,
         })
     }
-    
+
     pub fn save(&self) {
         if let Ok(json) = serde_json::to_string_pretty(&self.config) {
             let _ = fs::write(&self.config_path, json);

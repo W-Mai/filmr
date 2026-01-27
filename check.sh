@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 echo "Check formatting"
-cargo fmt -p filmr -- --all
-cargo fmt -p filmr_app -- --all
+cargo fmt -p filmr --all
+cargo fmt -p filmr_app --all
 
 echo "Build"
 cargo build -p filmr --verbose --all-features --all-targets

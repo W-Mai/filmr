@@ -28,14 +28,19 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                                 if let Ok(file) = std::fs::File::open(&path) {
                                     let reader = std::io::BufReader::new(file);
                                     // Try collection first
-                                    if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
+                                    if let Ok(collection) =
+                                        serde_json::from_reader::<_, FilmStockCollection>(reader)
+                                    {
                                         for (name, stock) in collection.stocks {
-                                             let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                                             app.stocks.push((leaked_name, stock));
+                                            let leaked_name: &'static str =
+                                                Box::leak(name.into_boxed_str());
+                                            app.stocks.push((leaked_name, stock));
                                         }
                                         app.status_msg = "Loaded preset collection".to_string();
                                         changed = true;
-                                    } else if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
+                                    } else if let Ok(stock) =
+                                        filmr::FilmStock::load_from_file(&path)
+                                    {
                                         let name =
                                             path.file_stem().unwrap().to_string_lossy().to_string();
 
@@ -232,7 +237,8 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                     }
                     if ui
                         .add(
-                            egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"),
+                            egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0)
+                                .text("Threshold"),
                         )
                         .changed()
                     {
@@ -327,12 +333,27 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                             {
                                 changed = true;
                             }
-                            
-                            if ui.add(egui::Slider::new(&mut leak.rotation, 0.0..=std::f32::consts::TAU).text("Rotation")).changed() {
+
+                            if ui
+                                .add(
+                                    egui::Slider::new(
+                                        &mut leak.rotation,
+                                        0.0..=std::f32::consts::TAU,
+                                    )
+                                    .text("Rotation"),
+                                )
+                                .changed()
+                            {
                                 changed = true;
                             }
-                            
-                            if ui.add(egui::Slider::new(&mut leak.roughness, 0.0..=1.0).text("Roughness")).changed() {
+
+                            if ui
+                                .add(
+                                    egui::Slider::new(&mut leak.roughness, 0.0..=1.0)
+                                        .text("Roughness"),
+                                )
+                                .changed()
+                            {
                                 changed = true;
                             }
 
