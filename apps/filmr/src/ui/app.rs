@@ -128,7 +128,7 @@ impl FilmrApp {
              if let Ok(entries) = std::fs::read_dir(&cm.config.custom_stocks_path) {
                  for entry in entries.flatten() {
                      let path = entry.path();
-                     if path.extension().map_or(false, |ext| ext == "json") {
+                     if path.extension().is_some_and(|ext| ext == "json") {
                          // Try collection first
                          if let Ok(file) = std::fs::File::open(&path) {
                              let reader = std::io::BufReader::new(file);

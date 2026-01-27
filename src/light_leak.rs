@@ -127,5 +127,5 @@ impl PipelineStage for LightLeakStage {
 
 // Simple pseudo-random noise function
 fn pseudo_noise(x: f32, y: f32) -> f32 {
-    ((x * 12.9898 + y * 78.233).sin() * 43758.5453).fract().abs()
+    ((x * 12.9898 + y * 78.233).sin() * 43_758.547).fract().abs()
 }
