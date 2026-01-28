@@ -79,18 +79,21 @@ fn run_pipeline_trace(r: u8, g: u8, b: u8, exposure_time: f32) {
         d_max: 2.9,
         gamma: 1.8,
         exposure_offset: 0.18,
+        shoulder_point: 0.8,
     };
     let g_curve = SegmentedCurve {
         d_min: 0.10,
         d_max: 3.0,
         gamma: 1.8,
         exposure_offset: 0.18,
+        shoulder_point: 0.8,
     };
     let b_curve = SegmentedCurve {
         d_min: 0.11,
         d_max: 2.8,
         gamma: 1.7,
         exposure_offset: 0.18,
+        shoulder_point: 0.8,
     };
 
     // film.rs uses map_smooth usually? Let's check map_log_exposure impl

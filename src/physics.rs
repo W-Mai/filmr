@@ -71,3 +71,29 @@ pub fn erf(x: f32) -> f32 {
 
     sign * y
 }
+
+/// Shoulder softening model based on space charge limit
+/// Smoothly compresses densities above a certain threshold to simulate highlight roll-off.
+#[inline]
+pub fn shoulder_softening(density: f32, shoulder_point: f32) -> f32 {
+    if density > shoulder_point {
+        let excess = density - shoulder_point;
+        // Formula: D_soft = D - (D-D_s)^2 / (D_s + (D-D_s))
+        // This approximates the physical saturation of silver halide crystals.
+        density - (excess * excess) / (shoulder_point + excess)
+    } else {
+        density
+    }
+}
+
+/// Dye self-absorption correction
+/// At high densities, Beer's Law deviates slightly.
+#[inline]
+pub fn apply_dye_self_absorption(density: f32, transmission: f32) -> f32 {
+    if density > 1.5 {
+        let correction = 1.0 + (density - 1.5) * 0.02;
+        transmission * correction.clamp(0.97, 1.03)
+    } else {
+        transmission
+    }
+}

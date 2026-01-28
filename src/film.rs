@@ -19,6 +19,7 @@ pub struct SegmentedCurve {
     pub d_max: f32,
     pub gamma: f32,
     pub exposure_offset: f32, // E0 in the doc, controls speed
+    pub shoulder_point: f32,  // Density where shoulder softening begins
 }
 
 impl SegmentedCurve {
@@ -28,6 +29,7 @@ impl SegmentedCurve {
             d_max,
             gamma,
             exposure_offset,
+            shoulder_point: 0.8 * d_max, // Default to 80% of D_max
         }
     }
 
@@ -222,9 +224,15 @@ impl FilmStock {
         let d_g = self.g_curve.map_smooth(log_e[1]);
         let d_b = self.b_curve.map_smooth(log_e[2]);
 
-        let net_r = (d_r - self.r_curve.d_min).max(0.0);
-        let net_g = (d_g - self.g_curve.d_min).max(0.0);
-        let net_b = (d_b - self.b_curve.d_min).max(0.0);
+        // Apply Shoulder Softening
+        // This simulates the space charge limit at high densities
+        let d_r_soft = physics::shoulder_softening(d_r, self.r_curve.shoulder_point);
+        let d_g_soft = physics::shoulder_softening(d_g, self.g_curve.shoulder_point);
+        let d_b_soft = physics::shoulder_softening(d_b, self.b_curve.shoulder_point);
+
+        let net_r = (d_r_soft - self.r_curve.d_min).max(0.0);
+        let net_g = (d_g_soft - self.g_curve.d_min).max(0.0);
+        let net_b = (d_b_soft - self.b_curve.d_min).max(0.0);
 
         // 2. Apply Color Matrix (Simulates Section 5 - Layer Coupling)
         // [Dr']   [ M00 M01 M02 ] [ Dr ]

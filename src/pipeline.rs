@@ -292,9 +292,18 @@ pub fn create_output_image(
         let net_b = (densities[2] - film.b_curve.d_min).max(0.0);
         match config.output_mode {
             OutputMode::Negative => {
-                let t_r = physics::density_to_transmission(net_r);
-                let t_g = physics::density_to_transmission(net_g);
-                let t_b = physics::density_to_transmission(net_b);
+                let t_r = physics::apply_dye_self_absorption(
+                    net_r,
+                    physics::density_to_transmission(net_r),
+                );
+                let t_g = physics::apply_dye_self_absorption(
+                    net_g,
+                    physics::density_to_transmission(net_g),
+                );
+                let t_b = physics::apply_dye_self_absorption(
+                    net_b,
+                    physics::density_to_transmission(net_b),
+                );
                 (
                     t_r.clamp(0.0, 1.0),
                     t_g.clamp(0.0, 1.0),
@@ -302,9 +311,18 @@ pub fn create_output_image(
                 )
             }
             OutputMode::Positive => {
-                let t_r = physics::density_to_transmission(net_r);
-                let t_g = physics::density_to_transmission(net_g);
-                let t_b = physics::density_to_transmission(net_b);
+                let t_r = physics::apply_dye_self_absorption(
+                    net_r,
+                    physics::density_to_transmission(net_r),
+                );
+                let t_g = physics::apply_dye_self_absorption(
+                    net_g,
+                    physics::density_to_transmission(net_g),
+                );
+                let t_b = physics::apply_dye_self_absorption(
+                    net_b,
+                    physics::density_to_transmission(net_b),
+                );
                 let t_r_max = physics::density_to_transmission(0.0);
                 let t_g_max = physics::density_to_transmission(0.0);
                 let t_b_max = physics::density_to_transmission(0.0);
