@@ -1,5 +1,6 @@
 use crate::ui::app::FilmrApp;
 use egui::Context;
+#[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
 
 pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
@@ -29,6 +30,7 @@ pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
                         );
 
                         if ui.button("📂 Browse...").clicked() {
+                            #[cfg(not(target_arch = "wasm32"))]
                             if let Some(path) = FileDialog::new().pick_folder() {
                                 config_manager.config.custom_stocks_path = path;
                                 config_manager.save();

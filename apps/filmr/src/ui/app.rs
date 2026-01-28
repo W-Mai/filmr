@@ -12,6 +12,7 @@ use image::imageops::FilterType;
 use image::{DynamicImage, RgbImage};
 use std::path::PathBuf;
 use std::sync::Arc;
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
 
 struct ProcessRequest {
@@ -28,7 +29,8 @@ struct ProcessResult {
 }
 
 struct LoadRequest {
-    path: PathBuf,
+    path: Option<PathBuf>,
+    bytes: Option<Arc<[u8]>>,
     stock: Option<FilmStock>,
 }
 
@@ -42,8 +44,73 @@ struct LoadResultData {
 }
 
 struct LoadResult {
-    path: PathBuf,
+    path: Option<PathBuf>,
     result: Result<LoadResultData, String>,
+}
+
+fn process_worker_logic(req: ProcessRequest) -> ProcessResult {
+    let processed = process_image(&req.image, &req.film, &req.config);
+    let metrics = FilmMetrics::analyze(&processed);
+    ProcessResult {
+        image: processed,
+        metrics,
+        is_preview: req.is_preview,
+    }
+}
+
+fn load_worker_logic(req: LoadRequest) -> LoadResult {
+    let img_result = if let Some(bytes) = &req.bytes {
+        image::load_from_memory(bytes)
+    } else if let Some(path) = &req.path {
+        image::open(path)
+    } else {
+        Err(image::ImageError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "No image source provided",
+        )))
+    };
+
+    let result = match img_result {
+        Ok(img) => {
+            let rgb = img.to_rgb8();
+            let metrics = FilmMetrics::analyze(&rgb);
+            let texture_data = ColorImage::from_rgb(
+                [rgb.width() as _, rgb.height() as _],
+                rgb.as_flat_samples().as_slice(),
+            );
+
+            let width = img.width();
+            let height = img.height();
+            let preview_rgb = if width > 2048 || height > 2048 {
+                img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8()
+            } else {
+                rgb.clone()
+            };
+            let preview_texture_data = ColorImage::from_rgb(
+                [preview_rgb.width() as _, preview_rgb.height() as _],
+                preview_rgb.as_flat_samples().as_slice(),
+            );
+
+            let estimated_exposure = req
+                .stock
+                .map(|stock| estimate_exposure_time(&preview_rgb, &stock));
+
+            Ok(LoadResultData {
+                image: img,
+                texture_data,
+                metrics,
+                preview: Arc::new(preview_rgb),
+                preview_texture_data,
+                estimated_exposure,
+            })
+        }
+        Err(e) => Err(e.to_string()),
+    };
+
+    LoadResult {
+        path: req.path,
+        result,
+    }
 }
 
 pub struct FilmrApp {
@@ -118,6 +185,15 @@ pub struct FilmrApp {
     pub show_settings: bool,
 
     pub config_manager: Option<ConfigManager>,
+
+    #[cfg(target_arch = "wasm32")]
+    rx_req_wasm: Receiver<ProcessRequest>,
+    #[cfg(target_arch = "wasm32")]
+    rx_load_wasm: Receiver<LoadRequest>,
+    #[cfg(target_arch = "wasm32")]
+    tx_res_wasm: Sender<ProcessResult>,
+    #[cfg(target_arch = "wasm32")]
+    tx_load_res_wasm: Sender<LoadResult>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -185,10 +261,16 @@ impl FilmrApp {
         let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
 
         // Clone context for the thread
-        let ctx_process = cc.egui_ctx.clone();
-        let ctx_load = cc.egui_ctx.clone();
+        let _ctx_process = cc.egui_ctx.clone();
+        let _ctx_load = cc.egui_ctx.clone();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let ctx_process = _ctx_process;
+        #[cfg(not(target_arch = "wasm32"))]
+        let ctx_load = _ctx_load;
 
         // Spawn worker thread for processing
+        #[cfg(not(target_arch = "wasm32"))]
         thread::spawn(move || {
             while let Ok(mut req) = rx_req.recv() {
                 // Drain any newer requests to skip intermediate states (debounce)
@@ -197,15 +279,10 @@ impl FilmrApp {
                 }
 
                 // Process
-                let processed = process_image(&req.image, &req.film, &req.config);
-                let metrics = FilmMetrics::analyze(&processed);
+                let res = process_worker_logic(req);
 
                 // Send back result
-                let _ = tx_res.send(ProcessResult {
-                    image: processed,
-                    metrics,
-                    is_preview: req.is_preview,
-                });
+                let _ = tx_res.send(res);
 
                 // Wake up the GUI
                 ctx_process.request_repaint();
@@ -213,48 +290,11 @@ impl FilmrApp {
         });
 
         // Spawn worker thread for loading
+        #[cfg(not(target_arch = "wasm32"))]
         thread::spawn(move || {
             while let Ok(req) = rx_load.recv() {
-                let result = match image::open(&req.path) {
-                    Ok(img) => {
-                        let rgb = img.to_rgb8();
-                        let metrics = FilmMetrics::analyze(&rgb);
-                        let texture_data = ColorImage::from_rgb(
-                            [rgb.width() as _, rgb.height() as _],
-                            rgb.as_flat_samples().as_slice(),
-                        );
-
-                        let width = img.width();
-                        let height = img.height();
-                        let preview_rgb = if width > 2048 || height > 2048 {
-                            img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8()
-                        } else {
-                            rgb.clone()
-                        };
-                        let preview_texture_data = ColorImage::from_rgb(
-                            [preview_rgb.width() as _, preview_rgb.height() as _],
-                            preview_rgb.as_flat_samples().as_slice(),
-                        );
-
-                        let estimated_exposure = req
-                            .stock
-                            .map(|stock| estimate_exposure_time(&preview_rgb, &stock));
-
-                        Ok(LoadResultData {
-                            image: img,
-                            texture_data,
-                            metrics,
-                            preview: Arc::new(preview_rgb),
-                            preview_texture_data,
-                            estimated_exposure,
-                        })
-                    }
-                    Err(e) => Err(e.to_string()),
-                };
-                let _ = tx_load_res.send(LoadResult {
-                    path: req.path,
-                    result,
-                });
+                let res = load_worker_logic(req);
+                let _ = tx_load_res.send(res);
                 ctx_load.request_repaint();
             }
         });
@@ -317,6 +357,15 @@ impl FilmrApp {
             show_settings: false,
 
             config_manager,
+
+            #[cfg(target_arch = "wasm32")]
+            rx_req_wasm: rx_req,
+            #[cfg(target_arch = "wasm32")]
+            rx_load_wasm: rx_load,
+            #[cfg(target_arch = "wasm32")]
+            tx_res_wasm: tx_res,
+            #[cfg(target_arch = "wasm32")]
+            tx_load_res_wasm: tx_load_res,
         }
     }
 
@@ -450,6 +499,7 @@ impl FilmrApp {
     }
 
     pub fn save_image(&mut self) {
+        #[cfg(not(target_arch = "wasm32"))]
         if let Some(img) = &self.developed_image {
             if let Some(path) = rfd::FileDialog::new()
                 .add_filter("PNG Image", &["png"])
@@ -463,6 +513,10 @@ impl FilmrApp {
                 }
             }
         }
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.status_msg = "Save not supported in Web Demo".to_owned();
+        }
     }
 }
 
@@ -473,18 +527,23 @@ impl App for FilmrApp {
         if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
             let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
             if let Some(file) = dropped_files.first() {
-                if let Some(path) = &file.path {
-                    self.status_msg = format!("Loading {:?}...", path);
+                let path = file.path.clone();
+                let bytes = file.bytes.clone();
+
+                if path.is_some() || bytes.is_some() {
+                    let path_str = path
+                        .as_ref()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "dropped file".to_owned());
+
+                    self.status_msg = format!("Loading {}...", path_str);
                     self.is_loading = true;
                     let stock = if self.mode == AppMode::Standard {
                         Some(self.get_current_stock())
                     } else {
                         None
                     };
-                    let _ = self.tx_load.send(LoadRequest {
-                        path: path.to_path_buf(),
-                        stock,
-                    });
+                    let _ = self.tx_load.send(LoadRequest { path, bytes, stock });
                 }
             }
         }
@@ -584,6 +643,7 @@ impl App for FilmrApp {
                         .add(egui::Button::new("Open Image...").shortcut_text("Ctrl+O"))
                         .clicked()
                     {
+                        #[cfg(not(target_arch = "wasm32"))]
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("Images", &["png", "jpg", "jpeg", "tif", "tiff"])
                             .pick_file()
@@ -595,7 +655,15 @@ impl App for FilmrApp {
                             } else {
                                 None
                             };
-                            let _ = self.tx_load.send(LoadRequest { path, stock });
+                            let _ = self.tx_load.send(LoadRequest {
+                                path: Some(path),
+                                bytes: None,
+                                stock,
+                            });
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            self.status_msg = "Drag and drop files to open".to_owned();
                         }
                         ui.close();
                     }
@@ -697,5 +765,29 @@ impl App for FilmrApp {
         });
 
         panels::central::render_central_panel(self, ctx);
+
+        #[cfg(target_arch = "wasm32")]
+        self.poll_wasm_workers();
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl FilmrApp {
+    fn poll_wasm_workers(&mut self) {
+        // Process requests
+        while let Ok(mut req) = self.rx_req_wasm.try_recv() {
+            // Drain debounce
+            while let Ok(newer) = self.rx_req_wasm.try_recv() {
+                req = newer;
+            }
+            let res = process_worker_logic(req);
+            let _ = self.tx_res_wasm.send(res);
+        }
+
+        // Load requests
+        while let Ok(req) = self.rx_load_wasm.try_recv() {
+            let res = load_worker_logic(req);
+            let _ = self.tx_load_res_wasm.send(res);
+        }
     }
 }

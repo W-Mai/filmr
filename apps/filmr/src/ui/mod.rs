@@ -1,9 +1,12 @@
 pub mod app;
 pub mod panels;
 
+#[cfg(not(target_arch = "wasm32"))]
 use app::FilmrApp;
+#[cfg(not(target_arch = "wasm32"))]
 use eframe::egui;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn run() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()

@@ -57,11 +57,22 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
       - uses: swatinem/rust-cache@v2
 
-      # If you use any mdbook plugins, here's the place to install them!
+      # --- WASM App Build Steps ---
+      - name: Install Trunk
+        uses: jetli/trunk-action@v0.4.0
 
+      - name: Build WASM App
+        working-directory: apps/filmr
+        run: trunk build --release --public-url /web/
+
+      # --- Oranda Build Steps ---
       # Install and run oranda (and mdbook)!
       #
       # This will write all output to ./public/ (including copying mdbook's output to there).
@@ -70,6 +81,13 @@ jobs:
           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.6.1/oranda-installer.sh | sh
           oranda build
       
+      # --- Merge Steps ---
+      - name: Merge WASM App into Site
+        run: |
+          mkdir -p public/web
+          cp -r apps/filmr/dist/* public/web/
+
+      # --- Deploy Steps ---
       # Deploy to our gh-pages branch (creating it if it doesn't exist).
       # The "public" dir that oranda made above will become the root dir
       # of this branch.

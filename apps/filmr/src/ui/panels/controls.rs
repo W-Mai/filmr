@@ -1,9 +1,11 @@
 use crate::ui::app::{AppMode, FilmrApp};
 use egui::Context;
+#[cfg(not(target_arch = "wasm32"))]
 use filmr::film::FilmStockCollection;
 use filmr::light_leak::{LightLeak, LightLeakShape};
 use filmr::{OutputMode, WhiteBalanceMode};
 
+#[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
 
 pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
@@ -21,6 +23,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                     ui.label("Preset Management");
                     ui.horizontal(|ui| {
                         if ui.button("Import Preset").clicked() {
+                            #[cfg(not(target_arch = "wasm32"))]
                             if let Some(path) =
                                 FileDialog::new().add_filter("JSON", &["json"]).pick_file()
                             {
@@ -69,9 +72,14 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                                     }
                                 }
                             }
+                            #[cfg(target_arch = "wasm32")]
+                            {
+                                app.status_msg = "Import not supported in Web Demo".to_string();
+                            }
                         }
 
                         if ui.button("Export Preset").clicked() {
+                            #[cfg(not(target_arch = "wasm32"))]
                             if let Some(path) =
                                 FileDialog::new().add_filter("JSON", &["json"]).save_file()
                             {
@@ -98,6 +106,10 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                                 } else {
                                     app.status_msg = "Failed to save preset".to_string();
                                 }
+                            }
+                            #[cfg(target_arch = "wasm32")]
+                            {
+                                app.status_msg = "Export not supported in Web Demo".to_string();
                             }
                         }
                     });

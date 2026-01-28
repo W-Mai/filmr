@@ -1,3 +1,4 @@
+#[cfg(not(target_arch = "wasm32"))]
 use directories::UserDirs;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -15,6 +16,12 @@ pub struct ConfigManager {
 }
 
 impl ConfigManager {
+    #[cfg(target_arch = "wasm32")]
+    pub fn init() -> Option<Self> {
+        None
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn init() -> Option<Self> {
         let user_dirs = UserDirs::new()?;
         let home = user_dirs.home_dir();

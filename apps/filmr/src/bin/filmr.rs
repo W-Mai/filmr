@@ -8,10 +8,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.len() > 1 && args[1] == "ui" {
         #[cfg(feature = "ui")]
         {
+            #[cfg(not(target_arch = "wasm32"))]
             match filmr_app::ui::run() {
                 Ok(_) => Ok(()),
                 Err(e) => Err(Box::new(e)),
             }
+            #[cfg(target_arch = "wasm32")]
+            Ok(())
         }
         #[cfg(not(feature = "ui"))]
         {
