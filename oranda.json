@@ -7,5 +7,12 @@
   },
   "styles": {
     "theme": "cupcake"
+  },
+  "marketing": {
+    "analytics": {
+      "google": {
+        "tracking_id": "G-ZCH0DFY43H"
+      }
+    }
   }
 }
