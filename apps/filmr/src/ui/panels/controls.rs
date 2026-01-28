@@ -109,7 +109,25 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                             }
                             #[cfg(target_arch = "wasm32")]
                             {
-                                app.status_msg = "Export not supported in Web Demo".to_string();
+                                // Serialize current stock
+                                let stock = app.get_current_stock();
+                                if let Ok(json) = serde_json::to_string_pretty(&stock) {
+                                    let task = rfd::AsyncFileDialog::new()
+                                        .set_file_name("preset.json")
+                                        .save_file();
+
+                                    let bytes = json.into_bytes();
+                                    wasm_bindgen_futures::spawn_local(async move {
+                                        if let Some(handle) = task.await {
+                                            if let Err(_e) = handle.write(&bytes).await {
+                                                // Log error
+                                            }
+                                        }
+                                    });
+                                    app.status_msg = "Export started...".to_string();
+                                } else {
+                                    app.status_msg = "Failed to serialize preset".to_string();
+                                }
                             }
                         }
                     });

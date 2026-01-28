@@ -194,6 +194,12 @@ pub struct FilmrApp {
     tx_res_wasm: Sender<ProcessResult>,
     #[cfg(target_arch = "wasm32")]
     tx_load_res_wasm: Sender<LoadResult>,
+
+    // Preset Loading (WASM)
+    #[cfg(target_arch = "wasm32")]
+    pub tx_preset: Sender<Vec<u8>>,
+    #[cfg(target_arch = "wasm32")]
+    pub rx_preset: Receiver<Vec<u8>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -299,6 +305,9 @@ impl FilmrApp {
             }
         });
 
+        #[cfg(target_arch = "wasm32")]
+        let (tx_preset, rx_preset) = unbounded();
+
         Self {
             original_image: None,
             preview_image: None,
@@ -366,6 +375,11 @@ impl FilmrApp {
             tx_res_wasm: tx_res,
             #[cfg(target_arch = "wasm32")]
             tx_load_res_wasm: tx_load_res,
+
+            #[cfg(target_arch = "wasm32")]
+            tx_preset,
+            #[cfg(target_arch = "wasm32")]
+            rx_preset,
         }
     }
 
@@ -515,7 +529,29 @@ impl FilmrApp {
         }
         #[cfg(target_arch = "wasm32")]
         {
-            self.status_msg = "Save not supported in Web Demo".to_owned();
+            if let Some(img) = &self.developed_image {
+                let mut bytes: Vec<u8> = Vec::new();
+                let mut cursor = std::io::Cursor::new(&mut bytes);
+                // Default to PNG
+                if let Err(e) = img.write_to(&mut cursor, image::ImageOutputFormat::Png) {
+                    self.status_msg = format!("Failed to encode image: {}", e);
+                    return;
+                }
+
+                let task = rfd::AsyncFileDialog::new()
+                    .set_file_name("filmr_output.png")
+                    .save_file();
+
+                let bytes = bytes.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    if let Some(handle) = task.await {
+                        if let Err(_e) = handle.write(&bytes).await {
+                            // Log error?
+                        }
+                    }
+                });
+                self.status_msg = "Download started...".to_owned();
+            }
         }
     }
 }
@@ -601,6 +637,26 @@ impl App for FilmrApp {
         }
 
         // Check for async results
+        #[cfg(target_arch = "wasm32")]
+        if let Ok(bytes) = self.rx_preset.try_recv() {
+            if let Ok(collection) = serde_json::from_slice::<FilmStockCollection>(&bytes) {
+                for (name, stock) in collection.stocks {
+                    let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                    self.stocks.push((leaked_name, stock));
+                }
+                self.status_msg = "Loaded preset collection".to_string();
+            } else if let Ok(stock) = serde_json::from_slice::<FilmStock>(&bytes) {
+                let name = format!("Imported Stock {}", self.stocks.len());
+                let leaked_name: &'static str = Box::leak(name.into_boxed_str());
+                self.stocks.push((leaked_name, stock));
+                self.selected_stock_idx = self.stocks.len() - 1;
+                self.load_preset_values();
+                self.status_msg = "Loaded imported preset".to_string();
+            } else {
+                self.status_msg = "Failed to parse preset file".to_string();
+            }
+        }
+
         if let Ok(result) = self.rx_res.try_recv() {
             if result.is_preview {
                 // Convert to egui texture
