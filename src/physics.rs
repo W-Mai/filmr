@@ -23,6 +23,7 @@ pub fn transmission_to_density(transmission: f32) -> f32 {
 
 /// Calculates Transmission (T) from Optical Density (D).
 /// T = 10^(-D)
+#[inline]
 pub fn density_to_transmission(density: f32) -> f32 {
     10.0f32.powf(-density)
 }
@@ -30,6 +31,7 @@ pub fn density_to_transmission(density: f32) -> f32 {
 /// Helper to convert sRGB (gamma encoded) to Linear Light (approximate).
 /// This is needed to get "Irradiance" from a digital image pixel.
 /// Assuming sRGB gamma ~2.2 for simplicity or standard transfer function.
+#[inline]
 pub fn srgb_to_linear(v: f32) -> f32 {
     if v <= 0.04045 {
         v / 12.92
@@ -39,6 +41,7 @@ pub fn srgb_to_linear(v: f32) -> f32 {
 }
 
 /// Helper to convert Linear Light to sRGB.
+#[inline]
 pub fn linear_to_srgb(v: f32) -> f32 {
     if v <= 0.0031308 {
         12.92 * v
@@ -49,6 +52,7 @@ pub fn linear_to_srgb(v: f32) -> f32 {
 
 /// Error function approximation (Abramowitz and Stegun 7.1.26)
 /// Maximum error: 1.5e-7
+#[inline]
 pub fn erf(x: f32) -> f32 {
     let a1 = 0.254_829_6;
     let a2 = -0.284_496_72;

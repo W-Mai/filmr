@@ -21,6 +21,12 @@ pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> 
     let height = input.height();
     let mut linear_image: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
 
+    // Precompute sRGB to Linear LUT for 8-bit input
+    // This provides a significant speedup (instruction level parallelism via LUT)
+    let lut: Vec<f32> = (0..=255)
+        .map(|i| physics::srgb_to_linear(i as f32 / 255.0))
+        .collect();
+
     linear_image
         .par_chunks_mut(3)
         .enumerate()
@@ -29,9 +35,10 @@ pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> 
             let y = (i as u32) / width;
             let in_pixel = input.get_pixel(x, y);
 
-            pixel[0] = physics::srgb_to_linear(in_pixel[0] as f32 / 255.0);
-            pixel[1] = physics::srgb_to_linear(in_pixel[1] as f32 / 255.0);
-            pixel[2] = physics::srgb_to_linear(in_pixel[2] as f32 / 255.0);
+            // Use LUT for fast conversion
+            pixel[0] = lut[in_pixel[0] as usize];
+            pixel[1] = lut[in_pixel[1] as usize];
+            pixel[2] = lut[in_pixel[2] as usize];
         });
     linear_image
 }
@@ -51,16 +58,16 @@ impl PipelineStage for HalationStage {
         let mut halation_map = image.clone();
 
         // Apply threshold
-        halation_map.pixels_mut().for_each(|p| {
+        halation_map.par_chunks_mut(3).for_each(|p| {
             let lum = 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
             if lum < threshold {
-                p.0 = [0.0, 0.0, 0.0];
+                p[0] = 0.0;
+                p[1] = 0.0;
+                p[2] = 0.0;
             } else {
-                p.0 = [
-                    (p[0] - threshold).max(0.0),
-                    (p[1] - threshold).max(0.0),
-                    (p[2] - threshold).max(0.0),
-                ];
+                p[0] = (p[0] - threshold).max(0.0);
+                p[1] = (p[1] - threshold).max(0.0);
+                p[2] = (p[2] - threshold).max(0.0);
             }
         });
 
@@ -71,8 +78,8 @@ impl PipelineStage for HalationStage {
         let strength = film.halation_strength;
 
         image
-            .pixels_mut()
-            .zip(halation_map.pixels())
+            .par_chunks_mut(3)
+            .zip(halation_map.par_chunks(3))
             .for_each(|(dest, src)| {
                 dest[0] += src[0] * tint[0] * strength;
                 dest[1] += src[1] * tint[1] * strength;
