@@ -1,6 +1,6 @@
 //! Physics module for Film Simulation
 //!
-//! Handles basic physical quantities and conversions described in the technical document.
+//! Handles basic physical quantities and conversions described in the documentation.
 //! Section 2: Exposure and Density Mapping.
 
 /// Calculates Exposure (E) from Irradiance (I) and Time (t).

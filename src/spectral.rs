@@ -205,6 +205,19 @@ impl FilmSpectralParams {
         }
     }
 
+    /// Create standard Color Negative response (Broad, overlapping)
+    /// Modeled after Kodak Portra / Vision3
+    pub const fn new_color_negative_standard() -> Self {
+        Self {
+            r_peak: 640.0, // Deep Red
+            r_width: 45.0, // Broad
+            g_peak: 550.0, // Green
+            g_width: 40.0, // Broad, overlaps with Blue at 480-500
+            b_peak: 450.0, // Blue
+            b_width: 45.0, // Broad
+        }
+    }
+
     /// Create orthochromatic response (insensitive to red)
     pub const fn new_orthochromatic() -> Self {
         Self {
