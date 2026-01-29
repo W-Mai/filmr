@@ -132,13 +132,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Core**: Fixed "Channel Integrity" check for B&W films (panchromatic sensitivity is not leakage).
 - **GUI**: Fixed main thread blocking by offloading heavy processing to background worker threads.
 
-## [0.1.0] - 2026-01-25
+## [0.1.5] - 2026-01-25
+
+### 🚀 Features
+
+- **Docs**: Added README and LICENSE.
+- **Docs**: Added detailed GUI demo run instructions.
+- **Demo**: Added metrics info and original image display to GUI demo.
+- **Demo**: Implemented large image preview and develop/save workflow.
+- **Demo**: Moved metrics to right side panel and improved visualization with `egui_plot`.
+- **Demo**: Optimized preview size and dynamic scaling for metrics plots.
+
+### 🐛 Fixes
+
+- **Demo**: Fixed histogram visualization issues and GLCM display.
+- **Demo**: Fixed chart scaling and legend issues.
+
+## [0.1.4] - 2026-01-24
+
+### 🚀 Features
+
+- **Quality**: Implemented comprehensive 7-layer verification (neutral axis, channel integrity, spectral fidelity, etc.).
+- **Quality**: Added automated color fidelity verification.
+- **Quality**: Implemented consolidated diagnosis chart and report generation.
+- **Metrics**: Integrated film metrics (Dynamic Range, MTF, etc.) into diagnosis.
+
+## [0.1.3] - 2026-01-23
+
+### 🚀 Features
+
+- **Pipeline**: Implemented base fog anchoring and D65 illuminant handling.
+- **Exposure**: Improved auto-exposure time estimation logic.
+
+## [0.1.2] - 2026-01-22
+
+### 🚀 Features
+
+- **Spectral**: Implemented wavelength-based simulation and relative sensitivity factors.
+- **Spectral**: Tuned sensitivity curves to fix yellow tint and red deficiency.
+- **Spectral**: Implemented gray-world auto white balance blend.
+- **Presets**: Added 30+ new film simulation presets.
+- **GUI**: Added preset selector and detailed halation controls.
+- **Grain**: Implemented monochrome grain for B&W films.
+
+### 🐛 Fixes
+
+- **Core**: Fixed panic on non-square images.
+- **Presets**: Configured B&W films to produce correct grayscale output.
+
+## [0.1.1] - 2026-01-22
+
+### 🚀 Features
+
+- **Core**: Initial implementation of physical models (layer occlusion, etc.).
+- **Refactor**: Extracted film presets to `presets.rs` and made `FilmStock` customizable.
+
+## [0.1.0] - 2026-01-22
 
 ### 🎉 Initial Release
 
 - Basic Film Simulation Engine (Physics-based).
-- Support for 33 Film Stocks (Kodak, Fujifilm, Ilford, Polaroid).
-- Spectral Sensitivity Simulation.
+- Support for initial set of Film Stocks.
+- Spectral Sensitivity Simulation foundation.
 - Grain Simulation (RMS-based).
 - Halation and Bloom effects.
 - Basic GUI Demo with real-time preview.
