@@ -19,7 +19,7 @@ mod tests {
         }
 
         // Setup Film with Red Blindness (Orthochromatic simulation)
-        let mut film = STANDARD_DAYLIGHT;
+        let mut film = STANDARD_DAYLIGHT();
         // Set d_min to 0 to ensure zero exposure results in black
         film.r_curve.d_min = 0.0;
         film.g_curve.d_min = 0.0;
@@ -77,7 +77,7 @@ mod tests {
         }
 
         // Setup Film where Red Layer is sensitive to Green Light (Cross talk)
-        let mut film = STANDARD_DAYLIGHT;
+        let mut film = STANDARD_DAYLIGHT();
         // Set d_min to 0
         film.r_curve.d_min = 0.0;
         film.g_curve.d_min = 0.0;

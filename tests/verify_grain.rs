@@ -15,7 +15,7 @@ mod tests {
         }
 
         // Setup Monochrome Film (modified Tri-X)
-        let mut film = KODAK_TRI_X_400;
+        let mut film = KODAK_TRI_X_400();
         film.grain_model.monochrome = true;
         film.grain_model.alpha = 0.5; // High noise to be sure
         film.grain_model.sigma_read = 0.0;
@@ -65,7 +65,7 @@ mod tests {
         }
 
         // Setup Color Film (modified Tri-X but with monochrome=false)
-        let mut film = KODAK_TRI_X_400;
+        let mut film = KODAK_TRI_X_400();
         film.grain_model.monochrome = false;
         film.grain_model.alpha = 0.5; // High noise
         film.grain_model.sigma_read = 0.0;

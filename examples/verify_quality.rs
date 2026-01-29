@@ -10,7 +10,7 @@ use rusttype::{Font, Scale};
 use std::fs;
 use std::path::Path;
 
-/// Quality Report Generator based on tec5.md
+/// Quality Report Generator
 /// Implements 7-Layer Verification System (Subset)
 fn main() {
     let output_dir = "quality_report";
@@ -24,7 +24,7 @@ fn main() {
         stocks.len()
     );
 
-    let mut report = String::from("# Film Simulation Quality Report (tec5.md)\n\n");
+    let mut report = String::from("# Film Simulation Quality Report\n\n");
     report.push_str("## Metrics Explanation\n");
     report.push_str("- **L0: Spectral Fidelity**: Peak Wavelength and FWHM check.\n");
     report.push_str("- **L1: H-D Curve**: Gamma (Slope) and Dmax check. **Reciprocity**: 1s vs 10s consistency.\n");
@@ -356,7 +356,7 @@ fn check_hd_curve(stock: &FilmStock) -> (f32, f32) {
     let _d_min = get_density(steps - 1); // White input -> Low density (Negative) -> High Value (Positive)
                                          // Wait, OutputMode::Positive means Bright Input -> Bright Output.
                                          // Density is usually measured on the Negative.
-                                         // But tec5.md says "H-D Curve: log10(Exposure) vs Density".
+                                         // But docs say "H-D Curve: log10(Exposure) vs Density".
                                          // For a Positive simulation, "Density" corresponds to "darkness".
                                          // Bright output (255) -> Density 0. Dark output (0) -> Density Max.
 

@@ -18,7 +18,7 @@ fn test_neutral_axis_stability() {
         }
     }
 
-    let film = presets::STANDARD_DAYLIGHT;
+    let film = presets::STANDARD_DAYLIGHT();
     let mut config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: false, // Disable grain for pure color check
@@ -36,7 +36,7 @@ fn test_neutral_axis_stability() {
 
     // Check Neutral Axis
     // Threshold: Drift < 0.03 (approx 8 levels in 8-bit)
-    // tec6.md says Drift < 0.03 (3%)
+    // Documentation says Drift < 0.03 (3%)
     let tolerance = 15; // Relaxed slightly to account for integer rounding errors and spectral shifts
 
     for p in output.pixels() {
@@ -83,7 +83,7 @@ fn test_neutral_axis_stability() {
 fn test_channel_integrity() {
     // Check pure red input
     let input = RgbImage::from_fn(50, 50, |_, _| Rgb([200, 0, 0]));
-    let film = presets::STANDARD_DAYLIGHT;
+    let film = presets::STANDARD_DAYLIGHT();
     let mut config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: false,

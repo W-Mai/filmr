@@ -9,6 +9,7 @@ use crate::spectral::{CameraSensitivities, Spectrum};
 use image::RgbImage;
 
 /// Configuration for the simulation run.
+#[derive(Debug, Clone, PartialEq)]
 pub struct SimulationConfig {
     pub exposure_time: f32, // t in E = I * t
     pub enable_grain: bool,
@@ -141,7 +142,7 @@ pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
         // E_film = E_actual / (1 + beta * log10(t)^2)
         // We use t as E_actual (assuming I=1).
         let t_eff = if t > 1.0 {
-            let factor = 1.0 + film.reciprocity_beta * t.log10().powi(2);
+            let factor = 1.0 + film.reciprocity.beta * t.log10().powi(2);
             t / factor
         } else {
             t

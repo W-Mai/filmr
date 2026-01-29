@@ -127,7 +127,7 @@ impl PipelineStage for DevelopStage {
         film_sens.calibrate_to_white_point(&system_white);
 
         let reciprocity_factor = if config.exposure_time > 1.0 {
-            1.0 + film.reciprocity_beta * config.exposure_time.log10().powi(2)
+            1.0 + film.reciprocity.beta * config.exposure_time.log10().powi(2)
         } else {
             1.0
         };

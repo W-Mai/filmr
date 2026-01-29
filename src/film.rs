@@ -5,7 +5,7 @@ use crate::spectral::{FilmSensitivities, FilmSpectralParams};
 /// Film Modeling Module
 ///
 /// Handles Characteristic Curves (H-D Curves) and Color Coupling.
-/// Section 3 & 5 of the technical document.
+/// Section 3 & 5 of the documentation.
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,7 +42,7 @@ impl SegmentedCurve {
 
     /// Implementation using the Error Function (Erf), which corresponds to the
     /// Gaussian distribution of crystal sensitivities. This is the scientifically
-    /// accurate model mentioned in the technical documentation.
+    /// accurate model mentioned in the documentation.
     ///
     /// D(E) = D_min + (D_max - D_min) * (1 + erf((log E - log E0) / sigma)) / 2
     pub fn map_erf(&self, log_e: f32) -> f32 {
@@ -100,6 +100,11 @@ pub enum FilmType {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct ReciprocityFailure {
+    pub beta: f32,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct FilmStock {
     /// Film Type (affects processing pipeline)
     pub film_type: FilmType,
@@ -130,10 +135,8 @@ pub struct FilmStock {
     /// Used to simulate optical softness before grain.
     pub resolution_lp_mm: f32,
 
-    /// Reciprocity Failure coefficient (beta).
-    /// E_effective = E * (1 + beta * log10(t/t0)^2)
-    /// Typically 0.03-0.10.
-    pub reciprocity_beta: f32,
+    /// Reciprocity Failure parameters.
+    pub reciprocity: ReciprocityFailure,
 
     /// Halation strength.
     /// Simulates light reflecting off the film base back into the emulsion.
@@ -166,7 +169,7 @@ impl FilmStock {
         spectral_params: FilmSpectralParams,
         grain_model: GrainModel,
         resolution_lp_mm: f32,
-        reciprocity_beta: f32,
+        reciprocity: ReciprocityFailure,
         halation_strength: f32,
         halation_threshold: f32,
         halation_sigma: f32,
@@ -182,7 +185,7 @@ impl FilmStock {
             color_matrix,
             grain_model,
             resolution_lp_mm,
-            reciprocity_beta,
+            reciprocity,
             halation_strength,
             halation_threshold,
             halation_sigma,
@@ -354,7 +357,7 @@ mod tests {
             FilmSpectralParams::new_panchromatic(),
             GrainModel::medium_grain(),
             100.0,
-            0.1,
+            ReciprocityFailure { beta: 0.1 },
             0.0,
             0.0,
             0.0,

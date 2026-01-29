@@ -63,7 +63,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
 
                     if ui
                         .add(
-                            Slider::new(&mut app.studio_stock.reciprocity_beta, 0.5..=1.5)
+                            Slider::new(&mut app.studio_stock.reciprocity.beta, 0.5..=1.5)
                                 .text("Reciprocity Beta"),
                         )
                         .changed()

@@ -76,7 +76,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             // Try to find the preset specified by --preset argument
             if let Some(s) = collection.stocks.get(&args.preset) {
                 println!("Using preset '{}' from collection.", args.preset);
-                *s // FilmStock is Copy
+                *s
             } else {
                 // If not found, list available keys
                 let keys: Vec<_> = collection.stocks.keys().collect();

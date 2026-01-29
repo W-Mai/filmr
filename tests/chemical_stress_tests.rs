@@ -1,11 +1,8 @@
-use filmr::film::{FilmStock, FilmType, SegmentedCurve};
-use filmr::grain::GrainModel;
-use filmr::physics::{density_to_transmission, linear_to_srgb, srgb_to_linear};
+use filmr::film::FilmStock;
 use filmr::presets::KODAK_PORTRA_400;
-use filmr::processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
-use filmr::spectral::{FilmSpectralParams, Spectrum, BINS, LAMBDA_START, LAMBDA_STEP};
+use filmr::processor::{OutputMode, SimulationConfig};
+use filmr::spectral::{Spectrum, BINS};
 use image::{Rgb, RgbImage};
-use serde::{Deserialize, Serialize};
 
 /// Helper to create a pure RGB image
 fn create_image<F>(width: u32, height: u32, generator: F) -> RgbImage
@@ -42,7 +39,7 @@ fn simulate_pixel_exposure(
     // Apply reciprocity
     let reciprocity = |v: f32| {
         if v > 0.0 {
-            v.powf(1.0 - film.reciprocity_beta)
+            v.powf(1.0 - film.reciprocity.beta)
         } else {
             0.0
         }
@@ -64,14 +61,8 @@ fn simulate_density(film: &FilmStock, exposure: (f32, f32, f32)) -> (f32, f32, f
     let log_g = if g_e > 0.0 { g_e.log10() } else { -10.0 };
     let log_b = if b_e > 0.0 { b_e.log10() } else { -10.0 };
 
-    // Map through curves (includes Shoulder Softening now)
-    let d_r_raw = film.r_curve.map_smooth(log_r);
-    let d_g_raw = film.g_curve.map_smooth(log_g);
-    let d_b_raw = film.b_curve.map_smooth(log_b);
-
-    // Apply Interlayer Matrix (Color Matrix)
+    // Map through curves and Apply Interlayer Matrix (Color Matrix)
     // Note: FilmStock::map_log_exposure does exactly this.
-    // Let's use map_log_exposure directly if possible, but it takes [f32; 3]
     let log_exposure = [log_r, log_g, log_b];
     let densities = film.map_log_exposure(log_exposure);
 
@@ -90,7 +81,7 @@ fn test_1_highlight_gradient_shoulder() {
     // We want to verify that dDensity/dLogExposure decreases at high exposure (Shoulder).
     // Let's sample discrete points.
 
-    let film = KODAK_PORTRA_400;
+    let film = KODAK_PORTRA_400();
 
     // Create inputs: +0 EV, +1 EV, +2 EV, +3 EV, +4 EV, +5 EV relative to mid-grey
     // Mid-grey ~ 0.18 linear.
@@ -140,13 +131,13 @@ fn test_1_highlight_gradient_shoulder() {
 /// Test 2: Saturated Red/Blue Collision (Interlayer Inhibition)
 #[test]
 fn test_2_interlayer_inhibition() {
-    let film = KODAK_PORTRA_400;
+    let film = KODAK_PORTRA_400();
 
     // Case A: Pure Red (Reference)
     // Red Light: 650nm peak
     let red_spectrum = Spectrum::new_gaussian(650.0, 20.0);
     let red_exposure = simulate_pixel_exposure(&film, &red_spectrum, 1.0);
-    let red_density = simulate_density(&film, red_exposure);
+    let _ = simulate_density(&film, red_exposure); // Check side effects if any, but result unused
 
     // Case B: Red + Blue (Collision)
     // Simulating "Red area near Blue area" physically means checking if Blue exposure affects Red layer formation?
@@ -166,21 +157,19 @@ fn test_2_interlayer_inhibition() {
     // 1. Reference: Moderate Green Exposure -> Produces Magenta Dye
     let green_spectrum = Spectrum::new_gaussian(540.0, 20.0);
     let green_exp = simulate_pixel_exposure(&film, &green_spectrum, 0.5); // Moderate exposure
-    let d_ref = simulate_density(&film, green_exp);
-    let magenta_ref = d_ref.1; // Green channel maps to Magenta dye (roughly)
+    let _d_ref = simulate_density(&film, green_exp);
+    // let _magenta_ref = d_ref.1; // Green channel maps to Magenta dye (roughly) - UNUSED
 
     // 2. Inhibition: Same Green Exposure + High Blue Exposure
     // High Blue -> High Yellow Dye -> Inhibits Magenta
-    let blue_spectrum = Spectrum::new_gaussian(450.0, 20.0);
-    let mixed_spectrum = add_spectra(&green_spectrum, &blue_spectrum); // Additive light
+    let _blue_spectrum = Spectrum::new_gaussian(450.0, 20.0);
+    // let _mixed_spectrum = add_spectra(&green_spectrum, &blue_spectrum); // Additive light - UNUSED
 
     // Note: We need to feed the *separate* exposures to the matrix logic
     // But our `simulate_density` does the full chain.
     // Let's verify manually using the exposures.
 
-    let mixed_exp = simulate_pixel_exposure(&film, &mixed_spectrum, 1.0); // Higher exposure to ensure Blue is strong
-                                                                          // But wait, if we just add spectra, we get valid exposures for R, G, B layers.
-                                                                          // B layer will be high. G layer will be same as reference (ideally).
+    // let _mixed_exp = simulate_pixel_exposure(&film, &mixed_spectrum, 1.0); // Higher exposure to ensure Blue is strong - UNUSED
 
     // Let's control inputs directly to isolate the Matrix Effect
     // Scenario 1: Green Layer Exp = 0.0 (Log -2.0), Blue Layer Exp = -10.0
@@ -266,7 +255,7 @@ fn test_3_dye_self_absorption() {
 /// Test 4: Neon Narrow Peak Pollution (Spectral Resolution)
 #[test]
 fn test_4_neon_pollution() {
-    let film = KODAK_PORTRA_400;
+    let film = KODAK_PORTRA_400();
 
     // 480nm Neon Light (Cyan-ish)
     // Peaks between Blue (440-460) and Green (540-550).
@@ -306,7 +295,7 @@ fn test_4_neon_pollution() {
 /// Test 5: Mixed Color Temperature Sphere (White Balance Anchoring)
 #[test]
 fn test_5_mixed_wb_anchoring() {
-    let film = KODAK_PORTRA_400;
+    let film = KODAK_PORTRA_400();
 
     // Tungsten (3200K) and Daylight (8000K) illuminating a neutral object.
     // Film is anchored to "Physical White" (D65 or similar).
@@ -375,11 +364,9 @@ fn test_5_mixed_wb_anchoring() {
 fn test_6_grain_density_dependence() {
     // We cannot easily simulate visual grain in a unit test without rendering an image and doing FFT.
     // But we CAN check the Grain Model parameters or logic if exposed.
-    // Our Grain Model in film.rs/grain.rs:
-    // `apply_grain` uses `film.grain_model.alpha`.
-    // Does it scale with density?
-    // In `grain.rs`: `let sigma_d = (film.grain_model.alpha * density).sqrt()`? No, typically `sigma = sqrt(alpha * D)` or similar.
-    // Let's check `grain.rs`.
+    // Let's re-read the documentation.
+    // "Granularity ... decreases as density increases."
+    // If documentation says so, we expect High Density (Highlight on Negative) to have LESS noise?
     // Since we are writing integration tests, we can verify the *behavior* by checking noise variance on flat patches.
 
     // Need to use `process_image` for grain.
@@ -390,10 +377,12 @@ fn test_6_grain_density_dependence() {
 
     use filmr::processor::process_image;
 
-    let film = KODAK_PORTRA_400;
-    let mut config = SimulationConfig::default();
-    config.enable_grain = true;
-    config.output_mode = OutputMode::Positive; // To see the result
+    let film = KODAK_PORTRA_400();
+    let config = SimulationConfig {
+        enable_grain: true,
+        output_mode: OutputMode::Positive, // To see the result
+        ..Default::default()
+    };
 
     // 1. Low Exposure (Shadow) -> Low Density on Negative -> High Brightness on Positive?
     // Wait, Grain is added to the Negative Density.
@@ -431,23 +420,6 @@ fn test_6_grain_density_dependence() {
     println!("Variance Low Exposure (Shadow): {:.4}", var_low);
     println!("Variance High Exposure (Highlight): {:.4}", var_high);
 
-    // Physics: Grain noise is proportional to Density^0.5 or Density (depending on model).
-    // High Exposure -> High Negative Density -> More Grains -> More Noise Variance?
-    // Wait, tec7.md says: "Granularity ... decreases as density increases"?
-    // "CMOS noise is Poisson... Film is Wiener... and decreases as density increases."
-    // Let's re-read tec7.md.
-    // "CMOS High light noise is Poisson... Film is ... G(f) = a/(f^2+b), and decreases as density increases."
-    // Wait, usually Grain is visible in Mid-tones/Shadows (on print).
-    // On Negative: High Density (Highlights) has MORE silver, so MORE grains.
-    // BUT, the signal-to-noise ratio improves?
-    // Or is it that "Print Grain" is highest in low density of the *Print* (which is High Density of Negative)?
-
-    // tec7.md Section 3.3: "Granularity ... decreases as density increases."
-    // If tec7 says so, we expect High Density (Highlight on Negative) to have LESS noise?
-    // Let's check our model in `grain.rs`.
-    // If our model follows this, then `var_high` should be < `var_low`.
-
-    // Actually, let's just assert that they are DIFFERENT, proving density dependence.
     assert!(
         (var_high - var_low).abs() > 0.1,
         "Grain variance should depend on density/exposure!"
@@ -455,6 +427,7 @@ fn test_6_grain_density_dependence() {
 }
 
 // Helper to add spectra manually since orphan rule prevents implementing Add for external type
+#[allow(dead_code)]
 fn add_spectra(a: &Spectrum, b: &Spectrum) -> Spectrum {
     let mut s = Spectrum::new();
     for i in 0..BINS {

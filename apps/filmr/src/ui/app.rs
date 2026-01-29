@@ -357,7 +357,7 @@ impl FilmrApp {
             hist_clamp_zeros: true,
 
             mode: AppMode::Standard,
-            studio_stock: presets::STANDARD_DAYLIGHT,
+            studio_stock: presets::STANDARD_DAYLIGHT(),
             builtin_stock_count,
 
             studio_stock_idx: None,
@@ -387,7 +387,7 @@ impl FilmrApp {
         if self.selected_stock_idx < self.stocks.len() {
             self.stocks[self.selected_stock_idx].1
         } else {
-            presets::STANDARD_DAYLIGHT
+            presets::STANDARD_DAYLIGHT()
         }
     }
 

@@ -18,7 +18,7 @@ fn main() {
 
     // 2. Setup Film Simulation
     // Use preset
-    let film = presets::STANDARD_DAYLIGHT;
+    let film = presets::STANDARD_DAYLIGHT();
     let config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: true,
