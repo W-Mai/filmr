@@ -1,0 +1,6 @@
+[book]
+authors = ["Benign X"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Filmr Knowledge Base"
