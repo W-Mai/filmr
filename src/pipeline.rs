@@ -5,6 +5,7 @@ use crate::spectral::{CameraSensitivities, Spectrum};
 use crate::utils;
 use image::{ImageBuffer, Rgb, RgbImage};
 use rayon::prelude::*;
+use tracing::{debug, info, instrument};
 
 pub struct PipelineContext<'a> {
     pub film: &'a FilmStock,
@@ -16,7 +17,9 @@ pub trait PipelineStage {
 }
 
 // 1. Linearize (Not a stage per se, but an initializer)
+#[instrument(skip(input))]
 pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> {
+    debug!("Converting input image to linear space");
     let width = input.width();
     let height = input.height();
     let mut linear_image: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
@@ -47,11 +50,14 @@ pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> 
 pub struct HalationStage;
 
 impl PipelineStage for HalationStage {
+    #[instrument(skip(self, image, context))]
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
         let film = context.film;
         if film.halation_strength <= 0.0 {
+            debug!("Halation disabled (strength <= 0)");
             return;
         }
+        info!("Applying Halation effect");
 
         let width = image.width();
         let threshold = film.halation_threshold;
@@ -92,6 +98,7 @@ impl PipelineStage for HalationStage {
 pub struct MtfStage;
 
 impl PipelineStage for MtfStage {
+    #[instrument(skip(self, image, context))]
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
         let film = context.film;
         let width = image.width();
@@ -101,7 +108,10 @@ impl PipelineStage for MtfStage {
         let mtf_sigma = (0.5 / film.resolution_lp_mm) * pixels_per_mm;
 
         if mtf_sigma > 0.5 {
+            info!("Applying MTF blur (sigma: {:.2})", mtf_sigma);
             utils::apply_gaussian_blur(image, mtf_sigma);
+        } else {
+            debug!("MTF blur skipped (sigma too small: {:.2})", mtf_sigma);
         }
     }
 }
@@ -112,7 +122,9 @@ pub struct DevelopStage;
 const SPECTRAL_NORM: f32 = 1.0;
 
 impl PipelineStage for DevelopStage {
+    #[instrument(skip(self, image, context))]
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        info!("Developing film (Spectral -> Exposure -> Density)");
         let film = context.film;
         let config = context.config;
         let width = image.width();
@@ -222,10 +234,13 @@ impl PipelineStage for DevelopStage {
 pub struct GrainStage;
 
 impl PipelineStage for GrainStage {
+    #[instrument(skip(self, image, context))]
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
         if !context.config.enable_grain {
+            debug!("Grain disabled");
             return;
         }
+        info!("Applying Grain noise");
         let film = context.film;
         let width = image.width();
         let height = image.height();
@@ -277,10 +292,12 @@ impl PipelineStage for GrainStage {
 }
 
 // 6. Output (Final Conversion)
+#[instrument(skip(image, context))]
 pub fn create_output_image(
     image: &ImageBuffer<Rgb<f32>, Vec<f32>>,
     context: &PipelineContext,
 ) -> RgbImage {
+    info!("Converting to final output image");
     let width = image.width();
     let height = image.height();
     let film = context.film;

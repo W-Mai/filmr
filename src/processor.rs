@@ -7,6 +7,7 @@ use crate::pipeline::{
 };
 use crate::spectral::{CameraSensitivities, Spectrum};
 use image::RgbImage;
+use tracing::{debug, info, instrument};
 
 /// Configuration for the simulation run.
 #[derive(Debug, Clone, PartialEq)]
@@ -48,7 +49,9 @@ impl Default for SimulationConfig {
 
 const SPECTRAL_NORM: f32 = 1.0;
 
+#[instrument(skip(input, film))]
 pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
+    debug!("Estimating exposure time...");
     let camera_sens = CameraSensitivities::srgb();
     let mut film_sens = film.get_spectral_sensitivities();
     let illuminant = Spectrum::new_d65();
@@ -181,7 +184,9 @@ pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
 
 /// Main processor function.
 /// Takes an input image and film parameters, returns the simulated image.
+#[instrument(skip(input, film, config))]
 pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConfig) -> RgbImage {
+    info!("Starting film simulation processing");
     // Pipeline initialization
     let context = PipelineContext { film, config };
     let mut image_buffer = create_linear_image(input);

@@ -1,6 +1,9 @@
 use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize tracing
+    tracing_subscriber::fmt::init();
+
     let args: Vec<String> = env::args().collect();
 
     // Check if "ui" is explicitly requested
