@@ -2,6 +2,7 @@
 pub mod cli;
 
 pub mod config;
+pub mod cus_component;
 
 #[cfg(feature = "ui")]
 pub mod ui;

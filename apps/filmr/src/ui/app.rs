@@ -1,4 +1,5 @@
 pub use crate::config::{AppMode, ConfigManager, UxMode};
+use crate::cus_component::toggle;
 use crate::ui::panels;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
@@ -827,31 +828,21 @@ impl App for FilmrApp {
 
                 // UX Mode Switcher
                 ui.horizontal(|ui| {
-                    ui.label("UX:");
-                    if ui
-                        .selectable_value(&mut self.ux_mode, UxMode::Simple, "🎨 Simple")
-                        .clicked()
-                    {
-                        // Switch to Develop mode if we were in Stock Studio when switching to Simple
-                        if self.mode == AppMode::StockStudio {
-                            self.mode = AppMode::Develop;
-                        }
-                        // Save config
+                    let mut toggle_flag = self.ux_mode == UxMode::Professional;
+
+                    ui.label("🎨 Simple");
+                    if ui.add(toggle("🚀 Pro", &mut toggle_flag)).clicked() {
                         if let Some(cm) = &mut self.config_manager {
                             cm.config.ux_mode = self.ux_mode;
                             cm.save();
                         }
                     }
-                    if ui
-                        .selectable_value(&mut self.ux_mode, UxMode::Professional, "🚀 Pro")
-                        .clicked()
-                    {
-                        // Save config
-                        if let Some(cm) = &mut self.config_manager {
-                            cm.config.ux_mode = self.ux_mode;
-                            cm.save();
-                        }
-                    }
+
+                    self.ux_mode = if toggle_flag {
+                        UxMode::Professional
+                    } else {
+                        UxMode::Simple
+                    };
                 });
 
                 ui.separator();
