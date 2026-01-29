@@ -30,6 +30,7 @@ serde_json = "1.0.149"
 tracing = "0.1.44"
 
 [dev-dependencies]
+criterion = "0.8.1"
 imageproc = "0.23.0"
 rusttype = "0.9.3"
 
@@ -37,3 +38,7 @@ rusttype = "0.9.3"
 [profile.dist]
 inherits = "release"
 lto = "thin"
+
+[[bench]]
+name = "processing_benchmark"
+harness = false
