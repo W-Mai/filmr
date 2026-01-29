@@ -17,7 +17,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             let mut changed = false;
 
             // Preset Management (Standard Mode Only)
-            if app.mode == AppMode::Standard {
+            if app.mode == AppMode::Develop {
                 ui.group(|ui| {
                     ui.set_min_width(ui.available_width());
                     ui.label("Preset Management");
@@ -151,7 +151,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
             ui.label("Film Stock");
 
-            if app.mode == AppMode::Standard {
+            if app.mode == AppMode::Develop {
                 if ui.button("✨ Create Custom Stock from Current").clicked() {
                     let current_stock = app.get_current_stock();
                     let new_stock = current_stock;
@@ -169,7 +169,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
                     app.studio_stock = new_stock;
                     app.studio_stock_idx = Some(new_idx);
-                    app.mode = AppMode::Studio;
+                    app.mode = AppMode::StockStudio;
                     app.has_unsaved_changes = true;
 
                     app.process_and_update_texture(ctx);
@@ -181,7 +181,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 {
                     app.studio_stock = app.stocks[app.selected_stock_idx].1;
                     app.studio_stock_idx = Some(app.selected_stock_idx);
-                    app.mode = AppMode::Studio;
+                    app.mode = AppMode::StockStudio;
                     // Editing existing stock implies potential changes
                     app.has_unsaved_changes = true;
 
@@ -244,7 +244,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             ui.separator();
 
             // Only show overrides in Standard Mode
-            if app.mode == AppMode::Standard {
+            if app.mode == AppMode::Develop {
                 if ui
                     .add(egui::Slider::new(&mut app.gamma_boost, 0.5..=2.0).text("Gamma Boost"))
                     .changed()
@@ -447,7 +447,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 }
             });
 
-            if app.mode == AppMode::Standard {
+            if app.mode == AppMode::Develop {
                 ui.group(|ui| {
                     ui.set_min_width(ui.available_width());
                     ui.label("Grain (Editable)");

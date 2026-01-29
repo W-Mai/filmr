@@ -4,9 +4,27 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
+pub enum AppMode {
+    Develop,
+    StockStudio,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
+pub enum UxMode {
+    Simple,
+    Professional,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilmrConfig {
     pub custom_stocks_path: PathBuf,
+    #[serde(default = "default_ux_mode")]
+    pub ux_mode: UxMode,
+}
+
+fn default_ux_mode() -> UxMode {
+    UxMode::Professional
 }
 
 pub struct ConfigManager {
@@ -40,15 +58,18 @@ impl ConfigManager {
             if let Ok(content) = fs::read_to_string(&config_path) {
                 serde_json::from_str(&content).unwrap_or_else(|_| FilmrConfig {
                     custom_stocks_path: default_stocks_path.clone(),
+                    ux_mode: UxMode::Professional,
                 })
             } else {
                 FilmrConfig {
                     custom_stocks_path: default_stocks_path.clone(),
+                    ux_mode: UxMode::Professional,
                 }
             }
         } else {
             let config = FilmrConfig {
                 custom_stocks_path: default_stocks_path.clone(),
+                ux_mode: UxMode::Professional,
             };
             if let Ok(json) = serde_json::to_string_pretty(&config) {
                 let _ = fs::write(&config_path, json);

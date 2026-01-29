@@ -1,4 +1,4 @@
-use crate::config::ConfigManager;
+pub use crate::config::{AppMode, ConfigManager, UxMode};
 use crate::ui::panels;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
@@ -139,10 +139,14 @@ pub struct FilmrApp {
     pub offset: Vec2,
     pub show_original: bool,
     pub show_metrics: bool,
+    pub split_view: bool,
+    pub split_pos: f32,
 
     // Parameters
     pub exposure_time: f32,
     pub gamma_boost: f32,
+    pub warmth: f32,
+    pub saturation: f32,
 
     // Halation Parameters
     pub halation_strength: f32,
@@ -175,6 +179,7 @@ pub struct FilmrApp {
 
     // App Mode
     pub mode: AppMode,
+    pub ux_mode: UxMode,
     pub studio_stock: FilmStock,
     pub builtin_stock_count: usize,
 
@@ -185,6 +190,10 @@ pub struct FilmrApp {
     pub show_settings: bool,
 
     pub config_manager: Option<ConfigManager>,
+
+    pub preset_thumbnails: std::collections::HashMap<&'static str, TextureHandle>,
+    tx_thumb: Sender<(&'static str, RgbImage)>,
+    rx_thumb: Receiver<(&'static str, RgbImage)>,
 
     #[cfg(target_arch = "wasm32")]
     rx_req_wasm: Receiver<ProcessRequest>,
@@ -200,12 +209,6 @@ pub struct FilmrApp {
     pub tx_preset: Sender<Vec<u8>>,
     #[cfg(target_arch = "wasm32")]
     pub rx_preset: Receiver<Vec<u8>>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum AppMode {
-    Standard,
-    Studio,
 }
 
 impl FilmrApp {
@@ -228,6 +231,32 @@ impl FilmrApp {
             .or_default()
             .insert(0, "ark-pixel".to_owned());
         cc.egui_ctx.set_fonts(fonts);
+
+        // Global Style & Visuals Optimization Prepared for simple mode
+        //
+        // let mut style = (*cc.egui_ctx.style()).clone();
+        // style.spacing.item_spacing = egui::vec2(8.0, 10.0); // Increase vertical spacing
+        // style.spacing.button_padding = egui::vec2(8.0, 4.0);
+        //
+        // // Adjust Font Hierarchy
+        // use egui::TextStyle::*;
+        // style
+        //     .text_styles
+        //     .insert(Heading, egui::FontId::proportional(20.0));
+        // style
+        //     .text_styles
+        //     .insert(Body, egui::FontId::proportional(14.0));
+        // style
+        //     .text_styles
+        //     .insert(Monospace, egui::FontId::monospace(14.0));
+        // style
+        //     .text_styles
+        //     .insert(Button, egui::FontId::proportional(14.0));
+        // style
+        //     .text_styles
+        //     .insert(Small, egui::FontId::proportional(11.0));
+        //
+        // cc.egui_ctx.set_style(style);
 
         let mut stocks = presets::get_all_stocks();
         let builtin_stock_count = stocks.len();
@@ -265,32 +294,23 @@ impl FilmrApp {
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
         let (tx_load, rx_load) = unbounded::<LoadRequest>();
         let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
+        let (tx_thumb, rx_thumb) = unbounded::<(&'static str, RgbImage)>();
+        let (tx_thumb_res, rx_thumb_res) = unbounded::<(&'static str, RgbImage)>();
 
         // Clone context for the thread
-        let _ctx_process = cc.egui_ctx.clone();
-        let _ctx_load = cc.egui_ctx.clone();
-
-        #[cfg(not(target_arch = "wasm32"))]
-        let ctx_process = _ctx_process;
-        #[cfg(not(target_arch = "wasm32"))]
-        let ctx_load = _ctx_load;
+        let ctx_process = cc.egui_ctx.clone();
+        let ctx_load = cc.egui_ctx.clone();
+        let ctx_thumb = cc.egui_ctx.clone();
 
         // Spawn worker thread for processing
         #[cfg(not(target_arch = "wasm32"))]
         thread::spawn(move || {
             while let Ok(mut req) = rx_req.recv() {
-                // Drain any newer requests to skip intermediate states (debounce)
                 while let Ok(newer) = rx_req.try_recv() {
                     req = newer;
                 }
-
-                // Process
                 let res = process_worker_logic(req);
-
-                // Send back result
                 let _ = tx_res.send(res);
-
-                // Wake up the GUI
                 ctx_process.request_repaint();
             }
         });
@@ -305,8 +325,33 @@ impl FilmrApp {
             }
         });
 
+        // Spawn worker thread for thumbnails
+        #[cfg(not(target_arch = "wasm32"))]
+        let stocks_for_thumb = presets::get_all_stocks();
+        #[cfg(not(target_arch = "wasm32"))]
+        thread::spawn(move || {
+            while let Ok((name, base_img)) = rx_thumb.recv() {
+                // Find the stock
+                if let Some(stock) = stocks_for_thumb
+                    .iter()
+                    .find(|(n, _)| *n == name)
+                    .map(|(_, s)| s)
+                {
+                    let config = SimulationConfig::default();
+                    let processed = process_image(&base_img, stock, &config);
+                    let _ = tx_thumb_res.send((name, processed));
+                    ctx_thumb.request_repaint();
+                }
+            }
+        });
+
         #[cfg(target_arch = "wasm32")]
         let (tx_preset, rx_preset) = unbounded();
+
+        let ux_mode = config_manager
+            .as_ref()
+            .map(|cm| cm.config.ux_mode)
+            .unwrap_or(UxMode::Professional);
 
         Self {
             original_image: None,
@@ -326,12 +371,20 @@ impl FilmrApp {
             rx_load: rx_load_res,
             is_loading: false,
 
+            preset_thumbnails: std::collections::HashMap::new(),
+            tx_thumb,
+            rx_thumb: rx_thumb_res,
+
             zoom: 1.0,
             offset: Vec2::ZERO,
             show_original: false,
             show_metrics: false,
+            split_view: false,
+            split_pos: 0.5,
             exposure_time: 1.0,
             gamma_boost: 1.0,
+            warmth: 0.0,
+            saturation: 1.0,
 
             // Default Halation params
             halation_strength: 0.0,
@@ -356,7 +409,8 @@ impl FilmrApp {
             hist_log_scale: false,
             hist_clamp_zeros: true,
 
-            mode: AppMode::Standard,
+            mode: AppMode::Develop,
+            ux_mode,
             studio_stock: presets::STANDARD_DAYLIGHT(),
             builtin_stock_count,
 
@@ -420,15 +474,15 @@ impl FilmrApp {
         if let Some(img) = source_image {
             // Construct params
             // Use preset as base and modify
-            let base_film = if self.mode == AppMode::Studio {
+            let base_film = if self.mode == AppMode::StockStudio {
                 self.studio_stock
             } else {
                 self.get_current_stock()
             };
 
             let mut film = base_film; // Copy
-            if self.mode == AppMode::Standard {
-                // Only apply UI overrides in Standard mode
+            if self.mode == AppMode::Develop {
+                // Only apply UI overrides in Develop mode
                 film.halation_strength = self.halation_strength;
                 film.halation_threshold = self.halation_threshold;
                 film.halation_sigma = self.halation_sigma;
@@ -450,6 +504,8 @@ impl FilmrApp {
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
+                warmth: self.warmth,
+                saturation: self.saturation,
                 light_leak: self.light_leak_config.clone(),
             };
 
@@ -475,14 +531,14 @@ impl FilmrApp {
             // unless we also keep full-res as RgbImage (memory intensive).
             let rgb_img = Arc::new(img.to_rgb8());
 
-            let base_film = if self.mode == AppMode::Studio {
+            let base_film = if self.mode == AppMode::StockStudio {
                 self.studio_stock
             } else {
                 self.get_current_stock()
             };
             let mut film = base_film;
 
-            if self.mode == AppMode::Standard {
+            if self.mode == AppMode::Develop {
                 film.halation_strength = self.halation_strength;
                 film.halation_threshold = self.halation_threshold;
                 film.halation_sigma = self.halation_sigma;
@@ -497,6 +553,8 @@ impl FilmrApp {
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
+                warmth: self.warmth,
+                saturation: self.saturation,
                 light_leak: self.light_leak_config.clone(),
             };
 
@@ -574,7 +632,7 @@ impl App for FilmrApp {
 
                     self.status_msg = format!("Loading {}...", path_str);
                     self.is_loading = true;
-                    let stock = if self.mode == AppMode::Standard {
+                    let stock = if self.mode == AppMode::Develop {
                         Some(self.get_current_stock())
                     } else {
                         None
@@ -614,8 +672,8 @@ impl App for FilmrApp {
                         egui::TextureOptions::LINEAR,
                     ));
 
-                    if self.mode == AppMode::Standard {
-                        // Estimate exposure for the loaded image if in standard mode
+                    if self.mode == AppMode::Develop {
+                        // Estimate exposure for the loaded image if in Develop mode
                         if let Some(exposure) = data.estimated_exposure {
                             self.exposure_time = exposure;
                         } else {
@@ -629,6 +687,17 @@ impl App for FilmrApp {
 
                     // Auto-process logic: Immediately process the preview after loading
                     self.process_and_update_texture(ctx);
+
+                    // Trigger thumbnail generation
+                    let thumb_base = self
+                        .original_image
+                        .as_ref()
+                        .unwrap()
+                        .thumbnail(128, 128)
+                        .to_rgb8();
+                    for (name, _) in &self.stocks {
+                        let _ = self.tx_thumb.send((*name, thumb_base.clone()));
+                    }
                 }
                 Err(e) => {
                     self.status_msg = format!("Failed to load image: {}", e);
@@ -691,6 +760,19 @@ impl App for FilmrApp {
             }
         }
 
+        // Handle Thumbnail Results
+        while let Ok((name, img)) = self.rx_thumb.try_recv() {
+            let size = [img.width() as _, img.height() as _];
+            let pixels = img.as_flat_samples();
+            let color_image = ColorImage::from_rgb(size, pixels.as_slice());
+            let texture = ctx.load_texture(
+                format!("thumb_{}", name),
+                color_image,
+                egui::TextureOptions::LINEAR,
+            );
+            self.preset_thumbnails.insert(name, texture);
+        }
+
         // Top Menu Bar
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -706,7 +788,7 @@ impl App for FilmrApp {
                         {
                             self.status_msg = format!("Loading {:?}...", path);
                             self.is_loading = true;
-                            let stock = if self.mode == AppMode::Standard {
+                            let stock = if self.mode == AppMode::Develop {
                                 Some(self.get_current_stock())
                             } else {
                                 None
@@ -743,29 +825,62 @@ impl App for FilmrApp {
 
                 ui.separator();
 
-                // Mode Switcher
+                // UX Mode Switcher
                 ui.horizontal(|ui| {
-                    ui.label("Mode:");
+                    ui.label("UX:");
                     if ui
-                        .selectable_value(&mut self.mode, AppMode::Standard, "Standard")
+                        .selectable_value(&mut self.ux_mode, UxMode::Simple, "🎨 Simple")
                         .clicked()
                     {
-                        self.process_and_update_texture(ctx);
+                        // Switch to Develop mode if we were in Stock Studio when switching to Simple
+                        if self.mode == AppMode::StockStudio {
+                            self.mode = AppMode::Develop;
+                        }
+                        // Save config
+                        if let Some(cm) = &mut self.config_manager {
+                            cm.config.ux_mode = self.ux_mode;
+                            cm.save();
+                        }
                     }
                     if ui
-                        .add_enabled(
-                            self.studio_stock_idx.is_some(),
-                            egui::SelectableLabel::new(
-                                self.mode == AppMode::Studio,
-                                "Stock Studio",
-                            ),
-                        )
+                        .selectable_value(&mut self.ux_mode, UxMode::Professional, "🚀 Pro")
                         .clicked()
                     {
-                        self.mode = AppMode::Studio;
-                        self.process_and_update_texture(ctx);
+                        // Save config
+                        if let Some(cm) = &mut self.config_manager {
+                            cm.config.ux_mode = self.ux_mode;
+                            cm.save();
+                        }
                     }
                 });
+
+                ui.separator();
+
+                // Functional Mode Switcher (Only in Pro Mode)
+                if self.ux_mode == UxMode::Professional {
+                    ui.horizontal(|ui| {
+                        ui.label("Mode:");
+                        if ui
+                            .selectable_value(&mut self.mode, AppMode::Develop, "Develop")
+                            .clicked()
+                        {
+                            self.process_and_update_texture(ctx);
+                        }
+                        if ui
+                            .add_enabled(
+                                self.studio_stock_idx.is_some(),
+                                egui::SelectableLabel::new(
+                                    self.mode == AppMode::StockStudio,
+                                    "Stock Studio",
+                                ),
+                            )
+                            .clicked()
+                        {
+                            self.mode = AppMode::StockStudio;
+                            self.process_and_update_texture(ctx);
+                        }
+                    });
+                }
             });
         });
 
@@ -801,7 +916,7 @@ impl App for FilmrApp {
         panels::controls::render_controls(self, ctx);
 
         // Right Panel
-        if self.mode == AppMode::Studio {
+        if self.mode == AppMode::StockStudio {
             panels::studio::render_studio_panel(self, ctx);
         }
 
