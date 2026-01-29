@@ -14,10 +14,7 @@ pub fn render_metrics(app: &mut FilmrApp, ctx: &Context) {
                 let metrics_to_show = if app.show_original {
                     &app.metrics_original
                 } else if app.developed_image.is_some() {
-                    // If we have a developed image, we should probably show it?
-                    // But currently we show preview metrics if params changed.
-                    // Let's stick to preview metrics unless we want to be fancy.
-                    &app.metrics_preview
+                    &app.metrics_developed
                 } else {
                     &app.metrics_preview
                 };
