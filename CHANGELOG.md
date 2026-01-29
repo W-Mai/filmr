@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-01-29
+
+### ⚠ Breaking Changes
+
+- **Core**: Refactored `ReciprocityFailure` model to be a struct with `beta` parameter, removing the `description` field. This restores `Copy` trait for `FilmStock`.
+- **Core**: Removed references to internal documentation IDs ("tec n") from public API comments.
+
+### 🚀 Features
+
+- **Core**: Added standard color negative spectral response model (`new_color_negative_standard`).
+- **Ops**: Implemented structured logging with `tracing` crate, replacing `println!` debugging.
+- **Docs**: Established `mdBook` knowledge base structure in `docs/`.
+- **Docs**: Added comprehensive Rustdoc documentation to public API (`FilmStock`, `PipelineStage`, etc.).
+
+### ⚡️ Performance
+
+- **Bench**: Added `criterion` benchmarks for image processing (1080p).
+
+### 🐛 Fixes
+
+- **Tests**: Resolved Clippy warnings and unused variables in test suites.
+
 ## [0.3.9] - 2026-01-27
 
 ### ⚡️ Performance
