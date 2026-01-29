@@ -7,16 +7,23 @@ use image::{ImageBuffer, Rgb, RgbImage};
 use rayon::prelude::*;
 use tracing::{debug, info, instrument};
 
+/// Context shared across all pipeline stages.
+/// Contains read-only references to film data and configuration.
 pub struct PipelineContext<'a> {
     pub film: &'a FilmStock,
     pub config: &'a SimulationConfig,
 }
 
+/// A stage in the image processing pipeline.
+/// Modifies the image buffer in place.
 pub trait PipelineStage {
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext);
 }
 
-// 1. Linearize (Not a stage per se, but an initializer)
+/// # Linearize Stage (Initializer)
+///
+/// Converts sRGB input image to Linear RGB f32 format.
+/// Uses a Look-Up Table (LUT) for performance optimization.
 #[instrument(skip(input))]
 pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> {
     debug!("Converting input image to linear space");
@@ -46,7 +53,10 @@ pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> 
     linear_image
 }
 
-// 2. Halation Stage
+/// # Halation Stage
+///
+/// Simulates light reflecting off the film base back into the emulsion.
+/// Creates a reddish-orange glow around highlights.
 pub struct HalationStage;
 
 impl PipelineStage for HalationStage {
@@ -94,7 +104,10 @@ impl PipelineStage for HalationStage {
     }
 }
 
-// 3. MTF Stage
+/// # MTF (Modulation Transfer Function) Stage
+///
+/// Simulates optical softness based on the film's resolving power (lp/mm).
+/// Applied before grain to simulate the physical blurring of the image.
 pub struct MtfStage;
 
 impl PipelineStage for MtfStage {
@@ -116,7 +129,13 @@ impl PipelineStage for MtfStage {
     }
 }
 
-// 4. Develop Stage (Spectral -> Log Exposure -> Density)
+/// # Develop Stage
+///
+/// The core physical simulation:
+/// - Spectral Sensitivity (RGB -> Spectrum -> Exposure)
+/// - Reciprocity Failure (Exposure Adjustment)
+/// - White Balance (Exposure Gain)
+/// - H-D Curves (Exposure -> Density)
 pub struct DevelopStage;
 
 const SPECTRAL_NORM: f32 = 1.0;
@@ -230,7 +249,10 @@ impl PipelineStage for DevelopStage {
     }
 }
 
-// 5. Grain Stage
+/// # Grain Stage
+///
+/// Adds film grain noise based on density.
+/// Supports both monochrome and color grain models.
 pub struct GrainStage;
 
 impl PipelineStage for GrainStage {
@@ -291,7 +313,12 @@ impl PipelineStage for GrainStage {
     }
 }
 
-// 6. Output (Final Conversion)
+/// # Output Stage (Final Conversion)
+///
+/// Converts Density to final output color space.
+/// - Negative Mode: Simulates transmission light through the negative.
+/// - Positive Mode: Simulates scan/inversion for display.
+/// - Applies Color Matrix (Crosstalk) and CMY -> RGB conversion.
 #[instrument(skip(image, context))]
 pub fn create_output_image(
     image: &ImageBuffer<Rgb<f32>, Vec<f32>>,

@@ -10,13 +10,21 @@ use image::RgbImage;
 use tracing::{debug, info, instrument};
 
 /// Configuration for the simulation run.
+/// Controls all aspects of the physical simulation pipeline.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SimulationConfig {
+    /// Exposure time (t) in seconds.
+    /// Used for Reciprocity Failure calculation (E = I * t).
     pub exposure_time: f32, // t in E = I * t
+    /// Enable or disable grain simulation.
     pub enable_grain: bool,
+    /// Output mode: Negative (Transmission) or Positive (Scanned).
     pub output_mode: OutputMode,
+    /// White Balance mode.
     pub white_balance_mode: WhiteBalanceMode,
+    /// Strength of White Balance correction (0.0 to 1.0).
     pub white_balance_strength: f32,
+    /// Light leak simulation configuration.
     pub light_leak: LightLeakConfig,
 }
 

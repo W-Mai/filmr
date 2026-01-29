@@ -99,8 +99,14 @@ pub enum FilmType {
     BwNegative,
 }
 
+/// Reciprocity Failure Parameters.
+///
+/// Describes how the film responds to long exposures (Schwarzschild effect).
+/// Effective Exposure = I * t / (1 + beta * (log10(t))^2)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct ReciprocityFailure {
+    /// The beta coefficient (sensitivity to time).
+    /// Typical values range from 0.05 to 0.3.
     pub beta: f32,
 }
 
