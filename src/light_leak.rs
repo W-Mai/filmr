@@ -21,11 +21,23 @@ pub struct LightLeak {
     /// Type of shape
     pub shape: LightLeakShape,
     /// Rotation angle in radians
-    #[serde(default)]
     pub rotation: f32,
     /// Roughness/Noise factor (0.0 to 1.0)
-    #[serde(default)]
     pub roughness: f32,
+}
+
+impl Default for LightLeak {
+    fn default() -> Self {
+        Self {
+            position: (0.5, 0.5),
+            color: [1.0, 0.5, 0.2], // Warm orange
+            radius: 0.3,
+            intensity: 1.0,
+            shape: LightLeakShape::Circle,
+            rotation: 0.0,
+            roughness: 0.5,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]

@@ -24,6 +24,10 @@ pub struct SimulationConfig {
     pub white_balance_mode: WhiteBalanceMode,
     /// Strength of White Balance correction (0.0 to 1.0).
     pub white_balance_strength: f32,
+    /// Warmth adjustment (-1.0 to 1.0).
+    pub warmth: f32,
+    /// Saturation adjustment (0.0 to 2.0).
+    pub saturation: f32,
     /// Light leak simulation configuration.
     pub light_leak: LightLeakConfig,
 }
@@ -50,6 +54,8 @@ impl Default for SimulationConfig {
             output_mode: OutputMode::Positive, // Default to what users expect
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
+            warmth: 0.0,
+            saturation: 1.0,
             light_leak: LightLeakConfig::default(),
         }
     }

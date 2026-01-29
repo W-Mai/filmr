@@ -6,3 +6,4 @@ quality_report/
 dist/
 docs/book/
 public/
+.idea

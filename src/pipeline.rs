@@ -199,16 +199,28 @@ impl PipelineStage for DevelopStage {
                     let gain_b = lum / avg_b.max(eps);
 
                     let s = config.white_balance_strength.clamp(0.0, 1.0);
-                    [
+                    let base_gains = [
                         1.0 + (gain_r - 1.0) * s,
                         1.0 + (gain_g - 1.0) * s,
                         1.0 + (gain_b - 1.0) * s,
+                    ];
+
+                    // Apply Warmth (Shift R/B)
+                    let warmth = config.warmth.clamp(-1.0, 1.0);
+                    [
+                        base_gains[0] * (1.0 + warmth * 0.1),
+                        base_gains[1],
+                        base_gains[2] * (1.0 - warmth * 0.1),
                     ]
                 } else {
                     [1.0, 1.0, 1.0]
                 }
             }
-            _ => [1.0, 1.0, 1.0],
+            _ => {
+                // Manual/Off mode still supports Warmth
+                let warmth = config.warmth.clamp(-1.0, 1.0);
+                [1.0 + warmth * 0.1, 1.0, 1.0 - warmth * 0.1]
+            }
         };
 
         // Transform in place: Linear -> Density
@@ -404,7 +416,15 @@ pub fn create_output_image(
         let y = (i as u32) / width;
         let d = image.get_pixel(x, y).0;
 
-        let (r_lin, g_lin, b_lin) = map_densities(d);
+        let (mut r_lin, mut g_lin, mut b_lin) = map_densities(d);
+
+        // Apply Saturation
+        if config.saturation != 1.0 {
+            let lum = 0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin;
+            r_lin = lum + (r_lin - lum) * config.saturation;
+            g_lin = lum + (g_lin - lum) * config.saturation;
+            b_lin = lum + (b_lin - lum) * config.saturation;
+        }
 
         let r_out = physics::linear_to_srgb(r_lin.clamp(0.0, 1.0));
         let g_out = physics::linear_to_srgb(g_lin.clamp(0.0, 1.0));
