@@ -15,7 +15,7 @@ pub fn run() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "Filmr GUI Example",
+        "Filmr GUI",
         options,
         Box::new(|cc| Ok(Box::new(FilmrApp::new(cc)))),
     )
