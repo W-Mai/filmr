@@ -739,6 +739,7 @@ impl App for FilmrApp {
                     color_image,
                     egui::TextureOptions::LINEAR,
                 ));
+                self.developed_image = None;
                 self.metrics_preview = Some(result.metrics);
                 self.is_processing = false;
             } else {
