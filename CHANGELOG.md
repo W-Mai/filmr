@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Metrics**: Fixed incorrect metrics display logic and optimized metrics panel visibility for different modes.
 - **UI**: Fixed control panel layout issues and improved visual hierarchy with better spacing and grouping.
 
+### ⚠ Breaking Changes
+
+- **Core**: Refactored `FilmStock` struct to embed `manufacturer` and `name` fields directly, removing the need for external name management. Updated `get_all_stocks` to return `Vec<FilmStock>` instead of tuples.
+
 ## [0.4.0] - 2026-01-29
 
 ### ⚠ Breaking Changes
