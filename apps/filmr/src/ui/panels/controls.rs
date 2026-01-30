@@ -62,6 +62,16 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 } else {
                     UxMode::Simple
                 };
+
+                ui.allocate_ui_with_layout(
+                    ui.available_size(),
+                    egui::Layout::right_to_left(egui::Align::Center),
+                    |ui| {
+                        if ui.button("🔧").clicked() {
+                            app.show_settings = true;
+                        }
+                    },
+                );
             });
         });
     });
