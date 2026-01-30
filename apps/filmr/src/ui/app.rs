@@ -297,12 +297,15 @@ impl FilmrApp {
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
         let (tx_load, rx_load) = unbounded::<LoadRequest>();
         let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
-        let (tx_thumb, rx_thumb) = unbounded::<(String, RgbImage)>();
-        let (tx_thumb_res, rx_thumb_res) = unbounded::<(String, RgbImage)>();
+        let (tx_thumb, _rx_thumb) = unbounded::<(String, RgbImage)>();
+        let (_tx_thumb_res, rx_thumb_res) = unbounded::<(String, RgbImage)>();
 
         // Clone context for the thread
+        #[cfg(not(target_arch = "wasm32"))]
         let ctx_process = cc.egui_ctx.clone();
+        #[cfg(not(target_arch = "wasm32"))]
         let ctx_load = cc.egui_ctx.clone();
+        #[cfg(not(target_arch = "wasm32"))]
         let ctx_thumb = cc.egui_ctx.clone();
 
         // Spawn worker thread for processing
@@ -332,12 +335,12 @@ impl FilmrApp {
         #[cfg(not(target_arch = "wasm32"))]
         thread::spawn(move || {
             let stocks_for_thumb = presets::get_all_stocks();
-            while let Ok((name, base_img)) = rx_thumb.recv() {
+            while let Ok((name, base_img)) = _rx_thumb.recv() {
                 // Find the stock
                 if let Some(stock) = stocks_for_thumb.iter().find(|s| s.full_name() == name) {
                     let config = SimulationConfig::default();
                     let processed = process_image(&base_img, stock, &config);
-                    let _ = tx_thumb_res.send((name, processed));
+                    let _ = _tx_thumb_res.send((name, processed));
                     ctx_thumb.request_repaint();
                 }
             }
@@ -713,7 +716,7 @@ impl App for FilmrApp {
                     if stock.name.is_empty() {
                         stock.name = name;
                     }
-                    self.stocks.push(stock);
+                    self.stocks.push(std::rc::Rc::from(stock));
                 }
                 self.status_msg = "Loaded preset collection".to_string();
             } else if let Ok(stock) = serde_json::from_slice::<FilmStock>(&bytes) {
@@ -722,7 +725,7 @@ impl App for FilmrApp {
                 if stock.name.is_empty() {
                     stock.name = name;
                 }
-                self.stocks.push(stock);
+                self.stocks.push(std::rc::Rc::from(stock));
                 self.selected_stock_idx = self.stocks.len() - 1;
                 self.load_preset_values();
                 self.status_msg = "Loaded imported preset".to_string();
