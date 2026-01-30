@@ -322,11 +322,34 @@ fn render_professional_controls(
                 ui.set_min_width(ui.available_width());
                 ui.vertical_centered(|ui| {
                     ui.label(
-                        egui::RichText::new("🛠️ Custom Studio Stock")
+                        egui::RichText::new("🛠 Custom Studio Stock")
                             .strong()
                             .color(egui::Color32::LIGHT_BLUE),
                     );
                     ui.label("Editing in Right Panel 👉");
+                });
+                ui.add_space(5.0);
+                let mut name = app
+                    .stocks
+                    .get(app.studio_stock_idx.unwrap_or_default())
+                    .map(|p| p.0)
+                    .unwrap_or_default()
+                    .to_owned();
+                ui.label("Name:");
+                egui::TextEdit::singleline(&mut name).show(ui);
+                app.stocks[app.studio_stock_idx.unwrap_or_default()].0 = name.leak();
+
+                ui.vertical_centered(|ui| {
+                    if ui
+                        .button(
+                            egui::RichText::new("🛠 Save & Back")
+                                .strong()
+                                .color(egui::Color32::LIGHT_BLUE),
+                        )
+                        .clicked()
+                    {
+                        app.mode = AppMode::Develop;
+                    };
                 });
             });
         }
