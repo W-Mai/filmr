@@ -8,9 +8,11 @@ use egui::{Context, RichText};
 use rfd::FileDialog;
 
 use crate::config::UxMode;
+use crate::cus_component::toggle;
 use crate::ui::app::{AppMode, FilmrApp};
 
 pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
+    let mut changed = false;
     egui::SidePanel::left("controls_panel").show(ctx, |ui| {
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.add_space(10.0);
@@ -19,8 +21,6 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
             });
             ui.add_space(16.0);
-
-            let mut changed = false;
 
             if app.ux_mode == UxMode::Simple {
                 render_simple_controls(app, ui, ctx, &mut changed);
@@ -38,12 +38,37 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 ui.small("- Double Click to Reset View");
                 ui.small("- Ctrl+O to Open File");
             });
+        });
 
-            if changed {
-                app.process_and_update_texture(ctx);
-            }
+        egui::TopBottomPanel::bottom("ux_mode_panel").show(ctx, |ui| {
+            // UX Mode Switcher
+            ui.horizontal_centered(|ui| {
+                ui.set_min_height(24.0);
+                let mut toggle_flag = app.ux_mode == UxMode::Professional;
+
+                ui.label("👶");
+                if ui
+                    .add(toggle("🚀 Professional", &mut toggle_flag))
+                    .clicked()
+                {
+                    if let Some(cm) = &mut app.config_manager {
+                        cm.config.ux_mode = app.ux_mode;
+                        cm.save();
+                    }
+                }
+
+                app.ux_mode = if toggle_flag {
+                    UxMode::Professional
+                } else {
+                    UxMode::Simple
+                };
+            });
         });
     });
+
+    if changed {
+        app.process_and_update_texture(ctx);
+    }
 }
 
 fn render_simple_controls(
@@ -67,6 +92,7 @@ fn render_simple_controls(
                 .max_height(300.0)
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
+                        ui.set_min_size(ui.available_size());
                         for idx in 0..app.stocks.len() {
                             let (name, _) = app.stocks[idx];
                             ui.horizontal(|ui| {

@@ -1,5 +1,4 @@
 pub use crate::config::{AppMode, ConfigManager, UxMode};
-use crate::cus_component::toggle;
 use crate::ui::panels;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
@@ -824,29 +823,6 @@ impl App for FilmrApp {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
-
-                ui.separator();
-
-                // UX Mode Switcher
-                ui.horizontal(|ui| {
-                    let mut toggle_flag = self.ux_mode == UxMode::Professional;
-
-                    ui.label("🎨 Simple");
-                    if ui.add(toggle("🚀 Pro", &mut toggle_flag)).clicked() {
-                        if let Some(cm) = &mut self.config_manager {
-                            cm.config.ux_mode = self.ux_mode;
-                            cm.save();
-                        }
-                    }
-
-                    self.ux_mode = if toggle_flag {
-                        UxMode::Professional
-                    } else {
-                        UxMode::Simple
-                    };
-                });
-
-                ui.separator();
 
                 // Functional Mode Switcher (Only in Pro Mode)
                 if self.ux_mode == UxMode::Professional {
