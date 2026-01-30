@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-30
+
+### 🚀 Features
+
+- **UI**: Introduced **Simple** and **Professional** UX modes. Simple mode focuses on quick adjustments (Brightness, Contrast, Warmth, Intensity), while Professional mode offers full physics-based control.
+- **UI**: Added **Split-Screen Comparison** view in the central panel for side-by-side before/after comparison.
+- **UI**: Implemented async **Preset Thumbnails** in the controls panel for visual preview of film stocks.
+- **Processor**: Added `warmth` and `saturation` parameters to the simulation engine.
+- **UI**: Added persistency for UX mode preference in `config.json`.
+- **UI**: Optimized top bar layout with direct mode toggles.
+
+### 🐛 Fixes
+
+- **Metrics**: Fixed incorrect metrics display logic and optimized metrics panel visibility for different modes.
+- **UI**: Fixed control panel layout issues and improved visual hierarchy with better spacing and grouping.
+
 ## [0.4.0] - 2026-01-29
 
 ### ⚠ Breaking Changes
