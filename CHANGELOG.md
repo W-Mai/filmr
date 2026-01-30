@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-01-30
+
+### 🚀 Features
+
+- **UI**: Added "Save" and "Back" buttons in Studio Mode for improved workflow.
+- **UI**: Optimized main layout by removing the top panel and relocating the settings button for a cleaner interface.
+- **UI**: Improved positioning of the UX mode toggle.
+
+### 🐛 Fixes
+
+- **Metrics**: Fixed logic for retrieving and displaying film metrics.
+
+### ♻️ Refactoring
+
+- **Core**: Refactored `FilmStock` struct to embed `manufacturer` and `name` fields directly, simplifying the `presets` module and removing redundant tuple wrappers.
+- **Core**: Optimized `FilmStock` usage to prefer references and moves over cloning, improving performance and reducing unnecessary allocations.
+
+
 ## [0.5.0] - 2026-01-30
 
 ### 🚀 Features
