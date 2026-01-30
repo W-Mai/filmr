@@ -6,6 +6,8 @@ use crate::spectral::FilmSpectralParams;
 /// Standard Daylight Film (Generic)
 pub fn STANDARD_DAYLIGHT() -> FilmStock {
     FilmStock {
+        manufacturer: "Generic".to_string(),
+        name: "Standard Daylight".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -57,6 +59,8 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
 /// Reciprocity: 1s -> +1 stop (exponent ~0.7)
 pub fn KODAK_TRI_X_400() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Tri-X 400".to_string(),
         film_type: FilmType::BwNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -109,6 +113,8 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
 /// Spectral: Enhanced Red Sensitivity
 pub fn FUJIFILM_VELVIA_50() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Velvia 50".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 50.0,
         r_curve: SegmentedCurve {
@@ -165,6 +171,8 @@ pub fn FUJIFILM_VELVIA_50() -> FilmStock {
 /// Spectral: Slightly lower Red response
 pub fn ILFORD_HP5_PLUS() -> FilmStock {
     FilmStock {
+        manufacturer: "Ilford".to_string(),
+        name: "HP5 Plus".to_string(),
         film_type: FilmType::BwNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -216,6 +224,8 @@ pub fn ILFORD_HP5_PLUS() -> FilmStock {
 /// Spectral: Neutral + 15% Saturation
 pub fn KODAK_PORTRA_400() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Portra 400".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -272,6 +282,8 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
 /// Spectral: High Saturation (+25%)
 pub fn KODAK_EKTAR_100() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Ektar 100".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -328,6 +340,8 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
 /// Reciprocity: Good for high speed
 pub fn KODAK_T_MAX_3200() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "T-Max 3200".to_string(),
         film_type: FilmType::BwNegative,
         iso: 3200.0,
         r_curve: SegmentedCurve {
@@ -380,6 +394,8 @@ pub fn KODAK_T_MAX_3200() -> FilmStock {
 /// Crystal: Core-Shell
 pub fn ILFORD_DELTA_100() -> FilmStock {
     FilmStock {
+        manufacturer: "Ilford".to_string(),
+        name: "Delta 100".to_string(),
         film_type: FilmType::BwNegative,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -432,6 +448,8 @@ pub fn ILFORD_DELTA_100() -> FilmStock {
 /// Spectral: Fourth Color Layer Sim (Cyan-ish)
 pub fn FUJIFILM_PRO_400H() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Pro 400H".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -487,6 +505,8 @@ pub fn FUJIFILM_PRO_400H() -> FilmStock {
 /// Resolution: 160 lp/mm
 pub fn FUJIFILM_VELVIA_100F() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Velvia 100F".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -541,6 +561,8 @@ pub fn FUJIFILM_VELVIA_100F() -> FilmStock {
 /// Resolution: 160 lp/mm
 pub fn FUJIFILM_VELVIA_100() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Velvia 100".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -591,6 +613,8 @@ pub fn FUJIFILM_VELVIA_100() -> FilmStock {
 /// Resolution: 135 lp/mm
 pub fn FUJIFILM_PROVIA_100F() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Provia 100F".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -641,6 +665,8 @@ pub fn FUJIFILM_PROVIA_100F() -> FilmStock {
 /// Resolution: 135 lp/mm
 pub fn FUJIFILM_ASTIA_100F() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Astia 100F".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -691,6 +717,8 @@ pub fn FUJIFILM_ASTIA_100F() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn FUJIFILM_PROVIA_400X() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Provia 400X".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -745,6 +773,8 @@ pub fn FUJIFILM_PROVIA_400X() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn FUJIFILM_TREBI_400() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Trebi 400".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -795,6 +825,8 @@ pub fn FUJIFILM_TREBI_400() -> FilmStock {
 /// Resolution: 135 lp/mm
 pub fn FUJIFILM_PRO_160NS() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Pro 160NS".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 160.0,
         r_curve: SegmentedCurve {
@@ -849,6 +881,8 @@ pub fn FUJIFILM_PRO_160NS() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn FUJIFILM_PRO_160NC() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Pro 160NC".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 160.0,
         r_curve: SegmentedCurve {
@@ -899,6 +933,8 @@ pub fn FUJIFILM_PRO_160NC() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn FUJIFILM_SUPERIA_200() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Superia 200".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 200.0,
         r_curve: SegmentedCurve {
@@ -953,6 +989,8 @@ pub fn FUJIFILM_SUPERIA_200() -> FilmStock {
 /// Resolution: 110 lp/mm
 pub fn FUJIFILM_SUPERIA_X_TRA_800() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Superia X-tra 800".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 800.0,
         r_curve: SegmentedCurve {
@@ -1003,6 +1041,8 @@ pub fn FUJIFILM_SUPERIA_X_TRA_800() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn KODAK_T_MAX_400() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "T-Max 400".to_string(),
         film_type: FilmType::BwNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -1053,6 +1093,8 @@ pub fn KODAK_T_MAX_400() -> FilmStock {
 /// Resolution: 200 lp/mm
 pub fn KODAK_T_MAX_100() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "T-Max 100".to_string(),
         film_type: FilmType::BwNegative,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -1103,6 +1145,8 @@ pub fn KODAK_T_MAX_100() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn KODAK_PLUS_X_125() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Plus-X 125".to_string(),
         film_type: FilmType::BwNegative,
         iso: 125.0,
         r_curve: SegmentedCurve {
@@ -1153,6 +1197,8 @@ pub fn KODAK_PLUS_X_125() -> FilmStock {
 /// Resolution: 135 lp/mm
 pub fn ILFORD_FP4_PLUS() -> FilmStock {
     FilmStock {
+        manufacturer: "Ilford".to_string(),
+        name: "FP4 Plus".to_string(),
         film_type: FilmType::BwNegative,
         iso: 125.0,
         r_curve: SegmentedCurve {
@@ -1203,6 +1249,8 @@ pub fn ILFORD_FP4_PLUS() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn ILFORD_DELTA_400() -> FilmStock {
     FilmStock {
+        manufacturer: "Ilford".to_string(),
+        name: "Delta 400".to_string(),
         film_type: FilmType::BwNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
@@ -1253,6 +1301,8 @@ pub fn ILFORD_DELTA_400() -> FilmStock {
 /// Resolution: 180 lp/mm
 pub fn ILFORD_PAN_F_PLUS() -> FilmStock {
     FilmStock {
+        manufacturer: "Ilford".to_string(),
+        name: "Pan F Plus".to_string(),
         film_type: FilmType::BwNegative,
         iso: 50.0,
         r_curve: SegmentedCurve {
@@ -1303,6 +1353,8 @@ pub fn ILFORD_PAN_F_PLUS() -> FilmStock {
 /// Resolution: 100 lp/mm
 pub fn ILFORD_SFX_200() -> FilmStock {
     FilmStock {
+        manufacturer: "Ilford".to_string(),
+        name: "SFX 200".to_string(),
         film_type: FilmType::BwNegative,
         iso: 200.0,
         r_curve: SegmentedCurve {
@@ -1354,6 +1406,8 @@ pub fn ILFORD_SFX_200() -> FilmStock {
 /// Resolution: 125 lp/mm
 pub fn KODAK_PORTRA_160() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Portra 160".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 160.0,
         r_curve: SegmentedCurve {
@@ -1408,6 +1462,8 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
 /// Resolution: 110 lp/mm
 pub fn KODAK_GOLD_200() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Gold 200".to_string(),
         film_type: FilmType::ColorNegative,
         iso: 200.0,
         r_curve: SegmentedCurve {
@@ -1458,6 +1514,8 @@ pub fn KODAK_GOLD_200() -> FilmStock {
 /// Resolution: 200 lp/mm
 pub fn KODACHROME_25() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Kodachrome 25".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 25.0,
         r_curve: SegmentedCurve {
@@ -1499,41 +1557,41 @@ pub fn KODACHROME_25() -> FilmStock {
     }
 }
 
-pub fn get_all_stocks() -> Vec<(&'static str, FilmStock)> {
+pub fn get_all_stocks() -> Vec<std::rc::Rc<FilmStock>> {
     vec![
-        ("Standard Daylight", STANDARD_DAYLIGHT()),
-        ("Kodak Tri-X 400", KODAK_TRI_X_400()),
-        ("Fujifilm Velvia 50", FUJIFILM_VELVIA_50()),
-        ("Ilford HP5 Plus", ILFORD_HP5_PLUS()),
-        ("Kodak Portra 400", KODAK_PORTRA_400()),
-        ("Kodak Ektar 100", KODAK_EKTAR_100()),
-        ("Kodak T-Max 3200", KODAK_T_MAX_3200()),
-        ("Ilford Delta 100", ILFORD_DELTA_100()),
-        ("Fujifilm Pro 400H", FUJIFILM_PRO_400H()),
-        ("Fujifilm Velvia 100F", FUJIFILM_VELVIA_100F()),
-        ("Fujifilm Velvia 100", FUJIFILM_VELVIA_100()),
-        ("Fujifilm Provia 100F", FUJIFILM_PROVIA_100F()),
-        ("Fujifilm Astia 100F", FUJIFILM_ASTIA_100F()),
-        ("Fujifilm Provia 400X", FUJIFILM_PROVIA_400X()),
-        ("Fujifilm Trebi 400", FUJIFILM_TREBI_400()),
-        ("Fujifilm Pro 160NS", FUJIFILM_PRO_160NS()),
-        ("Fujifilm Pro 160NC", FUJIFILM_PRO_160NC()),
-        ("Fujifilm Superia 200", FUJIFILM_SUPERIA_200()),
-        ("Fujifilm Superia X-tra 800", FUJIFILM_SUPERIA_X_TRA_800()),
-        ("Kodak T-Max 400", KODAK_T_MAX_400()),
-        ("Kodak T-Max 100", KODAK_T_MAX_100()),
-        ("Kodak Plus-X 125", KODAK_PLUS_X_125()),
-        ("Ilford FP4 Plus", ILFORD_FP4_PLUS()),
-        ("Ilford Delta 400", ILFORD_DELTA_400()),
-        ("Ilford Pan F Plus", ILFORD_PAN_F_PLUS()),
-        ("Ilford SFX 200", ILFORD_SFX_200()),
-        ("Kodak Portra 160", KODAK_PORTRA_160()),
-        ("Kodak Gold 200", KODAK_GOLD_200()),
-        ("Kodachrome 25", KODACHROME_25()),
-        ("Kodachrome 64", KODACHROME_64()),
-        ("Kodak Ektachrome 100VS", KODAK_EKTACHROME_100VS()),
-        ("Fujifilm Neopan Acros 100", FUJIFILM_NEOPAN_ACROS_100()),
-        ("Polaroid SX-70", POLAROID_SX_70()),
+        std::rc::Rc::from(STANDARD_DAYLIGHT()),
+        std::rc::Rc::from(KODAK_TRI_X_400()),
+        std::rc::Rc::from(FUJIFILM_VELVIA_50()),
+        std::rc::Rc::from(ILFORD_HP5_PLUS()),
+        std::rc::Rc::from(KODAK_PORTRA_400()),
+        std::rc::Rc::from(KODAK_EKTAR_100()),
+        std::rc::Rc::from(KODAK_T_MAX_3200()),
+        std::rc::Rc::from(ILFORD_DELTA_100()),
+        std::rc::Rc::from(FUJIFILM_PRO_400H()),
+        std::rc::Rc::from(FUJIFILM_VELVIA_100F()),
+        std::rc::Rc::from(FUJIFILM_VELVIA_100()),
+        std::rc::Rc::from(FUJIFILM_PROVIA_100F()),
+        std::rc::Rc::from(FUJIFILM_ASTIA_100F()),
+        std::rc::Rc::from(FUJIFILM_PROVIA_400X()),
+        std::rc::Rc::from(FUJIFILM_TREBI_400()),
+        std::rc::Rc::from(FUJIFILM_PRO_160NS()),
+        std::rc::Rc::from(FUJIFILM_PRO_160NC()),
+        std::rc::Rc::from(FUJIFILM_SUPERIA_200()),
+        std::rc::Rc::from(FUJIFILM_SUPERIA_X_TRA_800()),
+        std::rc::Rc::from(KODAK_T_MAX_400()),
+        std::rc::Rc::from(KODAK_T_MAX_100()),
+        std::rc::Rc::from(KODAK_PLUS_X_125()),
+        std::rc::Rc::from(ILFORD_FP4_PLUS()),
+        std::rc::Rc::from(ILFORD_DELTA_400()),
+        std::rc::Rc::from(ILFORD_PAN_F_PLUS()),
+        std::rc::Rc::from(ILFORD_SFX_200()),
+        std::rc::Rc::from(KODAK_PORTRA_160()),
+        std::rc::Rc::from(KODAK_GOLD_200()),
+        std::rc::Rc::from(KODACHROME_25()),
+        std::rc::Rc::from(KODACHROME_64()),
+        std::rc::Rc::from(KODAK_EKTACHROME_100VS()),
+        std::rc::Rc::from(FUJIFILM_NEOPAN_ACROS_100()),
+        std::rc::Rc::from(POLAROID_SX_70()),
     ]
 }
 
@@ -1546,6 +1604,8 @@ pub fn get_all_stocks() -> Vec<(&'static str, FilmStock)> {
 /// Resolution: 160 lp/mm
 pub fn KODACHROME_64() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Kodachrome 64".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 64.0,
         r_curve: SegmentedCurve {
@@ -1600,6 +1660,8 @@ pub fn KODACHROME_64() -> FilmStock {
 /// Resolution: 140 lp/mm
 pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
     FilmStock {
+        manufacturer: "Kodak".to_string(),
+        name: "Ektachrome 100VS".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -1654,6 +1716,8 @@ pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
 /// Resolution: 160 lp/mm
 pub fn FUJIFILM_NEOPAN_ACROS_100() -> FilmStock {
     FilmStock {
+        manufacturer: "Fujifilm".to_string(),
+        name: "Neopan Acros 100".to_string(),
         film_type: FilmType::BwNegative,
         iso: 100.0,
         r_curve: SegmentedCurve {
@@ -1702,6 +1766,8 @@ pub fn FUJIFILM_NEOPAN_ACROS_100() -> FilmStock {
 /// Dmax: 2.0
 pub fn POLAROID_SX_70() -> FilmStock {
     FilmStock {
+        manufacturer: "Polaroid".to_string(),
+        name: "SX-70".to_string(),
         film_type: FilmType::ColorSlide,
         iso: 150.0,
         r_curve: SegmentedCurve {
@@ -1752,7 +1818,7 @@ mod tests {
         // 通过 get_all_stocks 获取所有预设，避免手写列表
         let stocks = get_all_stocks();
         // 提取 FilmStock 部分用于验证
-        let presets: Vec<FilmStock> = stocks.into_iter().map(|(_, s)| s).collect();
+        let presets = stocks;
 
         for (i, preset) in presets.iter().enumerate() {
             assert!(preset.iso > 0.0, "Preset {} ISO must be positive", i);

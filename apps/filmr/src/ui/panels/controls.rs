@@ -104,9 +104,10 @@ fn render_simple_controls(
                     ui.vertical(|ui| {
                         ui.set_min_size(ui.available_size());
                         for idx in 0..app.stocks.len() {
-                            let (name, _) = app.stocks[idx];
+                            let stock = &app.stocks[idx];
+                            let name = stock.full_name();
                             ui.horizontal(|ui| {
-                                if let Some(thumb) = app.preset_thumbnails.get(name) {
+                                if let Some(thumb) = app.preset_thumbnails.get(&name) {
                                     ui.image((thumb.id(), egui::vec2(40.0, 40.0)));
                                 } else {
                                     let (rect, _) = ui.allocate_exact_size(
@@ -121,7 +122,7 @@ fn render_simple_controls(
                                 }
 
                                 if ui
-                                    .selectable_label(app.selected_stock_idx == idx, name)
+                                    .selectable_label(app.selected_stock_idx == idx, &name)
                                     .clicked()
                                 {
                                     app.selected_stock_idx = idx;
@@ -269,7 +270,7 @@ fn render_professional_controls(
             if app.selected_stock_idx >= app.builtin_stock_count
                 && ui.button("📝 Edit in Studio").clicked()
             {
-                app.studio_stock = app.stocks[app.selected_stock_idx].1;
+                app.studio_stock = app.stocks[app.selected_stock_idx].as_ref().clone();
                 app.studio_stock_idx = Some(app.selected_stock_idx);
                 app.mode = AppMode::StockStudio;
 
@@ -288,7 +289,8 @@ fn render_professional_controls(
                     // Group stocks by brand (first word)
                     let mut groups: std::collections::BTreeMap<String, Vec<usize>> =
                         Default::default();
-                    for (idx, (name, _)) in app.stocks.iter().enumerate() {
+                    for (idx, stock) in app.stocks.iter().enumerate() {
+                        let name = stock.full_name();
                         let brand = name
                             .split_whitespace()
                             .next()
@@ -300,7 +302,7 @@ fn render_professional_controls(
                     for (brand, indices) in groups {
                         ui.collapsing(brand, |ui| {
                             for idx in indices {
-                                let (name, _) = app.stocks[idx];
+                                let name = app.stocks[idx].full_name();
                                 if ui
                                     .selectable_value(&mut app.selected_stock_idx, idx, name)
                                     .clicked()
@@ -332,12 +334,13 @@ fn render_professional_controls(
                 let mut name = app
                     .stocks
                     .get(app.studio_stock_idx.unwrap_or_default())
-                    .map(|p| p.0)
-                    .unwrap_or_default()
-                    .to_owned();
+                    .map(|s| s.name.clone())
+                    .unwrap_or_default();
                 ui.label("Name:");
                 egui::TextEdit::singleline(&mut name).show(ui);
-                app.stocks[app.studio_stock_idx.unwrap_or_default()].0 = name.leak();
+
+                // FIXME: support name modified
+                // app.stocks[app.studio_stock_idx.unwrap_or_default()].name = name;
 
                 ui.vertical_centered(|ui| {
                     if ui
@@ -610,20 +613,24 @@ fn import_preset(app: &mut FilmrApp, changed: &mut bool) {
         if let Ok(file) = std::fs::File::open(&path) {
             let reader = std::io::BufReader::new(file);
             if let Ok(collection) = serde_json::from_reader::<_, FilmStockCollection>(reader) {
-                for (name, stock) in collection.stocks {
-                    let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                    app.stocks.push((leaked_name, stock));
+                for (name, mut stock) in collection.stocks {
+                    if stock.name.is_empty() {
+                        stock.name = name;
+                    }
+                    app.stocks.push(std::rc::Rc::from(stock));
                 }
                 app.status_msg = "Loaded preset collection".to_string();
                 *changed = true;
-            } else if let Ok(stock) = filmr::FilmStock::load_from_file(&path) {
+            } else if let Ok(mut stock) = filmr::FilmStock::load_from_file(&path) {
                 let name = path.file_stem().unwrap().to_string_lossy().to_string();
-                let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                app.stocks.push((leaked_name, stock));
+                if stock.name.is_empty() {
+                    stock.name = name.clone();
+                }
+                app.stocks.push(std::rc::Rc::from(stock));
                 app.selected_stock_idx = app.stocks.len() - 1;
                 app.load_preset_values();
                 *changed = true;
-                app.status_msg = format!("Loaded preset: {}", leaked_name);
+                app.status_msg = format!("Loaded preset: {}", name);
             }
         }
     }
@@ -632,7 +639,7 @@ fn import_preset(app: &mut FilmrApp, changed: &mut bool) {
 #[cfg(not(target_arch = "wasm32"))]
 fn export_preset(app: &mut FilmrApp) {
     if let Some(path) = FileDialog::new().add_filter("JSON", &["json"]).save_file() {
-        let mut stock = app.get_current_stock();
+        let mut stock = app.get_current_stock().as_ref().clone();
         stock.halation_strength = app.halation_strength;
         stock.halation_threshold = app.halation_threshold;
         stock.halation_sigma = app.halation_sigma;
@@ -651,16 +658,17 @@ fn export_preset(app: &mut FilmrApp) {
 }
 
 fn create_custom_stock(app: &mut FilmrApp, ctx: &Context) {
-    let current_stock = app.get_current_stock();
-    let base_name = app.stocks[app.selected_stock_idx].0;
-    let clean_name = base_name.strip_prefix("Custom - ").unwrap_or(base_name);
+    let current_stock = app.get_current_stock().as_ref().clone();
+    let base_name = app.stocks[app.selected_stock_idx].full_name();
+    let clean_name = base_name.strip_prefix("Custom - ").unwrap_or(&base_name);
     let new_name = format!("Custom - {}", clean_name);
-    let leaked_name: &'static str = Box::leak(new_name.into_boxed_str());
-
-    app.stocks.push((leaked_name, current_stock));
+    let mut new_stock = current_stock;
+    new_stock.name = new_name;
+    new_stock.manufacturer = "".to_string();
+    app.stocks.push(std::rc::Rc::from(new_stock.clone()));
     let new_idx = app.stocks.len() - 1;
     app.selected_stock_idx = new_idx;
-    app.studio_stock = current_stock;
+    app.studio_stock = new_stock;
     app.studio_stock_idx = Some(new_idx);
     app.mode = AppMode::StockStudio;
     app.has_unsaved_changes = true;

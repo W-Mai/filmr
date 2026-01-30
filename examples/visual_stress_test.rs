@@ -228,7 +228,7 @@ fn run_chart_4(film: &FilmStock, config: &SimulationConfig) -> ChartResult {
 
     // Create a modified film stock for this test to simulate "neon purple" crosstalk
     // This represents a specific chemical stress scenario where Red layer is sensitive to Blue
-    let mut stress_film = *film;
+    let mut stress_film = film.clone();
     stress_film.spectral_params.r_width = 80.0; // Broaden Red sensitivity to overlap Blue
     stress_film.color_matrix[1][2] = -0.40; // Increase Blue inhibition of Green (Magenta dye)
 

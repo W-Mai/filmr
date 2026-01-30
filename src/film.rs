@@ -110,7 +110,7 @@ pub struct ReciprocityFailure {
     pub beta: f32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilmStock {
     /// Film Type (affects processing pipeline)
     pub film_type: FilmType,
@@ -160,6 +160,14 @@ pub struct FilmStock {
     /// Tint color for the halation glow (RGB).
     /// Usually reddish-orange [1.0, 0.4, 0.2] due to base reflection.
     pub halation_tint: [f32; 3],
+
+    /// Manufacturer name (e.g., "Kodak", "Fujifilm", "Ilford").
+    #[serde(default)]
+    pub manufacturer: String,
+
+    /// Stock name (e.g., "Portra 400", "Velvia 50").
+    #[serde(default)]
+    pub name: String,
 }
 
 impl FilmStock {
@@ -180,6 +188,8 @@ impl FilmStock {
         halation_threshold: f32,
         halation_sigma: f32,
         halation_tint: [f32; 3],
+        manufacturer: String,
+        name: String,
     ) -> Self {
         Self {
             film_type,
@@ -196,6 +206,17 @@ impl FilmStock {
             halation_threshold,
             halation_sigma,
             halation_tint,
+            manufacturer,
+            name,
+        }
+    }
+
+    /// Get the full display name of the film stock (e.g., "Kodak Portra 400")
+    pub fn full_name(&self) -> String {
+        if self.manufacturer.is_empty() {
+            self.name.clone()
+        } else {
+            format!("{} {}", self.manufacturer, self.name)
         }
     }
 
@@ -368,6 +389,8 @@ mod tests {
             0.0,
             0.0,
             [0.0, 0.0, 0.0],
+            "Generic".to_string(),
+            "Test Stock".to_string(),
         );
 
         assert_eq!(stock.iso, 100.0);

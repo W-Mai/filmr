@@ -76,7 +76,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             // Try to find the preset specified by --preset argument
             if let Some(s) = collection.stocks.get(&args.preset) {
                 println!("Using preset '{}' from collection.", args.preset);
-                *s
+                std::rc::Rc::from(s.clone())
             } else {
                 // If not found, list available keys
                 let keys: Vec<_> = collection.stocks.keys().collect();
@@ -88,7 +88,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             }
         } else {
             // Fallback to single stock
-            FilmStock::load_from_file(path)?
+            std::rc::Rc::from(FilmStock::load_from_file(path)?)
         }
     } else {
         find_preset(&args.preset).ok_or("Preset not found")?
@@ -144,11 +144,12 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn find_preset(name: &str) -> Option<FilmStock> {
+fn find_preset(name: &str) -> Option<std::rc::Rc<FilmStock>> {
     let stocks = presets::get_all_stocks();
     let normalized_name = name.to_lowercase().replace("-", " ");
 
-    for (stock_name, stock) in stocks {
+    for stock in stocks {
+        let stock_name = stock.full_name();
         if stock_name.to_lowercase() == normalized_name
             || stock_name.to_lowercase().replace(" ", "-") == name.to_lowercase()
         {

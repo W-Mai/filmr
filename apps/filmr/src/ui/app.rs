@@ -163,7 +163,7 @@ pub struct FilmrApp {
     pub light_leak_config: LightLeakConfig,
 
     // Selection
-    pub stocks: Vec<(&'static str, FilmStock)>,
+    pub stocks: Vec<std::rc::Rc<FilmStock>>,
     pub selected_stock_idx: usize,
 
     pub output_mode: OutputMode,
@@ -191,9 +191,9 @@ pub struct FilmrApp {
 
     pub config_manager: Option<ConfigManager>,
 
-    pub preset_thumbnails: std::collections::HashMap<&'static str, TextureHandle>,
-    tx_thumb: Sender<(&'static str, RgbImage)>,
-    rx_thumb: Receiver<(&'static str, RgbImage)>,
+    pub preset_thumbnails: std::collections::HashMap<String, TextureHandle>,
+    tx_thumb: Sender<(String, RgbImage)>,
+    rx_thumb: Receiver<(String, RgbImage)>,
 
     #[cfg(target_arch = "wasm32")]
     rx_req_wasm: Receiver<ProcessRequest>,
@@ -274,15 +274,18 @@ impl FilmrApp {
                             if let Ok(collection) =
                                 serde_json::from_reader::<_, FilmStockCollection>(reader)
                             {
-                                for (name, stock) in collection.stocks {
-                                    let leaked_name: &'static str =
-                                        Box::leak(name.into_boxed_str());
-                                    stocks.push((leaked_name, stock));
+                                for (name, mut stock) in collection.stocks {
+                                    if stock.name.is_empty() {
+                                        stock.name = name;
+                                    }
+                                    stocks.push(std::rc::Rc::from(stock));
                                 }
-                            } else if let Ok(stock) = FilmStock::load_from_file(&path) {
+                            } else if let Ok(mut stock) = FilmStock::load_from_file(&path) {
                                 let name = path.file_stem().unwrap().to_string_lossy().to_string();
-                                let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                                stocks.push((leaked_name, stock));
+                                if stock.name.is_empty() {
+                                    stock.name = name;
+                                }
+                                stocks.push(std::rc::Rc::from(stock));
                             }
                         }
                     }
@@ -294,8 +297,8 @@ impl FilmrApp {
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
         let (tx_load, rx_load) = unbounded::<LoadRequest>();
         let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
-        let (tx_thumb, rx_thumb) = unbounded::<(&'static str, RgbImage)>();
-        let (tx_thumb_res, rx_thumb_res) = unbounded::<(&'static str, RgbImage)>();
+        let (tx_thumb, rx_thumb) = unbounded::<(String, RgbImage)>();
+        let (tx_thumb_res, rx_thumb_res) = unbounded::<(String, RgbImage)>();
 
         // Clone context for the thread
         let ctx_process = cc.egui_ctx.clone();
@@ -327,16 +330,11 @@ impl FilmrApp {
 
         // Spawn worker thread for thumbnails
         #[cfg(not(target_arch = "wasm32"))]
-        let stocks_for_thumb = presets::get_all_stocks();
-        #[cfg(not(target_arch = "wasm32"))]
         thread::spawn(move || {
+            let stocks_for_thumb = presets::get_all_stocks();
             while let Ok((name, base_img)) = rx_thumb.recv() {
                 // Find the stock
-                if let Some(stock) = stocks_for_thumb
-                    .iter()
-                    .find(|(n, _)| *n == name)
-                    .map(|(_, s)| s)
-                {
+                if let Some(stock) = stocks_for_thumb.iter().find(|s| s.full_name() == name) {
                     let config = SimulationConfig::default();
                     let processed = process_image(&base_img, stock, &config);
                     let _ = tx_thumb_res.send((name, processed));
@@ -437,12 +435,14 @@ impl FilmrApp {
         }
     }
 
-    pub fn get_current_stock(&self) -> FilmStock {
-        if self.selected_stock_idx < self.stocks.len() {
-            self.stocks[self.selected_stock_idx].1
+    pub fn get_current_stock(&self) -> std::rc::Rc<FilmStock> {
+        let index = if self.selected_stock_idx < self.stocks.len() {
+            self.selected_stock_idx
         } else {
-            presets::STANDARD_DAYLIGHT()
-        }
+            0
+        };
+
+        self.stocks[index].clone()
     }
 
     // Helper to load preset values into sliders when preset changes
@@ -475,12 +475,12 @@ impl FilmrApp {
             // Construct params
             // Use preset as base and modify
             let base_film = if self.mode == AppMode::StockStudio {
-                self.studio_stock
+                self.studio_stock.clone()
             } else {
-                self.get_current_stock()
+                self.get_current_stock().as_ref().clone()
             };
 
-            let mut film = base_film; // Copy
+            let mut film = base_film;
             if self.mode == AppMode::Develop {
                 // Only apply UI overrides in Develop mode
                 film.halation_strength = self.halation_strength;
@@ -532,9 +532,9 @@ impl FilmrApp {
             let rgb_img = Arc::new(img.to_rgb8());
 
             let base_film = if self.mode == AppMode::StockStudio {
-                self.studio_stock
+                self.studio_stock.clone()
             } else {
-                self.get_current_stock()
+                self.get_current_stock().as_ref().clone()
             };
             let mut film = base_film;
 
@@ -633,7 +633,7 @@ impl App for FilmrApp {
                     self.status_msg = format!("Loading {}...", path_str);
                     self.is_loading = true;
                     let stock = if self.mode == AppMode::Develop {
-                        Some(self.get_current_stock())
+                        Some(self.get_current_stock().as_ref().clone())
                     } else {
                         None
                     };
@@ -695,8 +695,8 @@ impl App for FilmrApp {
                         .unwrap()
                         .thumbnail(128, 128)
                         .to_rgb8();
-                    for (name, _) in &self.stocks {
-                        let _ = self.tx_thumb.send((*name, thumb_base.clone()));
+                    for stock in &self.stocks {
+                        let _ = self.tx_thumb.send((stock.full_name(), thumb_base.clone()));
                     }
                 }
                 Err(e) => {
@@ -709,15 +709,20 @@ impl App for FilmrApp {
         #[cfg(target_arch = "wasm32")]
         if let Ok(bytes) = self.rx_preset.try_recv() {
             if let Ok(collection) = serde_json::from_slice::<FilmStockCollection>(&bytes) {
-                for (name, stock) in collection.stocks {
-                    let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                    self.stocks.push((leaked_name, stock));
+                for (name, mut stock) in collection.stocks {
+                    if stock.name.is_empty() {
+                        stock.name = name;
+                    }
+                    self.stocks.push(stock);
                 }
                 self.status_msg = "Loaded preset collection".to_string();
             } else if let Ok(stock) = serde_json::from_slice::<FilmStock>(&bytes) {
                 let name = format!("Imported Stock {}", self.stocks.len());
-                let leaked_name: &'static str = Box::leak(name.into_boxed_str());
-                self.stocks.push((leaked_name, stock));
+                let mut stock = stock;
+                if stock.name.is_empty() {
+                    stock.name = name;
+                }
+                self.stocks.push(stock);
                 self.selected_stock_idx = self.stocks.len() - 1;
                 self.load_preset_values();
                 self.status_msg = "Loaded imported preset".to_string();

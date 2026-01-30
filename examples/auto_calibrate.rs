@@ -16,23 +16,27 @@ fn main() {
     println!("=== Film Stock Auto-Calibration Tool ===");
     println!("Target Mid-Tone Luminance: {:.1}", TARGET_LUMINANCE);
 
-    let stocks = get_all_stocks();
+    let stocks = get_all_stocks()
+        .iter()
+        .map(|s| s.as_ref().clone())
+        .collect::<Vec<_>>();
     let mut results = Vec::new();
 
-    for (name, mut stock) in stocks {
-        let (optimal_offset, final_lum) = calibrate_film(&mut stock, name);
+    for mut stock in stocks {
+        let name_string = stock.full_name();
+        let (optimal_offset, final_lum) = calibrate_film(&mut stock, &name_string);
 
-        results.push((name, stock.iso, optimal_offset, final_lum));
+        results.push((name_string.clone(), stock.iso, optimal_offset, final_lum));
 
         if (final_lum - TARGET_LUMINANCE).abs() > TOLERANCE {
             println!(
                 "Calibrating {} (ISO {:.0}) -> WARNING: Final Lum {:.1} (Offset {:.5})",
-                name, stock.iso, final_lum, optimal_offset
+                name_string, stock.iso, final_lum, optimal_offset
             );
         } else {
             println!(
                 "Calibrating {} (ISO {:.0}) -> Success! Offset {:.5}",
-                name, stock.iso, optimal_offset
+                name_string, stock.iso, optimal_offset
             );
         }
     }

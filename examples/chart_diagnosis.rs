@@ -31,7 +31,8 @@ fn main() {
     let stocks = presets::get_all_stocks();
     let mut results = Vec::new();
 
-    for (name, stock) in stocks.iter() {
+    for stock in stocks.iter() {
+        let name = stock.full_name();
         println!("\nProcessing {}...", name);
         let start = Instant::now();
 
@@ -61,7 +62,7 @@ fn main() {
         let lbp_img = draw_lbp_histogram(&metrics.lbp_hist, 220, 120);
 
         // Store for contact sheet
-        results.push((*name, result, t_est, metrics, hist_img, lab_img, lbp_img));
+        results.push((name, result, t_est, metrics, hist_img, lab_img, lbp_img));
     }
 
     println!("Generating contact sheet...");
@@ -71,7 +72,7 @@ fn main() {
 
 fn generate_contact_sheet(
     data: &[(
-        &str,
+        String,
         RgbImage,
         f32,
         FilmMetrics,

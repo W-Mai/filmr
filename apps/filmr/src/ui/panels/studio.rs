@@ -287,7 +287,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                 // Sync back to the stock list if we are editing a linked stock
                 if let Some(idx) = app.studio_stock_idx {
                     if idx < app.stocks.len() {
-                        app.stocks[idx].1 = app.studio_stock;
+                        app.stocks[idx] = std::rc::Rc::from(app.studio_stock.clone());
                     }
                 }
 

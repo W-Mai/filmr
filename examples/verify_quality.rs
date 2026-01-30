@@ -40,9 +40,10 @@ fn main() {
 
     let mut sheet_data = Vec::new();
 
-    for (name, stock) in &stocks {
+    for stock in &stocks {
+        let name = stock.full_name();
         println!("Verifying {}...", name);
-        let (metrics, neutral_img, channels_img, hue_img) = verify_stock(name, stock);
+        let (metrics, neutral_img, channels_img, hue_img) = verify_stock(&name, stock);
 
         let status = if metrics.passed {
             "✅ PASS"
@@ -77,7 +78,7 @@ fn main() {
             status
         ));
 
-        sheet_data.push((*name, metrics, neutral_img, channels_img, hue_img));
+        sheet_data.push((name, metrics, neutral_img, channels_img, hue_img));
     }
 
     fs::write(format!("{}/report.md", output_dir), report).unwrap();
@@ -609,7 +610,7 @@ fn test_hue_consistency(stock: &FilmStock) -> (u32, RgbImage) {
 }
 
 fn generate_contact_sheet(
-    data: &[(&str, QualityMetrics, RgbImage, RgbImage, RgbImage)],
+    data: &[(String, QualityMetrics, RgbImage, RgbImage, RgbImage)],
     output_dir: &str,
 ) {
     let header_height = 40;
