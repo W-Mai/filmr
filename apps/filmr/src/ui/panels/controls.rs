@@ -1,12 +1,14 @@
-use crate::ui::app::{AppMode, FilmrApp};
-use egui::{Context, RichText};
 #[cfg(not(target_arch = "wasm32"))]
 use filmr::film::FilmStockCollection;
 use filmr::light_leak::{LightLeak, LightLeakShape};
 use filmr::{OutputMode, WhiteBalanceMode};
 
+use egui::{Context, RichText};
 #[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
+
+use crate::config::UxMode;
+use crate::ui::app::{AppMode, FilmrApp};
 
 pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
     egui::SidePanel::left("controls_panel").show(ctx, |ui| {
@@ -20,7 +22,11 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
             let mut changed = false;
 
-            render_professional_controls(app, ui, ctx, &mut changed);
+            if app.ux_mode == UxMode::Simple {
+                render_simple_controls(app, ui, ctx, &mut changed);
+            } else {
+                render_professional_controls(app, ui, ctx, &mut changed);
+            }
 
             ui.add_space(20.0);
             ui.separator();
@@ -38,6 +44,135 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             }
         });
     });
+}
+
+fn render_simple_controls(
+    app: &mut FilmrApp,
+    ui: &mut egui::Ui,
+    _ctx: &Context,
+    changed: &mut bool,
+) {
+    // 1. Preset Selection
+    ui.label(RichText::new("🎞 Film Stock").strong());
+    ui.add_space(5.0);
+
+    let mut preset_changed = false;
+    egui::Frame::default()
+        .fill(ui.visuals().faint_bg_color)
+        .corner_radius(4.0)
+        .inner_margin(8.0)
+        .show(ui, |ui| {
+            ui.set_min_width(ui.available_width());
+            egui::ScrollArea::vertical()
+                .max_height(300.0)
+                .show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        for idx in 0..app.stocks.len() {
+                            let (name, _) = app.stocks[idx];
+                            ui.horizontal(|ui| {
+                                if let Some(thumb) = app.preset_thumbnails.get(name) {
+                                    ui.image((thumb.id(), egui::vec2(40.0, 40.0)));
+                                } else {
+                                    let (rect, _) = ui.allocate_exact_size(
+                                        egui::vec2(40.0, 40.0),
+                                        egui::Sense::hover(),
+                                    );
+                                    ui.painter().rect_filled(
+                                        rect,
+                                        4.0,
+                                        egui::Color32::from_gray(60),
+                                    );
+                                }
+
+                                if ui
+                                    .selectable_label(app.selected_stock_idx == idx, name)
+                                    .clicked()
+                                {
+                                    app.selected_stock_idx = idx;
+                                    preset_changed = true;
+                                }
+                            });
+                            ui.add_space(2.0);
+                        }
+                    });
+                });
+        });
+
+    if preset_changed {
+        app.load_preset_values();
+        *changed = true;
+    }
+
+    ui.add_space(15.0);
+
+    // 2. Basic Adjustments
+    ui.label(RichText::new("🎨 Quick Adjust").strong());
+    ui.add_space(5.0);
+
+    ui.group(|ui| {
+        ui.set_min_width(ui.available_width());
+
+        // Exposure -> Brightness
+        ui.horizontal(|ui| {
+            ui.label("☀ Brightness");
+            if ui
+                .add(
+                    egui::Slider::new(&mut app.exposure_time, 0.001..=4.0)
+                        .logarithmic(true)
+                        .show_value(false),
+                )
+                .changed()
+            {
+                *changed = true;
+            }
+        });
+        ui.add_space(5.0);
+
+        // Gamma -> Contrast
+        ui.horizontal(|ui| {
+            ui.label("◑ Contrast");
+            if ui
+                .add(egui::Slider::new(&mut app.gamma_boost, 0.5..=1.5).show_value(false))
+                .changed()
+            {
+                *changed = true;
+            }
+        });
+        ui.add_space(5.0);
+
+        // Warmth
+        ui.horizontal(|ui| {
+            ui.label("🔥 Warmth");
+            if ui
+                .add(egui::Slider::new(&mut app.warmth, -1.0..=1.0).show_value(false))
+                .changed()
+            {
+                *changed = true;
+            }
+        });
+        ui.add_space(5.0);
+
+        // Saturation
+        ui.horizontal(|ui| {
+            ui.label("🌈 Intensity");
+            if ui
+                .add(egui::Slider::new(&mut app.saturation, 0.0..=2.0).show_value(false))
+                .changed()
+            {
+                *changed = true;
+            }
+        });
+    });
+
+    ui.add_space(15.0);
+    if ui
+        .button(RichText::new("✨ Auto Enhance").strong())
+        .clicked()
+    {
+        app.white_balance_mode = WhiteBalanceMode::Auto;
+        app.white_balance_strength = 1.0;
+        *changed = true;
+    }
 }
 
 fn render_professional_controls(
@@ -96,12 +231,12 @@ fn render_professional_controls(
 
             // Allow editing if it is a custom stock (imported or created)
             if app.selected_stock_idx >= app.builtin_stock_count
-                && ui.button("📝 Edit in Stock Studio").clicked()
+                && ui.button("📝 Edit in Studio").clicked()
             {
                 app.studio_stock = app.stocks[app.selected_stock_idx].1;
                 app.studio_stock_idx = Some(app.selected_stock_idx);
                 app.mode = AppMode::StockStudio;
-                // Editing existing stock implies potential changes
+
                 app.has_unsaved_changes = true;
 
                 app.process_and_update_texture(ctx);
