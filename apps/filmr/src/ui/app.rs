@@ -1,6 +1,6 @@
 pub use crate::config::{AppMode, ConfigManager, UxMode};
 use crate::ui::panels;
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};
 use filmr::film::FilmStockCollection;

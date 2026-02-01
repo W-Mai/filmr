@@ -35,7 +35,7 @@ eframe = { version = "0.33.3", optional = true }
 egui = { version = "0.33.3", optional = true }
 rfd = { version = "0.17.2", optional = true }
 egui_plot = { version = "0.34.0", optional = true }
-crossbeam-channel = { version = "0.5.15", optional = true }
+crossbeam = { version = "0.8.4", optional = true }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 
@@ -50,7 +50,7 @@ web-sys = { version = "0.3", features = ["HtmlCanvasElement", "Window", "Documen
 [features]
 default = ["cli", "ui"]
 cli = ["dep:clap"]
-ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:crossbeam-channel"]
+ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:crossbeam"]
 
 [[bin]]
 name = "filmr"
