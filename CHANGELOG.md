@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-02-02
+
+### 🚀 Features
+
+- **WASM**: Implemented multi-threaded image processing using `rayon` and `wasm-bindgen-rayon` for significantly improved performance on the web.
+- **WASM**: Added dedicated `ComputeBridge` and Web Worker infrastructure to handle heavy computations off the main UI thread.
+- **WASM**: Integrated `console_log` for unified logging in the browser console.
+
+### 🐛 Fixes
+
+- **WASM**: Fixed `hist_rgb` serialization issue by implementing `serde-big-array` wrapper, ensuring correct histogram data transfer between worker and UI.
+- **WASM**: Resolved "Parking not supported" panic by enabling `parking_lot/nightly` and `wasm-bindgen-rayon/no-bundler` features.
+- **WASM**: Fixed `worker.js` module loading errors by patching import paths and removing problematic `modulepreload` links.
+- **CI**: Fixed GitHub Actions workflow for WASM builds by switching to `nightly` toolchain and adding `rust-src` component (required for `build-std` and atomics).
+- **Scripts**: Enhanced `patch_dist.py` robustness with better regex matching and environment variable support.
+
 ## [0.5.1] - 2026-01-30
 
 ### 🚀 Features

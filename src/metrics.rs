@@ -2,8 +2,67 @@ use image::RgbImage;
 use palette::{FromColor, Lab, Srgb};
 use rustfft::{num_complex::Complex, FftPlanner};
 use serde::{Deserialize, Serialize};
-fn default_hist() -> [[u32; 256]; 3] {
-    [[0; 256]; 3]
+
+// Helper module for serializing nested large arrays
+mod hist_serde {
+    use super::*;
+    use serde::{Deserializer, Serializer};
+    use serde_big_array::BigArray;
+
+    pub fn serialize<S>(data: &[[u32; 256]; 3], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        use serde::ser::SerializeTuple;
+        let mut s = serializer.serialize_tuple(3)?;
+        for inner in data {
+            // Wrapper for serialization
+            #[derive(Serialize)]
+            struct Wrapper(#[serde(with = "BigArray")] [u32; 256]);
+            s.serialize_element(&Wrapper(*inner))?;
+        }
+        s.end()
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<[[u32; 256]; 3], D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::{Error, SeqAccess, Visitor};
+        use std::fmt;
+
+        struct HistVisitor;
+
+        impl<'de> Visitor<'de> for HistVisitor {
+            type Value = [[u32; 256]; 3];
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a histogram array [[u32; 256]; 3]")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                let mut res = [[0; 256]; 3];
+                for (i, item) in res.iter_mut().enumerate() {
+                    // BigArray is a trait in recent versions, not a struct.
+                    // We need to deserialize into [u32; 256] using a wrapper that implements Deserialize.
+
+                    #[derive(Deserialize)]
+                    struct Wrapper(#[serde(with = "BigArray")] [u32; 256]);
+
+                    let val: Wrapper = seq
+                        .next_element()?
+                        .ok_or_else(|| Error::invalid_length(i, &self))?;
+                    *item = val.0;
+                }
+                Ok(res)
+            }
+        }
+
+        deserializer.deserialize_tuple(3, HistVisitor)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +97,7 @@ pub struct FilmMetrics {
     pub ssim: Option<f32>, // Needs reference
 
     // Raw Data
-    #[serde(skip, default = "default_hist")]
+    #[serde(with = "hist_serde")]
     pub hist_rgb: [[u32; 256]; 3],
 }
 
