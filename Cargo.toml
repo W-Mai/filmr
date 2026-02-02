@@ -29,6 +29,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 tracing = "0.1.44"
 serde-big-array = "0.5.1"
+wide = "1.1.1"
 
 [dev-dependencies]
 criterion = "0.8.1"

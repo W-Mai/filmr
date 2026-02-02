@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, Mul};
+use wide::f32x4;
 
 /// Wavelength range for simulation (Visible Spectrum)
 pub const LAMBDA_START: usize = 380;
@@ -77,8 +78,27 @@ impl Spectrum {
 
     pub fn multiply(&self, other: &Spectrum) -> Self {
         let mut s = Self::new();
-        for i in 0..BINS {
+        let mut i = 0;
+
+        // Process 4 elements at a time using SIMD (f32x4 is safe for WASM/Neon/SSE)
+        while i + 4 <= BINS {
+            // Safe because we check bounds. Copy to array to ensure fixed size.
+            let chunk_self: [f32; 4] = self.power[i..i + 4].try_into().unwrap();
+            let chunk_other: [f32; 4] = other.power[i..i + 4].try_into().unwrap();
+
+            let a = f32x4::from(chunk_self);
+            let b = f32x4::from(chunk_other);
+            let res = a * b;
+
+            let res_arr: [f32; 4] = res.into();
+            s.power[i..i + 4].copy_from_slice(&res_arr);
+            i += 4;
+        }
+
+        // Handle remainder
+        while i < BINS {
             s.power[i] = self.power[i] * other.power[i];
+            i += 1;
         }
         s
     }
@@ -86,13 +106,35 @@ impl Spectrum {
     /// Integrate the product of two spectra (inner product)
     /// Used for calculating response: Integral(Light * Sensitivity)
     pub fn integrate_product(&self, other: &Spectrum) -> f32 {
-        let mut sum = 0.0;
-        for i in 0..(BINS - 1) {
-            let v0 = self.power[i] * other.power[i];
-            let v1 = self.power[i + 1] * other.power[i + 1];
-            sum += 0.5 * (v0 + v1);
+        // Optimization: Trapezoidal rule sum = 0.5*v0 + v1 + ... + vn-1 + 0.5*vn
+        // equivalent to: Sum(all v) - 0.5*(v0 + vn)
+
+        let mut sum_simd = f32x4::splat(0.0);
+        let mut i = 0;
+
+        while i + 4 <= BINS {
+            let chunk_self: [f32; 4] = self.power[i..i + 4].try_into().unwrap();
+            let chunk_other: [f32; 4] = other.power[i..i + 4].try_into().unwrap();
+
+            let a = f32x4::from(chunk_self);
+            let b = f32x4::from(chunk_other);
+            sum_simd += a * b;
+            i += 4;
         }
-        sum * (LAMBDA_STEP as f32)
+
+        let mut sum = sum_simd.reduce_add();
+
+        // Handle remainder
+        while i < BINS {
+            sum += self.power[i] * other.power[i];
+            i += 1;
+        }
+
+        // Apply trapezoidal correction
+        let v_first = self.power[0] * other.power[0];
+        let v_last = self.power[BINS - 1] * other.power[BINS - 1];
+
+        (sum - 0.5 * (v_first + v_last)) * (LAMBDA_STEP as f32)
     }
 }
 

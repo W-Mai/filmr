@@ -6,6 +6,7 @@ use crate::utils;
 use image::{ImageBuffer, Rgb, RgbImage};
 use rayon::prelude::*;
 use tracing::{debug, info, instrument};
+use wide::f32x4;
 
 /// Context shared across all pipeline stages.
 /// Contains read-only references to film data and configuration.
@@ -93,13 +94,50 @@ impl PipelineStage for HalationStage {
         let tint = film.halation_tint;
         let strength = film.halation_strength;
 
+        let factor_r = tint[0] * strength;
+        let factor_g = tint[1] * strength;
+        let factor_b = tint[2] * strength;
+
+        // SIMD constants for RGBRGB... pattern
+        let v0 = f32x4::from([factor_r, factor_g, factor_b, factor_r]);
+        let v1 = f32x4::from([factor_g, factor_b, factor_r, factor_g]);
+        let v2 = f32x4::from([factor_b, factor_r, factor_g, factor_b]);
+
+        // Process 4 pixels (12 floats) at a time to align with SIMD lanes
         image
-            .par_chunks_mut(3)
-            .zip(halation_map.par_chunks(3))
+            .par_chunks_mut(12)
+            .zip(halation_map.par_chunks(12))
             .for_each(|(dest, src)| {
-                dest[0] += src[0] * tint[0] * strength;
-                dest[1] += src[1] * tint[1] * strength;
-                dest[2] += src[2] * tint[2] * strength;
+                if dest.len() == 12 {
+                    // SIMD Path
+                    let d0_arr: [f32; 4] = dest[0..4].try_into().unwrap();
+                    let s0_arr: [f32; 4] = src[0..4].try_into().unwrap();
+                    let d0 = f32x4::from(d0_arr);
+                    let s0 = f32x4::from(s0_arr);
+                    let r0 = d0 + s0 * v0;
+                    dest[0..4].copy_from_slice(&<[f32; 4]>::from(r0));
+
+                    let d1_arr: [f32; 4] = dest[4..8].try_into().unwrap();
+                    let s1_arr: [f32; 4] = src[4..8].try_into().unwrap();
+                    let d1 = f32x4::from(d1_arr);
+                    let s1 = f32x4::from(s1_arr);
+                    let r1 = d1 + s1 * v1;
+                    dest[4..8].copy_from_slice(&<[f32; 4]>::from(r1));
+
+                    let d2_arr: [f32; 4] = dest[8..12].try_into().unwrap();
+                    let s2_arr: [f32; 4] = src[8..12].try_into().unwrap();
+                    let d2 = f32x4::from(d2_arr);
+                    let s2 = f32x4::from(s2_arr);
+                    let r2 = d2 + s2 * v2;
+                    dest[8..12].copy_from_slice(&<[f32; 4]>::from(r2));
+                } else {
+                    // Scalar Fallback
+                    for (d, s) in dest.chunks_mut(3).zip(src.chunks(3)) {
+                        d[0] += s[0] * factor_r;
+                        d[1] += s[1] * factor_g;
+                        d[2] += s[2] * factor_b;
+                    }
+                }
             });
     }
 }
