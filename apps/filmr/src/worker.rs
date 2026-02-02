@@ -4,6 +4,9 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub async fn worker_entry() -> Result<(), JsValue> {
+    // Initialize logger
+    let _ = console_log::init_with_level(log::Level::Debug);
+
     // Initialize Rayon thread pool
     // In a worker, window() might not be available, use self or navigator directly if possible
     // But web_sys::window() usually returns None in worker.
@@ -17,24 +20,23 @@ pub async fn worker_entry() -> Result<(), JsValue> {
     let navigator = worker_scope.navigator();
     let concurrency = navigator.hardware_concurrency() as usize;
 
-    web_sys::console::log_1(
-        &format!("Worker started. Hardware concurrency: {}", concurrency).into(),
-    );
+    log::info!("Worker started. Hardware concurrency: {}", concurrency);
 
+    log::info!("Worker initializing thread pool...");
     wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(concurrency)).await?;
 
-    web_sys::console::log_1(&"Worker thread pool initialized".into());
+    log::info!("Worker thread pool initialized");
 
     let global_clone = global.clone();
 
     // Handle messages
     let onmessage = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
         let data = event.data();
-        web_sys::console::log_1(&"Worker received message".into());
+        log::info!("Worker received message");
 
         // We expect a batch of tasks (Vec<Task>)
         if let Ok(tasks) = serde_wasm_bindgen::from_value::<Vec<Task>>(data) {
-            web_sys::console::log_1(&format!("Worker processing {} tasks", tasks.len()).into());
+            log::info!("Worker processing {} tasks", tasks.len());
             // Process in parallel
             let results: Vec<WorkerResult> = tasks
                 .into_par_iter()
@@ -47,20 +49,16 @@ pub async fn worker_entry() -> Result<(), JsValue> {
                         config,
                         is_preview,
                     } => {
-                        web_sys::console::log_1(
-                            &format!("Worker task start: {}x{}", width, height).into(),
-                        );
+                        log::info!("Worker task start: {}x{}", width, height);
                         let result = process_task_image_data(
                             image_data, width, height, film, config, is_preview,
                         );
                         match &result {
                             WorkerResult::ProcessDone { .. } => {
-                                web_sys::console::log_1(&"Worker task done".into());
+                                log::info!("Worker task done");
                             }
                             WorkerResult::Error(_) => {
-                                web_sys::console::error_1(
-                                    &"Worker failed to create image buffer".into(),
-                                );
+                                log::error!("Worker failed to create image buffer");
                             }
                         }
                         result
