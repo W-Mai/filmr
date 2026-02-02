@@ -17,8 +17,44 @@
     </script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Filmr - Film Simulation Engine</title>
-    <link data-trunk rel="rust" data-target-name="filmr_app" data-wasm-opt="2" />
+    <!-- Disable wasm-opt to prevent stripping of shared memory features during debug -->
+    <link data-trunk rel="rust" data-target-name="filmr_app" data-wasm-opt="0" />
+    <link data-trunk rel="copy-file" href="worker.js" />
     <base data-trunk-public-url />
+    <script>
+        (function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        console.log('Unregistering Service Worker:', registration);
+                        registration.unregister();
+                    }
+                });
+            }
+
+            const isSecureContext = window.isSecureContext;
+            const crossOriginIsolated = window.crossOriginIsolated;
+            const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+
+            console.log("Environment Check:", {
+                isSecureContext,
+                crossOriginIsolated,
+                hasSharedArrayBuffer,
+                userAgent: navigator.userAgent
+            });
+
+            if (!hasSharedArrayBuffer) {
+                const msg = "CRITICAL ERROR: SharedArrayBuffer is missing.\n" +
+                            "This app REQUIRES Cross-Origin Isolation to run WASM threads.\n\n" +
+                            "Current Status:\n" +
+                            "- Secure Context: " + isSecureContext + "\n" +
+                            "- Cross-Origin Isolated: " + crossOriginIsolated + "\n\n";
+                
+                console.error(msg);
+                alert(msg);
+            }
+        })();
+    </script>
     <style>
         html {
             /* Remove touch delay: */
@@ -111,16 +147,6 @@
     <!-- The WASM code will resize the canvas dynamically -->
     <!-- the id is hardcoded in main.rs . so, make sure both match. -->
     <canvas id="the_canvas_id"></canvas>
-
-    <!--Register Service Worker-->
-    <script>
-        // We disable caching during development so that we always view the latest version.
-        if ('serviceWorker' in navigator && window.location.hash !== "#dev") {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('sw.js');
-            });
-        }
-    </script>
 </body>
 
 </html>

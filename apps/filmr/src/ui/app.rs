@@ -1,6 +1,5 @@
 pub use crate::config::{AppMode, ConfigManager, UxMode};
 use crate::ui::panels;
-use crossbeam::channel::{unbounded, Receiver, Sender};
 use eframe::{egui, App, Frame};
 use egui::{ColorImage, TextureHandle, Vec2};
 use filmr::film::FilmStockCollection;
@@ -8,12 +7,35 @@ use filmr::{
     estimate_exposure_time, light_leak::LightLeakConfig, presets, process_image, FilmMetrics,
     FilmStock, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
+use flume::{unbounded, Receiver, Sender};
 use image::imageops::FilterType;
 use image::{DynamicImage, RgbImage};
 use std::path::PathBuf;
 use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 use std::thread;
+
+#[cfg(target_arch = "wasm32")]
+use crate::bridge::ComputeBridge;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::types::process_image_with_metrics;
+#[cfg(target_arch = "wasm32")]
+use crate::types::{Task, WorkerResult};
+
+/// Spawns a thread (Native) or a Rayon task (WASM) to run the given closure.
+///
+/// On Native, this uses `std::thread::spawn`.
+/// On WASM, this uses `rayon::spawn`, assuming `wasm-bindgen-rayon` has been initialized.
+fn spawn_thread<F>(f: F)
+where
+    F: FnOnce() + Send + 'static,
+{
+    #[cfg(not(target_arch = "wasm32"))]
+    thread::spawn(f);
+
+    #[cfg(target_arch = "wasm32")]
+    rayon::spawn(f);
+}
 
 struct ProcessRequest {
     image: Arc<RgbImage>,
@@ -48,9 +70,9 @@ struct LoadResult {
     result: Result<LoadResultData, String>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn process_worker_logic(req: ProcessRequest) -> ProcessResult {
-    let processed = process_image(&req.image, &req.film, &req.config);
-    let metrics = FilmMetrics::analyze(&processed);
+    let (processed, metrics) = process_image_with_metrics(&req.image, &req.film, &req.config);
     ProcessResult {
         image: processed,
         metrics,
@@ -195,15 +217,6 @@ pub struct FilmrApp {
     tx_thumb: Sender<(String, RgbImage)>,
     rx_thumb: Receiver<(String, RgbImage)>,
 
-    #[cfg(target_arch = "wasm32")]
-    rx_req_wasm: Receiver<ProcessRequest>,
-    #[cfg(target_arch = "wasm32")]
-    rx_load_wasm: Receiver<LoadRequest>,
-    #[cfg(target_arch = "wasm32")]
-    tx_res_wasm: Sender<ProcessResult>,
-    #[cfg(target_arch = "wasm32")]
-    tx_load_res_wasm: Sender<LoadResult>,
-
     // Preset Loading (WASM)
     #[cfg(target_arch = "wasm32")]
     pub tx_preset: Sender<Vec<u8>>,
@@ -301,29 +314,98 @@ impl FilmrApp {
         let (_tx_thumb_res, rx_thumb_res) = unbounded::<(String, RgbImage)>();
 
         // Clone context for the thread
-        #[cfg(not(target_arch = "wasm32"))]
         let ctx_process = cc.egui_ctx.clone();
-        #[cfg(not(target_arch = "wasm32"))]
         let ctx_load = cc.egui_ctx.clone();
-        #[cfg(not(target_arch = "wasm32"))]
         let ctx_thumb = cc.egui_ctx.clone();
 
         // Spawn worker thread for processing
         #[cfg(not(target_arch = "wasm32"))]
-        thread::spawn(move || {
+        spawn_thread(move || {
             while let Ok(mut req) = rx_req.recv() {
                 while let Ok(newer) = rx_req.try_recv() {
                     req = newer;
                 }
+
+                let width = req.image.width();
+                let height = req.image.height();
+                log::info!("Native worker starting process: {}x{}", width, height);
+
                 let res = process_worker_logic(req);
+
+                log::info!("Native worker process done");
                 let _ = tx_res.send(res);
                 ctx_process.request_repaint();
             }
         });
 
+        #[cfg(target_arch = "wasm32")]
+        {
+            let bridge = ComputeBridge::new();
+            let bridge_clone = bridge.clone();
+
+            // Request Handler
+            wasm_bindgen_futures::spawn_local(async move {
+                while let Ok(mut req) = rx_req.recv_async().await {
+                    while let Ok(newer) = rx_req.try_recv() {
+                        req = newer;
+                    }
+
+                    let width = req.image.width();
+                    let height = req.image.height();
+                    log::info!(
+                        "Sending process task to worker: {}x{}, preview={}",
+                        width,
+                        height,
+                        req.is_preview
+                    );
+
+                    let task = Task::Process {
+                        image_data: req.image.as_raw().clone(),
+                        width,
+                        height,
+                        film: req.film,
+                        config: req.config,
+                        is_preview: req.is_preview,
+                    };
+                    bridge_clone.submit_task(task);
+                }
+            });
+
+            // Result Handler
+            let tx_res = tx_res.clone();
+            let ctx = ctx_process.clone();
+            let rx = bridge.result_receiver();
+
+            wasm_bindgen_futures::spawn_local(async move {
+                while let Ok(res) = rx.recv_async().await {
+                    match res {
+                        WorkerResult::ProcessDone {
+                            image_data,
+                            width,
+                            height,
+                            metrics,
+                            is_preview,
+                        } => {
+                            if let Some(img) = RgbImage::from_raw(width, height, image_data) {
+                                let res = ProcessResult {
+                                    image: img,
+                                    metrics: *metrics,
+                                    is_preview,
+                                };
+                                let _ = tx_res.send(res);
+                                ctx.request_repaint();
+                            }
+                        }
+                        WorkerResult::Error(e) => {
+                            log::error!("Worker error: {}", e);
+                        }
+                    }
+                }
+            });
+        }
+
         // Spawn worker thread for loading
-        #[cfg(not(target_arch = "wasm32"))]
-        thread::spawn(move || {
+        spawn_thread(move || {
             while let Ok(req) = rx_load.recv() {
                 let res = load_worker_logic(req);
                 let _ = tx_load_res.send(res);
@@ -332,8 +414,7 @@ impl FilmrApp {
         });
 
         // Spawn worker thread for thumbnails
-        #[cfg(not(target_arch = "wasm32"))]
-        thread::spawn(move || {
+        spawn_thread(move || {
             let stocks_for_thumb = presets::get_all_stocks();
             while let Ok((name, base_img)) = _rx_thumb.recv() {
                 // Find the stock
@@ -421,15 +502,6 @@ impl FilmrApp {
             show_settings: false,
 
             config_manager,
-
-            #[cfg(target_arch = "wasm32")]
-            rx_req_wasm: rx_req,
-            #[cfg(target_arch = "wasm32")]
-            rx_load_wasm: rx_load,
-            #[cfg(target_arch = "wasm32")]
-            tx_res_wasm: tx_res,
-            #[cfg(target_arch = "wasm32")]
-            tx_load_res_wasm: tx_load_res,
 
             #[cfg(target_arch = "wasm32")]
             tx_preset,
@@ -834,29 +906,5 @@ impl App for FilmrApp {
         });
 
         panels::central::render_central_panel(self, ctx);
-
-        #[cfg(target_arch = "wasm32")]
-        self.poll_wasm_workers();
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-impl FilmrApp {
-    fn poll_wasm_workers(&mut self) {
-        // Process requests
-        while let Ok(mut req) = self.rx_req_wasm.try_recv() {
-            // Drain debounce
-            while let Ok(newer) = self.rx_req_wasm.try_recv() {
-                req = newer;
-            }
-            let res = process_worker_logic(req);
-            let _ = self.tx_res_wasm.send(res);
-        }
-
-        // Load requests
-        while let Ok(req) = self.rx_load_wasm.try_recv() {
-            let res = load_worker_logic(req);
-            let _ = self.tx_load_res_wasm.send(res);
-        }
     }
 }

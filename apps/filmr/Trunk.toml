@@ -1,0 +1,10 @@
+[build]
+filehash = false
+
+[[hooks]]
+stage = "post_build"
+command = "python3"
+command_arguments = ["patch_dist.py"]
+
+[serve]
+headers = { "Cross-Origin-Opener-Policy" = "same-origin", "Cross-Origin-Embedder-Policy" = "require-corp" }

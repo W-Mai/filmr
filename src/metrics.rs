@@ -1,8 +1,12 @@
 use image::RgbImage;
 use palette::{FromColor, Lab, Srgb};
 use rustfft::{num_complex::Complex, FftPlanner};
+use serde::{Deserialize, Serialize};
+fn default_hist() -> [[u32; 256]; 3] {
+    [[0; 256]; 3]
+}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilmMetrics {
     // Basic Stats
     pub mean_rgb: [f32; 3],
@@ -34,6 +38,7 @@ pub struct FilmMetrics {
     pub ssim: Option<f32>, // Needs reference
 
     // Raw Data
+    #[serde(skip, default = "default_hist")]
     pub hist_rgb: [[u32; 256]; 3],
 }
 

@@ -7,11 +7,12 @@ use crate::pipeline::{
 };
 use crate::spectral::{CameraSensitivities, Spectrum};
 use image::RgbImage;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info, instrument};
 
 /// Configuration for the simulation run.
 /// Controls all aspects of the physical simulation pipeline.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationConfig {
     /// Exposure time (t) in seconds.
     /// Used for Reciprocity Failure calculation (E = I * t).
@@ -32,13 +33,13 @@ pub struct SimulationConfig {
     pub light_leak: LightLeakConfig,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum OutputMode {
     Negative, // Transmission of the negative (Dark -> Bright, Bright -> Dark)
     Positive, // Scanned/Inverted Positive (Dark -> Dark, Bright -> Bright)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum WhiteBalanceMode {
     Auto,
     Gray,
