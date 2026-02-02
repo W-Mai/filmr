@@ -33,7 +33,6 @@ pub async fn start() -> Result<(), wasm_bindgen::JsValue> {
     wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(concurrency)).await?;
     log::info!("Creating Compute Worker... after");
 
-
     let web_options = eframe::WebOptions::default();
 
     let document = window.document().expect("No document");

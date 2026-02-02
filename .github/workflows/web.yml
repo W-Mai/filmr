@@ -58,9 +58,10 @@ jobs:
         with:
           fetch-depth: 0
       
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: wasm32-unknown-unknown
+          components: rust-src
 
       - uses: swatinem/rust-cache@v2
 
