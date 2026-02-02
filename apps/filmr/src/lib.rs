@@ -19,29 +19,24 @@ use eframe::wasm_bindgen::{self, prelude::*};
 #[cfg(all(target_arch = "wasm32", feature = "ui"))]
 #[wasm_bindgen(start)]
 pub async fn start() -> Result<(), wasm_bindgen::JsValue> {
-    if web_sys::window().is_none() {
-        return Ok(());
-    }
+    let window = match web_sys::window() {
+        Some(window) => window,
+        None => return Ok(()),
+    };
 
-    // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
     log::info!("App starting...");
 
-    // REMOVED: wasm_bindgen_rayon::init_thread_pool is now handled in worker.rs
-    // #[cfg(target_arch = "wasm32")]
-    // {
-    //    let window = web_sys::window().expect("No window");
-    //    let navigator = window.navigator();
-    //    let concurrency = navigator.hardware_concurrency() as usize;
-    //    wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(concurrency)).await.map_err(|e| e)?;
-    // }
+    let navigator = window.navigator();
+    let concurrency = navigator.hardware_concurrency() as usize;
+    log::info!("Creating Compute Worker... before");
+    wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(concurrency)).await?;
+    log::info!("Creating Compute Worker... after");
+
 
     let web_options = eframe::WebOptions::default();
 
-    let document = web_sys::window()
-        .expect("No window")
-        .document()
-        .expect("No document");
+    let document = window.document().expect("No document");
 
     let canvas = document
         .get_element_by_id("the_canvas_id")

@@ -46,7 +46,8 @@ directories = "5.0"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4"
-wasm-bindgen-rayon = "1.2"
+wasm-bindgen-rayon = { version = "1.3.0", features = ["no-bundler"] }
+parking_lot = { version = "0.12", features = ["nightly"] }
 js-sys = "0.3"
 serde-wasm-bindgen = "0.6"
 getrandom = { version = "0.2", features = ["js"] }

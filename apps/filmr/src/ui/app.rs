@@ -31,10 +31,17 @@ where
     F: FnOnce() + Send + 'static,
 {
     #[cfg(not(target_arch = "wasm32"))]
-    thread::spawn(f);
+    {
+        thread::spawn(f);
+    }
 
     #[cfg(target_arch = "wasm32")]
-    rayon::spawn(f);
+    {
+        #[cfg(target_arch = "wasm32")]
+        use std::any::Any;
+        log::info!("Worker started {:?}", f.type_id());
+        rayon::spawn(f);
+    }
 }
 
 struct ProcessRequest {

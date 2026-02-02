@@ -1,4 +1,4 @@
-import init, { worker_entry } from '/filmr_app.js';
+import init, { worker_entry } from './filmr_app.js';
 
 console.log("JS Worker wrapper started");
 

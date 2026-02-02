@@ -1,7 +1,7 @@
 import os
 import glob
 
-DIST_DIR = "dist"
+DIST_DIR = os.environ['TRUNK_STAGING_DIR']
 
 def patch_worker_helpers():
     print("Searching for workerHelpers.js...")
@@ -17,7 +17,7 @@ def patch_worker_helpers():
             content = f.read()
         
         # Replace the buggy relative import with absolute path to main JS
-        new_content = content.replace("import('../../..')", "import('/filmr_app.js')")
+        new_content = content.replace("import('../../..')", "import(new URL('../../../filmr_app.js', import.meta.url).href)")
         
         if content == new_content:
             print("  - Already patched or pattern not found.")

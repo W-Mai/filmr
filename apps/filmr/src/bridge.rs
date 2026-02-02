@@ -16,7 +16,7 @@ impl ComputeBridge {
         // Note: The path "./worker.js" must match where Trunk puts the worker script.
         let options = web_sys::WorkerOptions::new();
         options.set_type(web_sys::WorkerType::Module);
-        // unsafe { web_sys::console::log_1(&"Creating Compute Worker...".into()); }
+        log::info!("Creating Compute Worker...");
         let worker =
             Worker::new_with_options("./worker.js", &options).expect("Failed to create worker");
 
