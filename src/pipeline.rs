@@ -195,6 +195,34 @@ impl PipelineStage for DevelopStage {
         let system_white = apply_illuminant(camera_sens.uplift(1.0, 1.0, 1.0));
         film_sens.calibrate_to_white_point(&system_white);
 
+        // Precompute Spectral Matrix (3x3)
+        // Maps Linear RGB -> Film Layer Exposure directly
+        // This avoids per-pixel full spectrum integration (~600 FLOPS -> 15 FLOPS)
+        let r_cam = camera_sens.r_curve.multiply(&illuminant);
+        let g_cam = camera_sens.g_curve.multiply(&illuminant);
+        let b_cam = camera_sens.b_curve.multiply(&illuminant);
+
+        let m00 = film_sens.r_sensitivity.integrate_product(&r_cam) * film_sens.r_factor;
+        let m01 = film_sens.r_sensitivity.integrate_product(&g_cam) * film_sens.r_factor;
+        let m02 = film_sens.r_sensitivity.integrate_product(&b_cam) * film_sens.r_factor;
+
+        let m10 = film_sens.g_sensitivity.integrate_product(&r_cam) * film_sens.g_factor;
+        let m11 = film_sens.g_sensitivity.integrate_product(&g_cam) * film_sens.g_factor;
+        let m12 = film_sens.g_sensitivity.integrate_product(&b_cam) * film_sens.g_factor;
+
+        let m20 = film_sens.b_sensitivity.integrate_product(&r_cam) * film_sens.b_factor;
+        let m21 = film_sens.b_sensitivity.integrate_product(&g_cam) * film_sens.b_factor;
+        let m22 = film_sens.b_sensitivity.integrate_product(&b_cam) * film_sens.b_factor;
+
+        // Helper to apply matrix
+        let apply_matrix = |r: f32, g: f32, b: f32| -> [f32; 3] {
+            [
+                r * m00 + g * m01 + b * m02,
+                r * m10 + g * m11 + b * m12,
+                r * m20 + g * m21 + b * m22,
+            ]
+        };
+
         let reciprocity_factor = if config.exposure_time > 1.0 {
             1.0 + film.reciprocity.beta * config.exposure_time.log10().powi(2)
         } else {
@@ -216,8 +244,7 @@ impl PipelineStage for DevelopStage {
                     let y = i / width;
                     let p = image.get_pixel(x, y).0;
 
-                    let scene_spectrum = apply_illuminant(camera_sens.uplift(p[0], p[1], p[2]));
-                    let exposure_vals = film_sens.expose(&scene_spectrum);
+                    let exposure_vals = apply_matrix(p[0], p[1], p[2]);
 
                     sum_r += exposure_vals[0];
                     sum_g += exposure_vals[1];
@@ -268,9 +295,7 @@ impl PipelineStage for DevelopStage {
             // Current pixel is Linear RGB
             let lin_pixel = [pixel[0], pixel[1], pixel[2]];
 
-            let scene_spectrum =
-                apply_illuminant(camera_sens.uplift(lin_pixel[0], lin_pixel[1], lin_pixel[2]));
-            let exposure_vals = film_sens.expose(&scene_spectrum);
+            let exposure_vals = apply_matrix(lin_pixel[0], lin_pixel[1], lin_pixel[2]);
 
             let r_balanced = exposure_vals[0] * wb_gains[0];
             let g_balanced = exposure_vals[1] * wb_gains[1];
