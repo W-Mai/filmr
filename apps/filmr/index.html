@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
 <head>
+    <script src="coi-serviceworker.min.js"></script>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZCH0DFY43H"></script>
     <script>
@@ -51,7 +53,7 @@
                             "- Cross-Origin Isolated: " + crossOriginIsolated + "\n\n";
                 
                 console.error(msg);
-                alert(msg);
+                // alert(msg);
             }
         })();
     </script>

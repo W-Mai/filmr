@@ -52,7 +52,21 @@ def patch_index_html():
             f.write(new_content)
         print("  - Removed problematic modulepreload link.")
 
+def patch_coi_serviceworker():
+    print("Patching coi-serviceworker.min.js...")
+    coi_path = os.path.join("static", "coi-serviceworker.min.js")
+    
+    if not os.path.exists(coi_path):
+        print("Error: coi-serviceworker.min.js not found!")
+        return
+
+    with open(coi_path, "r") as f:
+        content = f.read()
+    with open(os.path.join(DIST_DIR, "coi-serviceworker.min.js"), "w") as f:
+        f.write(content)
+
 if __name__ == "__main__":
     patch_worker_helpers()
     patch_index_html()
+    patch_coi_serviceworker()
     print("Done.")
