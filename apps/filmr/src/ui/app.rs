@@ -440,7 +440,7 @@ impl FilmrApp {
         let ux_mode = config_manager
             .as_ref()
             .map(|cm| cm.config.ux_mode)
-            .unwrap_or(UxMode::Professional);
+            .unwrap_or(UxMode::Simple);
 
         Self {
             original_image: None,
