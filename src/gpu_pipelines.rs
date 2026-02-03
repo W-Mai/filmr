@@ -124,16 +124,24 @@ impl LinearizePipeline {
                 })
         };
 
-        // 2. Prepare Output Buffer
+        // 2. Prepare Output Buffer (Storage Only)
         let output_size = (width * height * 3 * 4) as u64; // f32 * 3 channels
         let output_buffer = context.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Output Buffer"),
             size: output_size,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::MAP_READ,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 
-        // 3. Prepare Uniforms
+        // 3. Prepare Staging Buffer (Map Read)
+        let staging_buffer = context.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Staging Buffer"),
+            size: output_size,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        // 4. Prepare Uniforms
         let uniforms = LinearizeUniforms { width, height };
         let uniform_buffer = context
             .device
@@ -186,10 +194,12 @@ impl LinearizePipeline {
             compute_pass.dispatch_workgroups(x_groups, y_groups, 1);
         }
 
+        encoder.copy_buffer_to_buffer(&output_buffer, 0, &staging_buffer, 0, output_size);
+
         context.queue.submit(Some(encoder.finish()));
 
         // 6. Map and Read
-        let buffer_slice = output_buffer.slice(..);
+        let buffer_slice = staging_buffer.slice(..);
         let (sender, receiver) = std::sync::mpsc::channel();
         buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
 
@@ -205,7 +215,7 @@ impl LinearizePipeline {
             let data = buffer_slice.get_mapped_range();
             let result_vec: Vec<f32> = bytemuck::cast_slice(&data).to_vec();
             drop(data);
-            output_buffer.unmap();
+            staging_buffer.unmap();
 
             return ImageBuffer::from_raw(width, height, result_vec);
         }
