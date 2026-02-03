@@ -1,5 +1,5 @@
 use filmr::presets;
-use filmr::processor::{process_image, SimulationConfig};
+use filmr::processor::{process_image, SimulationConfig, WhiteBalanceMode};
 use image::{Rgb, RgbImage};
 
 #[test]
@@ -32,5 +32,54 @@ fn test_gpu_full_pipeline() {
     assert!(
         center[0] > 0 || center[1] > 0 || center[2] > 0,
         "Output should not be black"
+    );
+}
+
+#[test]
+fn test_gpu_halation_effect() {
+    let width = 64;
+    let height = 64;
+    // Create an image with a single very bright pixel in the center
+    let input = RgbImage::from_fn(width, height, |x, y| {
+        if x == 32 && y == 32 {
+            Rgb([255, 255, 255])
+        } else {
+            Rgb([0, 0, 0])
+        }
+    });
+
+    let mut film = presets::STANDARD_DAYLIGHT();
+    film.halation_strength = 1.0; // Strong halation
+    film.halation_threshold = 0.0; // Trigger on EVERYTHING
+    film.halation_sigma = 0.1; // Large radius
+    film.halation_tint = [1.0, 0.0, 0.0]; // Pure Red halation
+
+    let config = SimulationConfig {
+        use_gpu: true,
+        enable_grain: false,
+        white_balance_mode: WhiteBalanceMode::Off,
+        exposure_time: 100.0,
+        ..Default::default()
+    };
+
+    println!("Running GPU Halation test...");
+    let output = process_image(&input, &film, &config);
+
+    // Check center pixel (should be bright)
+    let center = output.get_pixel(32, 32);
+    println!("Center pixel: {:?}", center);
+
+    // Check neighbor pixel (should be red due to halation)
+    let neighbor = output.get_pixel(32 + 5, 32);
+    println!("Neighbor pixel (5px away): {:?}", neighbor);
+
+    assert!(neighbor[0] > 0, "Halation should add red glow");
+    assert!(
+        neighbor[0] > neighbor[1],
+        "Halation tint is red, so R should be > G"
+    );
+    assert!(
+        neighbor[0] > neighbor[2],
+        "Halation tint is red, so R should be > B"
     );
 }

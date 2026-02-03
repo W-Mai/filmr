@@ -5,7 +5,20 @@ use image::{Rgb, RgbImage};
 
 fn benchmark_processing(c: &mut Criterion) {
     let film = KODAK_PORTRA_400();
-    let config = SimulationConfig::default();
+
+    // CPU Config
+    let config_cpu = SimulationConfig::default();
+
+    // GPU Config (if feature enabled)
+    #[cfg(feature = "compute-gpu")]
+    let config_gpu = SimulationConfig {
+        use_gpu: true,
+        light_leak: filmr::light_leak::LightLeakConfig {
+            enabled: true,
+            leaks: vec![filmr::light_leak::LightLeak::default()],
+        },
+        ..Default::default()
+    };
 
     // 720p (HD) - Faster for CI
     let width = 1280;
@@ -17,8 +30,13 @@ fn benchmark_processing(c: &mut Criterion) {
     let mut group = c.benchmark_group("film_simulation");
     group.sample_size(10); // Reduced sample size for heavy operations
 
-    group.bench_function("720p_process", |b| {
-        b.iter(|| process_image(&input, &film, &config))
+    group.bench_function("720p_cpu", |b| {
+        b.iter(|| process_image(&input, &film, &config_cpu))
+    });
+
+    #[cfg(feature = "compute-gpu")]
+    group.bench_function("720p_gpu", |b| {
+        b.iter(|| process_image(&input, &film, &config_gpu))
     });
 
     group.finish();

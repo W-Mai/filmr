@@ -213,6 +213,7 @@ pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
 #[instrument(skip(input, film, config))]
 pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConfig) -> RgbImage {
     info!("Starting film simulation processing");
+
     // Pipeline initialization
     let context = PipelineContext { film, config };
 
@@ -224,6 +225,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     #[cfg(feature = "compute-gpu")]
     if config.use_gpu {
         if let Some(gpu_ctx) = get_gpu_context() {
+            let _span = tracing::info_span!("GPU Linearization").entered();
             info!("Attempting GPU Linearization...");
             let pipeline = LinearizePipeline::new(gpu_ctx);
             if let Some(buffer) = pipeline.process_to_gpu_buffer(gpu_ctx, input) {
@@ -239,6 +241,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         if let Some(gpu_ctx) = get_gpu_context() {
             // 1. Light Leak (In-Place)
             if let Some(ref mut buffer) = gpu_buffer {
+                let _span = tracing::info_span!("GPU Light Leak").entered();
                 info!("Applying Light Leak on GPU");
                 let pipeline = LightLeakPipeline::new(gpu_ctx);
                 pipeline.process(gpu_ctx, buffer, &config.light_leak);
@@ -246,35 +249,59 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
 
             // 2. Halation (Input -> Output)
             if let Some(buffer) = gpu_buffer.take() {
-                info!("Applying Halation on GPU");
-                let pipeline = HalationPipeline::new(gpu_ctx);
-                // process() returns new buffer (copied if disabled, or processed)
-                if let Some(out_buffer) = pipeline.process(gpu_ctx, &buffer, film) {
-                    gpu_buffer = Some(out_buffer);
+                if film.halation_strength > 0.0 {
+                    let _span = tracing::info_span!("GPU Halation").entered();
+                    info!("Applying Halation on GPU");
+                    let pipeline = HalationPipeline::new(gpu_ctx);
+                    if let Some(out_buffer) = pipeline.process(gpu_ctx, &buffer, film) {
+                        gpu_buffer = Some(out_buffer);
+                    } else {
+                        gpu_buffer = Some(buffer);
+                    }
                 } else {
-                    // Fallback to previous buffer if failed (shouldn't happen)
+                    gpu_buffer = Some(buffer);
+                }
+            }
+
+            // 3. MTF (Input -> Output)
+            if let Some(buffer) = gpu_buffer.take() {
+                // Calculate sigma from film resolution
+                let pixels_per_mm = buffer.width as f32 / 36.0;
+                let mtf_sigma = (0.5 / film.resolution_lp_mm) * pixels_per_mm;
+
+                if mtf_sigma > 0.5 {
+                    let _span = tracing::info_span!("GPU MTF Blur").entered();
+                    info!("Applying MTF Blur on GPU (sigma: {:.2})", mtf_sigma);
+                    use crate::gpu_pipelines::GaussianPipeline;
+                    let pipeline = GaussianPipeline::new(gpu_ctx);
+                    if let Some(out_buffer) = pipeline.process(gpu_ctx, &buffer, mtf_sigma) {
+                        gpu_buffer = Some(out_buffer);
+                    } else {
+                        gpu_buffer = Some(buffer);
+                    }
+                } else {
                     gpu_buffer = Some(buffer);
                 }
             }
         }
     }
 
+    #[cfg(feature = "compute-gpu")]
     let mut image_buffer = if let Some(ref buffer) = gpu_buffer {
+        let _span = tracing::info_span!("GPU Readback").entered();
         info!("Reading back from GPU pipeline");
-        #[cfg(feature = "compute-gpu")]
-        {
-            if let Some(gpu_ctx) = get_gpu_context() {
-                crate::gpu::block_on(read_gpu_buffer(gpu_ctx, buffer))
-                    .expect("Failed to read GPU buffer")
-            } else {
-                unreachable!("GPU context lost");
-            }
+        if let Some(gpu_ctx) = get_gpu_context() {
+            crate::gpu::block_on(read_gpu_buffer(gpu_ctx, buffer))
+                .expect("Failed to read GPU buffer")
+        } else {
+            unreachable!("GPU context lost")
         }
-        #[cfg(not(feature = "compute-gpu"))]
-        unreachable!()
     } else {
         create_linear_image(input)
     };
+
+    #[cfg(not(feature = "compute-gpu"))]
+    let mut image_buffer = create_linear_image(input);
 
     // CPU Fallback for early stages if GPU wasn't used
     #[cfg(feature = "compute-gpu")]

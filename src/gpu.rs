@@ -10,6 +10,14 @@ pub struct GpuContext {
     pub queue: wgpu::Queue,
 }
 
+#[cfg(feature = "compute-gpu")]
+pub struct GpuBuffer {
+    pub buffer: wgpu::Buffer,
+    pub width: u32,
+    pub height: u32,
+    pub size: u64,
+}
+
 #[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
 static GPU_CONTEXT: OnceLock<GpuContext> = OnceLock::new();
 
