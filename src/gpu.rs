@@ -1,7 +1,7 @@
 #[cfg(feature = "compute-gpu")]
 use tracing::info;
 
-#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
+#[cfg(feature = "compute-gpu")]
 use std::sync::OnceLock;
 
 #[cfg(feature = "compute-gpu")]
@@ -25,9 +25,28 @@ pub fn get_gpu_context() -> Option<&'static GpuContext> {
     GPU_CONTEXT.get()
 }
 
+// WASM Implementation using Unsafe Wrapper to bypass Send/Sync check
+// Safety: This is only safe if accessed from the single worker thread where it was initialized.
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+struct WasmGpuHolder(GpuContext);
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+unsafe impl Send for WasmGpuHolder {}
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+unsafe impl Sync for WasmGpuHolder {}
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+static WASM_GPU_CONTEXT: OnceLock<WasmGpuHolder> = OnceLock::new();
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+pub fn init_gpu_context(context: GpuContext) {
+    let _ = WASM_GPU_CONTEXT.set(WasmGpuHolder(context));
+}
+
 #[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
 pub fn get_gpu_context() -> Option<&'static GpuContext> {
-    None
+    WASM_GPU_CONTEXT.get().map(|h| &h.0)
 }
 
 #[cfg(feature = "compute-gpu")]

@@ -13,7 +13,9 @@ use tracing::{debug, info, instrument};
 #[cfg(feature = "compute-gpu")]
 use crate::gpu::get_gpu_context;
 #[cfg(feature = "compute-gpu")]
-use crate::gpu_pipelines::LinearizePipeline;
+use crate::gpu_pipelines::{
+    read_gpu_buffer, HalationPipeline, LightLeakPipeline, LinearizePipeline,
+};
 
 /// Configuration for the simulation run.
 /// Controls all aspects of the physical simulation pipeline.
@@ -215,11 +217,112 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     let context = PipelineContext { film, config };
 
     #[cfg(feature = "compute-gpu")]
+    let mut gpu_buffer = None;
+    #[cfg(feature = "compute-gpu")]
+    let mut used_gpu_pipeline = false;
+
+    #[cfg(feature = "compute-gpu")]
+    if config.use_gpu {
+        if let Some(gpu_ctx) = get_gpu_context() {
+            info!("Attempting GPU Linearization...");
+            let pipeline = LinearizePipeline::new(gpu_ctx);
+            if let Some(buffer) = pipeline.process_to_gpu_buffer(gpu_ctx, input) {
+                gpu_buffer = Some(buffer);
+                used_gpu_pipeline = true;
+            }
+        }
+    }
+
+    // GPU Pipeline Chain
+    #[cfg(feature = "compute-gpu")]
+    if used_gpu_pipeline {
+        if let Some(gpu_ctx) = get_gpu_context() {
+            // 1. Light Leak (In-Place)
+            if let Some(ref mut buffer) = gpu_buffer {
+                info!("Applying Light Leak on GPU");
+                let pipeline = LightLeakPipeline::new(gpu_ctx);
+                pipeline.process(gpu_ctx, buffer, &config.light_leak);
+            }
+
+            // 2. Halation (Input -> Output)
+            if let Some(buffer) = gpu_buffer.take() {
+                info!("Applying Halation on GPU");
+                let pipeline = HalationPipeline::new(gpu_ctx);
+                // process() returns new buffer (copied if disabled, or processed)
+                if let Some(out_buffer) = pipeline.process(gpu_ctx, &buffer, film) {
+                    gpu_buffer = Some(out_buffer);
+                } else {
+                    // Fallback to previous buffer if failed (shouldn't happen)
+                    gpu_buffer = Some(buffer);
+                }
+            }
+        }
+    }
+
+    let mut image_buffer = if let Some(ref buffer) = gpu_buffer {
+        info!("Reading back from GPU pipeline");
+        #[cfg(feature = "compute-gpu")]
+        {
+            if let Some(gpu_ctx) = get_gpu_context() {
+                crate::gpu::block_on(read_gpu_buffer(gpu_ctx, buffer))
+                    .expect("Failed to read GPU buffer")
+            } else {
+                unreachable!("GPU context lost");
+            }
+        }
+        #[cfg(not(feature = "compute-gpu"))]
+        unreachable!()
+    } else {
+        create_linear_image(input)
+    };
+
+    // CPU Fallback for early stages if GPU wasn't used
+    #[cfg(feature = "compute-gpu")]
+    let cpu_fallback = !used_gpu_pipeline;
+    #[cfg(not(feature = "compute-gpu"))]
+    let cpu_fallback = true;
+
+    if cpu_fallback {
+        // 1. Light Leak (CPU)
+        let light_leak = LightLeakStage;
+        light_leak.process(&mut image_buffer, &context);
+
+        // 2. Halation (CPU)
+        let halation = HalationStage;
+        halation.process(&mut image_buffer, &context);
+    }
+
+    // 3. Other Stages
+    let stages: Vec<Box<dyn PipelineStage>> = vec![
+        Box::new(MtfStage),
+        Box::new(DevelopStage),
+        Box::new(GrainStage),
+    ];
+
+    for stage in stages {
+        stage.process(&mut image_buffer, &context);
+    }
+
+    // Output Conversion
+    create_output_image(&image_buffer, &context)
+}
+
+/// Main processor function (Async).
+#[instrument(skip(input, film, config))]
+pub async fn process_image_async(
+    input: &RgbImage,
+    film: &FilmStock,
+    config: &SimulationConfig,
+) -> RgbImage {
+    info!("Starting film simulation processing (Async)");
+    let context = PipelineContext { film, config };
+
+    #[cfg(feature = "compute-gpu")]
     let gpu_result = if config.use_gpu {
         if let Some(gpu_ctx) = get_gpu_context() {
             info!("Attempting GPU Linearization...");
             let pipeline = LinearizePipeline::new(gpu_ctx);
-            pipeline.process_image(gpu_ctx, input)
+            pipeline.process_image_async(gpu_ctx, input).await
         } else {
             None
         }
@@ -239,7 +342,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
 
     // Sequential Stage Execution
     let stages: Vec<Box<dyn PipelineStage>> = vec![
-        Box::new(LightLeakStage), // Apply light leaks before halation so they contribute to halation
+        Box::new(LightLeakStage),
         Box::new(HalationStage),
         Box::new(MtfStage),
         Box::new(DevelopStage),
@@ -250,6 +353,5 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         stage.process(&mut image_buffer, &context);
     }
 
-    // Output Conversion
     create_output_image(&image_buffer, &context)
 }
