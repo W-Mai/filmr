@@ -1,6 +1,7 @@
 #[cfg(feature = "compute-gpu")]
 use tracing::info;
 
+#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
 use std::sync::OnceLock;
 
 #[cfg(feature = "compute-gpu")]
@@ -9,10 +10,10 @@ pub struct GpuContext {
     pub queue: wgpu::Queue,
 }
 
-#[cfg(feature = "compute-gpu")]
+#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
 static GPU_CONTEXT: OnceLock<GpuContext> = OnceLock::new();
 
-#[cfg(feature = "compute-gpu")]
+#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
 pub fn get_gpu_context() -> Option<&'static GpuContext> {
     if let Some(ctx) = GPU_CONTEXT.get() {
         return Some(ctx);
@@ -22,6 +23,11 @@ pub fn get_gpu_context() -> Option<&'static GpuContext> {
     let ctx = block_on(GpuContext::new())?;
     let _ = GPU_CONTEXT.set(ctx);
     GPU_CONTEXT.get()
+}
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+pub fn get_gpu_context() -> Option<&'static GpuContext> {
+    None
 }
 
 #[cfg(feature = "compute-gpu")]
