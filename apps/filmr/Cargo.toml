@@ -1,6 +1,6 @@
 [package]
 name = "filmr_app"
-version = "0.5.4"
+version = "0.5.5"
 edition = "2021"
 authors = ["Benign X <1341398182@qq.com>", "W-Mai"]
 description = "CLI and GUI application for filmr, a high-fidelity film simulation engine."
@@ -21,7 +21,7 @@ eula = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-filmr = { version = "0.5.4", path = "../../", features = ["compute-gpu"] }
+filmr = { version = "0.5.5", path = "../../", features = ["compute-gpu"] }
 image = "0.24"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -39,6 +39,7 @@ flume = { version = "0.11", optional = true }
 rayon = { version = "1.8", optional = true }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+futures = "0.3.31"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 directories = "5.0"
@@ -60,9 +61,10 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [features]
-default = ["cli", "ui"]
+default = ["cli", "ui", "compute-gpu"]
 cli = ["dep:clap"]
 ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:flume", "dep:rayon"]
+compute-gpu = []
 
 [[bin]]
 name = "filmr"
