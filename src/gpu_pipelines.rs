@@ -1,5 +1,14 @@
 use crate::gpu::GpuContext;
+use bytemuck::{Pod, Zeroable};
 use image::{ImageBuffer, Rgb, RgbImage};
+use wgpu::util::DeviceExt;
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
+struct LinearizeUniforms {
+    width: u32,
+    height: u32,
+}
 
 #[cfg(feature = "compute-gpu")]
 pub struct LinearizePipeline {
@@ -26,20 +35,30 @@ impl LinearizePipeline {
                         wgpu::BindGroupLayoutEntry {
                             binding: 0,
                             visibility: wgpu::ShaderStages::COMPUTE,
-                            ty: wgpu::BindingType::Texture {
-                                sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                                view_dimension: wgpu::TextureViewDimension::D2,
-                                multisampled: false,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
                             },
                             count: None,
                         },
                         wgpu::BindGroupLayoutEntry {
                             binding: 1,
                             visibility: wgpu::ShaderStages::COMPUTE,
-                            ty: wgpu::BindingType::StorageTexture {
-                                access: wgpu::StorageTextureAccess::WriteOnly,
-                                format: wgpu::TextureFormat::Rgba32Float,
-                                view_dimension: wgpu::TextureViewDimension::D2,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
                             },
                             count: None,
                         },
@@ -80,63 +99,49 @@ impl LinearizePipeline {
         let width = input.width();
         let height = input.height();
 
-        // 1. Convert to RGBA
-        let mut rgba_input = Vec::with_capacity((width * height * 4) as usize);
-        for pixel in input.pixels() {
-            rgba_input.push(pixel[0]);
-            rgba_input.push(pixel[1]);
-            rgba_input.push(pixel[2]);
-            rgba_input.push(255);
-        }
-
-        let texture_size = wgpu::Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
+        // 1. Prepare Input Buffer
+        // We need to pad to multiple of 4 bytes if necessary
+        let raw_bytes = input.as_raw();
+        let input_buffer = if raw_bytes.len().is_multiple_of(4) {
+            context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Input Buffer"),
+                    contents: raw_bytes,
+                    usage: wgpu::BufferUsages::STORAGE,
+                })
+        } else {
+            let mut padded = raw_bytes.clone();
+            while !padded.len().is_multiple_of(4) {
+                padded.push(0);
+            }
+            context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Input Buffer"),
+                    contents: &padded,
+                    usage: wgpu::BufferUsages::STORAGE,
+                })
         };
 
-        // 2. Create and Upload Input Texture
-        let input_texture = context.device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Input Texture"),
-            size: texture_size,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            view_formats: &[],
+        // 2. Prepare Output Buffer
+        let output_size = (width * height * 3 * 4) as u64; // f32 * 3 channels
+        let output_buffer = context.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Output Buffer"),
+            size: output_size,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
         });
 
-        context.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &input_texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            &rgba_input,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(width * 4),
-                rows_per_image: Some(height),
-            },
-            texture_size,
-        );
-
-        // 3. Create Output Texture
-        let output_texture = context.device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Output Texture"),
-            size: texture_size,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::COPY_SRC,
-            view_formats: &[],
-        });
-
-        let input_view = input_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let output_view = output_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        // 3. Prepare Uniforms
+        let uniforms = LinearizeUniforms { width, height };
+        let uniform_buffer = context
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Uniform Buffer"),
+                contents: bytemuck::bytes_of(&uniforms),
+                usage: wgpu::BufferUsages::UNIFORM,
+            });
 
         // 4. Bind Group
         let bind_group = context
@@ -147,11 +152,15 @@ impl LinearizePipeline {
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&input_view),
+                        resource: input_buffer.as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::TextureView(&output_view),
+                        resource: output_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: uniform_buffer.as_entire_binding(),
                     },
                 ],
             });
@@ -177,41 +186,9 @@ impl LinearizePipeline {
             compute_pass.dispatch_workgroups(x_groups, y_groups, 1);
         }
 
-        // 6. Readback Preparation
-        let unpadded_bytes_per_row = width * 16; // 4 * f32 = 16 bytes per pixel
-        let align = 256;
-        let padded_bytes_per_row_padding = (align - unpadded_bytes_per_row % align) % align;
-        let padded_bytes_per_row = unpadded_bytes_per_row + padded_bytes_per_row_padding;
-
-        let output_buffer_size = (padded_bytes_per_row * height) as u64;
-        let output_buffer = context.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Output Buffer"),
-            size: output_buffer_size,
-            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
-        encoder.copy_texture_to_buffer(
-            wgpu::TexelCopyTextureInfo {
-                texture: &output_texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            wgpu::TexelCopyBufferInfo {
-                buffer: &output_buffer,
-                layout: wgpu::TexelCopyBufferLayout {
-                    offset: 0,
-                    bytes_per_row: Some(padded_bytes_per_row),
-                    rows_per_image: Some(height),
-                },
-            },
-            texture_size,
-        );
-
         context.queue.submit(Some(encoder.finish()));
 
-        // 7. Map and Read
+        // 6. Map and Read
         let buffer_slice = output_buffer.slice(..);
         let (sender, receiver) = std::sync::mpsc::channel();
         buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
@@ -226,33 +203,11 @@ impl LinearizePipeline {
 
         if let Ok(Ok(())) = receiver.recv() {
             let data = buffer_slice.get_mapped_range();
-            // Convert padded data to linear image
-            let mut result_image: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
-
-            for y in 0..height {
-                let row_offset = (y * padded_bytes_per_row) as usize;
-                for x in 0..width {
-                    let pixel_offset = row_offset + (x * 16) as usize;
-                    let r = f32::from_le_bytes(
-                        data[pixel_offset..pixel_offset + 4].try_into().unwrap(),
-                    );
-                    let g = f32::from_le_bytes(
-                        data[pixel_offset + 4..pixel_offset + 8].try_into().unwrap(),
-                    );
-                    let b = f32::from_le_bytes(
-                        data[pixel_offset + 8..pixel_offset + 12]
-                            .try_into()
-                            .unwrap(),
-                    );
-                    // Alpha is ignored
-
-                    result_image.put_pixel(x, y, Rgb([r, g, b]));
-                }
-            }
-
+            let result_vec: Vec<f32> = bytemuck::cast_slice(&data).to_vec();
             drop(data);
             output_buffer.unmap();
-            return Some(result_image);
+
+            return ImageBuffer::from_raw(width, height, result_vec);
         }
 
         None
