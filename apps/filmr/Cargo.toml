@@ -1,6 +1,6 @@
 [package]
 name = "filmr_app"
-version = "0.5.3"
+version = "0.5.4"
 edition = "2021"
 authors = ["Benign X <1341398182@qq.com>", "W-Mai"]
 description = "CLI and GUI application for filmr, a high-fidelity film simulation engine."
@@ -21,7 +21,7 @@ eula = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-filmr = { version = "0.5.3", path = "../../" }
+filmr = { version = "0.5.4", path = "../../", features = ["compute-gpu"] }
 image = "0.24"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -53,8 +53,8 @@ serde-wasm-bindgen = "0.6"
 getrandom = { version = "0.2", features = ["js"] }
 console_log = "1.0"
 web-sys = { version = "0.3", features = [
-    "HtmlCanvasElement", "Window", "Document", "Element", 
-    "DedicatedWorkerGlobalScope", "MessageEvent", "Worker", 
+    "HtmlCanvasElement", "Window", "Document", "Element",
+    "DedicatedWorkerGlobalScope", "MessageEvent", "Worker",
     "Navigator", "console", "WorkerGlobalScope", "WorkerNavigator",
     "WorkerOptions", "WorkerType"
 ] }

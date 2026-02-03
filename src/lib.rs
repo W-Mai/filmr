@@ -1,4 +1,8 @@
 pub mod film;
+#[cfg(feature = "compute-gpu")]
+pub mod gpu;
+#[cfg(feature = "compute-gpu")]
+pub mod gpu_pipelines;
 pub mod grain;
 pub mod light_leak;
 pub mod metrics;

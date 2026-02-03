@@ -10,6 +10,11 @@ use image::RgbImage;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, instrument};
 
+#[cfg(feature = "compute-gpu")]
+use crate::gpu::get_gpu_context;
+#[cfg(feature = "compute-gpu")]
+use crate::gpu_pipelines::LinearizePipeline;
+
 /// Configuration for the simulation run.
 /// Controls all aspects of the physical simulation pipeline.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -19,6 +24,9 @@ pub struct SimulationConfig {
     pub exposure_time: f32, // t in E = I * t
     /// Enable or disable grain simulation.
     pub enable_grain: bool,
+    /// Enable GPU acceleration if available.
+    #[serde(default)]
+    pub use_gpu: bool,
     /// Output mode: Negative (Transmission) or Positive (Scanned).
     pub output_mode: OutputMode,
     /// White Balance mode.
@@ -52,6 +60,7 @@ impl Default for SimulationConfig {
         Self {
             exposure_time: 1.0,
             enable_grain: true,
+            use_gpu: false,                    // Default to CPU for stability
             output_mode: OutputMode::Positive, // Default to what users expect
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
@@ -204,7 +213,29 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     info!("Starting film simulation processing");
     // Pipeline initialization
     let context = PipelineContext { film, config };
-    let mut image_buffer = create_linear_image(input);
+
+    #[cfg(feature = "compute-gpu")]
+    let gpu_result = if config.use_gpu {
+        if let Some(gpu_ctx) = get_gpu_context() {
+            info!("Attempting GPU Linearization...");
+            let pipeline = LinearizePipeline::new(gpu_ctx);
+            pipeline.process_image(gpu_ctx, input)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    #[cfg(not(feature = "compute-gpu"))]
+    let gpu_result: Option<image::ImageBuffer<image::Rgb<f32>, Vec<f32>>> = None;
+
+    let mut image_buffer = if let Some(buffer) = gpu_result {
+        info!("Used GPU for linearization");
+        buffer
+    } else {
+        create_linear_image(input)
+    };
 
     // Sequential Stage Execution
     let stages: Vec<Box<dyn PipelineStage>> = vec![

@@ -1,6 +1,6 @@
 [package]
 name = "filmr"
-version = "0.5.3"
+version = "0.5.4"
 edition = "2021"
 authors = ["Benign X <1341398182@qq.com>", "W-Mai"]
 description = "A high-fidelity, physics-based film simulation engine written in Rust."
@@ -30,6 +30,9 @@ serde_json = "1.0.149"
 tracing = "0.1.44"
 serde-big-array = "0.5.1"
 wide = "1.1.1"
+wgpu = { version = "28.0.0", optional = true }
+bytemuck = { version = "1.25.0", features = ["derive"] }
+pollster = { version = "0.4.0", optional = true }
 
 [dev-dependencies]
 criterion = "0.8.1"
@@ -44,3 +47,6 @@ lto = "thin"
 [[bench]]
 name = "processing_benchmark"
 harness = false
+
+[features]
+compute-gpu = ["dep:wgpu", "dep:pollster"]

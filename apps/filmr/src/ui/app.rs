@@ -583,6 +583,7 @@ impl FilmrApp {
             let config = SimulationConfig {
                 exposure_time: self.exposure_time,
                 enable_grain: true,
+                use_gpu: true,
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
@@ -632,6 +633,7 @@ impl FilmrApp {
             let config = SimulationConfig {
                 exposure_time: self.exposure_time,
                 enable_grain: true,
+                use_gpu: true,
                 output_mode: self.output_mode,
                 white_balance_mode: self.white_balance_mode,
                 white_balance_strength: self.white_balance_strength,
