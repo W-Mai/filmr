@@ -2,7 +2,6 @@
 pub mod cli;
 
 pub mod config;
-pub mod cus_component;
 pub mod types;
 
 #[cfg(target_arch = "wasm32")]

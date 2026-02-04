@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.8] - 2026-02-04
+
+### ♻️ Refactoring
+
+- **UI**: Replaced internal `cus_component` module with `egui-uix` external crate for better code reuse.
+- **Core**: Refactored `processor.rs` to extract GPU pipeline execution and CPU fallback logic, improving modularity and maintainability.
+- **Core**: Implemented `OnceLock` caching for GPU pipelines in `gpu_pipelines.rs` to avoid redundant initialization and improve "Hot Run" performance.
+
+## [0.5.7] - 2026-02-04
+
+### ⚡️ Performance
+
+- **Bench**: Added `benchmark_sop` example tool for standardized performance testing (24MP image, Cold vs Hot runs).
+- **Core**: Optimized `processor.rs` instrumentation using `tracing` spans for better profiling visibility.
+
+## [0.5.6] - 2026-02-03
+
+### 🚀 Features
+
+- **GPU**: Implemented GPU acceleration for **Light Leak** and **Halation** stages using compute shaders.
+
+## [0.5.5] - 2026-02-03
+
+### 🚀 Features
+
+- **WASM**: Implemented global GPU context management for WASM workers.
+
+### 🐛 Fixes
+
+- **WASM**: Disabled GPU context on WASM temporarily to fix build issues.
+
+## [0.5.4] - 2026-02-03
+
+### 🚀 Features
+
+- **GPU**: Implemented **Linearization** compute shader for GPU pipeline entry.
+
+### 🐛 Fixes
+
+- **GPU**: Fixed buffer usage validation errors for map read operations by implementing proper staging buffers.
+
+### ⚡️ Performance
+
+- **GPU**: Optimized data transfer using storage buffers instead of uniform buffers.
+
+## [0.5.3] - 2026-02-03
+
+### ⚡️ Performance
+
+- **Core**: Implemented SIMD optimizations for **Gaussian Blur**, **Spectral** calculations, and **Halation** effect on CPU path.
+
 ## [0.5.2] - 2026-02-02
 
 ### 🚀 Features

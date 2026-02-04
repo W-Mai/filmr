@@ -8,8 +8,8 @@ use egui::{Context, RichText};
 use rfd::FileDialog;
 
 use crate::config::UxMode;
-use crate::cus_component::toggle;
 use crate::ui::app::{AppMode, FilmrApp};
+use egui_uix::components::toggle::Toggle;
 
 pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
     let mut changed = false;
@@ -48,7 +48,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
                 ui.label("👶");
                 if ui
-                    .add(toggle("🚀 Professional", &mut toggle_flag))
+                    .add(Toggle::new(&mut toggle_flag, "🚀 Professional"))
                     .clicked()
                 {
                     if let Some(cm) = &mut app.config_manager {
