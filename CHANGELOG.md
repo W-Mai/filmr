@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.9] - 2026-02-04
+
+### ♻️ Refactoring
+
+- **Core**: Refactored `Spectrum` struct to remove `Copy` trait, forcing explicit data flow and improving performance by avoiding expensive implicit copies.
+- **Core**: Improved numerical stability in `new_blackbody` and `integrate_product` functions within `spectral.rs`, ensuring physical consistency and preventing potential overflows.
+- **Core**: Replaced implicit amplitude scaling with `new_gaussian_normalized` to guarantee energy conservation in spectral modeling regardless of bandwidth.
+
+### ✨ Features
+
+- **Grain**: Implemented resolution-dependent grain scaling. Grain blur radius and noise amplitude now scale automatically with image resolution (reference 2K), ensuring consistent visual graininess across different image sizes.
+
 ## [0.5.8] - 2026-02-04
 
 ### ♻️ Refactoring

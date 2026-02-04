@@ -342,6 +342,22 @@ impl PipelineStage for GrainStage {
         let width = image.width();
         let height = image.height();
 
+        // Scale grain parameters based on resolution
+        // Reference: 2048px width (approx 2K scan)
+        const REFERENCE_WIDTH: f32 = 2048.0;
+        let scale_factor = width as f32 / REFERENCE_WIDTH;
+
+        // Scale blur radius linearly
+        let effective_blur = film.grain_model.blur_radius * scale_factor;
+
+        // Scale noise amplitude to maintain perceived granularity density
+        // Var = alpha * D^1.5 + sigma^2
+        // We want std_dev to scale linearly with resolution scale (to counter averaging)
+        // So Variance scales with square of resolution scale
+        let mut grain_model = film.grain_model;
+        grain_model.alpha *= scale_factor * scale_factor;
+        grain_model.sigma_read *= scale_factor;
+
         let mut grain_noise: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
 
         grain_noise
@@ -353,16 +369,16 @@ impl PipelineStage for GrainStage {
                 let densities = image.get_pixel(x, y).0;
                 let mut rng = rand::thread_rng();
 
-                if film.grain_model.monochrome {
+                if grain_model.monochrome {
                     let d = densities[1];
-                    let noise = film.grain_model.sample_noise(d, &mut rng);
+                    let noise = grain_model.sample_noise(d, &mut rng);
                     pixel[0] = noise;
                     pixel[1] = noise;
                     pixel[2] = noise;
                 } else {
-                    let n_r = film.grain_model.sample_noise(densities[0], &mut rng);
-                    let n_g = film.grain_model.sample_noise(densities[1], &mut rng);
-                    let n_b = film.grain_model.sample_noise(densities[2], &mut rng);
+                    let n_r = grain_model.sample_noise(densities[0], &mut rng);
+                    let n_g = grain_model.sample_noise(densities[1], &mut rng);
+                    let n_b = grain_model.sample_noise(densities[2], &mut rng);
 
                     let n_lum = (n_r + n_g + n_b) / 3.0;
                     let chroma_scale = 0.3;
@@ -373,8 +389,8 @@ impl PipelineStage for GrainStage {
                 }
             });
 
-        if film.grain_model.blur_radius > 0.0 {
-            utils::apply_gaussian_blur(&mut grain_noise, film.grain_model.blur_radius);
+        if effective_blur > 0.0 {
+            utils::apply_gaussian_blur(&mut grain_noise, effective_blur);
         }
 
         image

@@ -7,8 +7,9 @@ mod tests {
     #[test]
     fn test_monochrome_grain_consistency() {
         // Setup a flat gray image
-        let width = 10;
-        let height = 10;
+        // Use sufficient width to ensure grain scaling doesn't suppress noise completely
+        let width = 2048;
+        let height = 32;
         let mut input = RgbImage::new(width, height);
         for p in input.pixels_mut() {
             *p = Rgb([128, 128, 128]);
@@ -57,8 +58,9 @@ mod tests {
     #[test]
     fn test_color_grain_independence() {
         // Setup a flat gray image
-        let width = 10;
-        let height = 10;
+        // Use sufficient width to ensure grain scaling doesn't suppress noise completely
+        let width = 2048;
+        let height = 32;
         let mut input = RgbImage::new(width, height);
         for p in input.pixels_mut() {
             *p = Rgb([128, 128, 128]);

@@ -1194,12 +1194,24 @@ impl GrainPipeline {
 
         let seed = 1234.5678; // TODO: Pass random seed
 
+        // Scale grain parameters based on resolution
+        // Reference: 2048px width (approx 2K scan)
+        const REFERENCE_WIDTH: f32 = 2048.0;
+        let scale_factor = width as f32 / REFERENCE_WIDTH;
+
+        // Scale noise amplitude to maintain perceived granularity density
+        // Var = alpha * D^1.5 + sigma^2
+        // We want std_dev to scale linearly with resolution scale (to counter averaging)
+        // So Variance scales with square of resolution scale
+        let alpha_scaled = film.grain_model.alpha * scale_factor * scale_factor;
+        let sigma_read_scaled = film.grain_model.sigma_read * scale_factor;
+
         let uniforms = GrainUniforms {
             width,
             height,
             seed,
-            alpha: film.grain_model.alpha,
-            sigma_read: film.grain_model.sigma_read,
+            alpha: alpha_scaled,
+            sigma_read: sigma_read_scaled,
             roughness: film.grain_model.roughness,
             monochrome: if film.grain_model.monochrome { 1 } else { 0 },
             _pad: 0.0,
