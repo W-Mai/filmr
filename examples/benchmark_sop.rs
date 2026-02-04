@@ -61,22 +61,48 @@ fn main() {
             ..Default::default()
         };
 
-        // Warmup / Context Init
-        // Note: The first run might include shader compilation and context creation overhead.
-        // Ideally, we should measure steady state, but for this SOP, a single run is often indicative enough
-        // if we consider "cold start" vs "warm".
-        // process_image creates context internally if not cached (but our current impl creates context per call for pipelines).
-        // Actually, GpuContext is global/static in some places or passed around?
-        // Let's just run it.
+        // 3.1 Cold Start (First Run)
+        println!("  -> Running Cold Start (Initialization + Processing)...");
+        let start_cold = Instant::now();
+        let _ = process_image(&input, &film, &config_gpu);
+        let duration_cold = start_cold.elapsed();
+        println!("  GPU Cold Start Time: {:.2?}", duration_cold);
 
-        let start_gpu = Instant::now();
-        let _output_gpu = process_image(&input, &film, &config_gpu);
-        let duration_gpu = start_gpu.elapsed();
-        println!("GPU Processing Time: {:.2?}", duration_gpu);
+        // 3.2 Hot Runs (Steady State)
+        println!("  -> Running Hot Iterations (3 runs)...");
+        let mut total_hot_duration = std::time::Duration::new(0, 0);
+        for i in 1..=3 {
+            let start_hot = Instant::now();
+            let _ = process_image(&input, &film, &config_gpu);
+            let duration = start_hot.elapsed();
+            println!("    Run {}: {:.2?}", i, duration);
+            total_hot_duration += duration;
+        }
+        let avg_gpu = total_hot_duration / 3;
+        println!("  GPU Avg Hot Time: {:.2?}", avg_gpu);
 
-        // Calculate Speedup
-        let speedup = duration_cpu.as_secs_f64() / duration_gpu.as_secs_f64();
-        println!("GPU Speedup: {:.2}x", speedup);
+        // Calculate Speedups
+        let speedup_cold = duration_cpu.as_secs_f64() / duration_cold.as_secs_f64();
+        let speedup_hot = duration_cpu.as_secs_f64() / avg_gpu.as_secs_f64();
+
+        println!("\n------------------------------------------------------------");
+        println!("   Final Results Comparison");
+        println!("------------------------------------------------------------");
+        println!("CPU Time:        {:.2?}", duration_cpu);
+        println!(
+            "GPU Cold Time:   {:.2?} (Speedup: {:.2}x)",
+            duration_cold, speedup_cold
+        );
+        println!(
+            "GPU Hot Time:    {:.2?} (Speedup: {:.2}x)",
+            avg_gpu, speedup_hot
+        );
+
+        if avg_gpu < duration_cpu {
+            println!("\n✅ GPU is FASTER in steady state!");
+        } else {
+            println!("\n⚠️ GPU is SLOWER even in steady state. Optimization needed.");
+        }
     }
     #[cfg(not(feature = "compute-gpu"))]
     {

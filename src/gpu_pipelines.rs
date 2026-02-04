@@ -3,7 +3,38 @@ use crate::gpu::{GpuBuffer, GpuContext};
 #[cfg(feature = "compute-gpu")]
 use futures::channel::oneshot;
 #[cfg(feature = "compute-gpu")]
+use std::sync::OnceLock;
+#[cfg(feature = "compute-gpu")]
 use wgpu::util::DeviceExt;
+
+#[cfg(feature = "compute-gpu")]
+static LINEARIZE_PIPELINE: OnceLock<LinearizePipeline> = OnceLock::new();
+#[cfg(feature = "compute-gpu")]
+static LIGHT_LEAK_PIPELINE: OnceLock<LightLeakPipeline> = OnceLock::new();
+#[cfg(feature = "compute-gpu")]
+static HALATION_PIPELINE: OnceLock<HalationPipeline> = OnceLock::new();
+#[cfg(feature = "compute-gpu")]
+static GAUSSIAN_PIPELINE: OnceLock<GaussianPipeline> = OnceLock::new();
+
+#[cfg(feature = "compute-gpu")]
+pub fn get_linearize_pipeline(context: &GpuContext) -> &'static LinearizePipeline {
+    LINEARIZE_PIPELINE.get_or_init(|| LinearizePipeline::new(context))
+}
+
+#[cfg(feature = "compute-gpu")]
+pub fn get_light_leak_pipeline(context: &GpuContext) -> &'static LightLeakPipeline {
+    LIGHT_LEAK_PIPELINE.get_or_init(|| LightLeakPipeline::new(context))
+}
+
+#[cfg(feature = "compute-gpu")]
+pub fn get_halation_pipeline(context: &GpuContext) -> &'static HalationPipeline {
+    HALATION_PIPELINE.get_or_init(|| HalationPipeline::new(context))
+}
+
+#[cfg(feature = "compute-gpu")]
+pub fn get_gaussian_pipeline(context: &GpuContext) -> &'static GaussianPipeline {
+    GAUSSIAN_PIPELINE.get_or_init(|| GaussianPipeline::new(context))
+}
 
 #[cfg(feature = "compute-gpu")]
 pub async fn read_gpu_buffer(
