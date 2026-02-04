@@ -7,33 +7,66 @@ use std::sync::OnceLock;
 #[cfg(feature = "compute-gpu")]
 use wgpu::util::DeviceExt;
 
+// Wrapper to make WGPU types Send + Sync on WASM
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+struct SendSyncWrapper<T>(T);
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+unsafe impl<T> Send for SendSyncWrapper<T> {}
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+unsafe impl<T> Sync for SendSyncWrapper<T> {}
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+impl<T> std::ops::Deref for SendSyncWrapper<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
+type PipelineWrapper<T> = T;
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+type PipelineWrapper<T> = SendSyncWrapper<T>;
+
 #[cfg(feature = "compute-gpu")]
-static LINEARIZE_PIPELINE: OnceLock<LinearizePipeline> = OnceLock::new();
+static LINEARIZE_PIPELINE: OnceLock<PipelineWrapper<LinearizePipeline>> = OnceLock::new();
 #[cfg(feature = "compute-gpu")]
-static LIGHT_LEAK_PIPELINE: OnceLock<LightLeakPipeline> = OnceLock::new();
+static LIGHT_LEAK_PIPELINE: OnceLock<PipelineWrapper<LightLeakPipeline>> = OnceLock::new();
 #[cfg(feature = "compute-gpu")]
-static HALATION_PIPELINE: OnceLock<HalationPipeline> = OnceLock::new();
+static HALATION_PIPELINE: OnceLock<PipelineWrapper<HalationPipeline>> = OnceLock::new();
 #[cfg(feature = "compute-gpu")]
-static GAUSSIAN_PIPELINE: OnceLock<GaussianPipeline> = OnceLock::new();
+static GAUSSIAN_PIPELINE: OnceLock<PipelineWrapper<GaussianPipeline>> = OnceLock::new();
+
+#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
+fn wrap_pipeline<T>(pipeline: T) -> T {
+    pipeline
+}
+
+#[cfg(all(feature = "compute-gpu", target_arch = "wasm32"))]
+fn wrap_pipeline<T>(pipeline: T) -> SendSyncWrapper<T> {
+    SendSyncWrapper(pipeline)
+}
 
 #[cfg(feature = "compute-gpu")]
 pub fn get_linearize_pipeline(context: &GpuContext) -> &'static LinearizePipeline {
-    LINEARIZE_PIPELINE.get_or_init(|| LinearizePipeline::new(context))
+    LINEARIZE_PIPELINE.get_or_init(|| wrap_pipeline(LinearizePipeline::new(context)))
 }
 
 #[cfg(feature = "compute-gpu")]
 pub fn get_light_leak_pipeline(context: &GpuContext) -> &'static LightLeakPipeline {
-    LIGHT_LEAK_PIPELINE.get_or_init(|| LightLeakPipeline::new(context))
+    LIGHT_LEAK_PIPELINE.get_or_init(|| wrap_pipeline(LightLeakPipeline::new(context)))
 }
 
 #[cfg(feature = "compute-gpu")]
 pub fn get_halation_pipeline(context: &GpuContext) -> &'static HalationPipeline {
-    HALATION_PIPELINE.get_or_init(|| HalationPipeline::new(context))
+    HALATION_PIPELINE.get_or_init(|| wrap_pipeline(HalationPipeline::new(context)))
 }
 
 #[cfg(feature = "compute-gpu")]
 pub fn get_gaussian_pipeline(context: &GpuContext) -> &'static GaussianPipeline {
-    GAUSSIAN_PIPELINE.get_or_init(|| GaussianPipeline::new(context))
+    GAUSSIAN_PIPELINE.get_or_init(|| wrap_pipeline(GaussianPipeline::new(context)))
 }
 
 #[cfg(feature = "compute-gpu")]
