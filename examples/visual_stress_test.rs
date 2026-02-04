@@ -184,9 +184,9 @@ fn run_chart_2(film: &FilmStock, config: &SimulationConfig) -> ChartResult {
     let height = 256;
     let (input, output) = process_spectral_image(width, height, film, config, |x, _| {
         if x < width / 2 - 1 {
-            Spectrum::new_gaussian(610.0, 20.0) // Red
+            Spectrum::new_gaussian_normalized(610.0, 20.0) * 50.0 // Red
         } else if x > width / 2 {
-            Spectrum::new_gaussian(450.0, 20.0) // Blue
+            Spectrum::new_gaussian_normalized(450.0, 20.0) * 50.0 // Blue
         } else {
             Spectrum::new_flat(0.0)
         }
@@ -208,8 +208,10 @@ fn run_chart_3(film: &FilmStock, config: &SimulationConfig) -> ChartResult {
             Spectrum::new_flat(0.9)
         } else {
             let mut s = Spectrum::new();
-            s = s + Spectrum::new_gaussian_with_amplitude(500.0, 100.0, 0.4);
-            s = s + Spectrum::new_gaussian_with_amplitude(650.0, 80.0, 0.8);
+            // Amplitude 0.4 * Width 100 * 2.5 ~= 100.0
+            s = s + Spectrum::new_gaussian_normalized(500.0, 100.0) * 100.0;
+            // Amplitude 0.8 * Width 80 * 2.5 ~= 160.0
+            s = s + Spectrum::new_gaussian_normalized(650.0, 80.0) * 160.0;
             s * 2.0
         }
     });
@@ -233,9 +235,10 @@ fn run_chart_4(film: &FilmStock, config: &SimulationConfig) -> ChartResult {
     stress_film.color_matrix[1][2] = -0.40; // Increase Blue inhibition of Green (Magenta dye)
 
     let (input, output) = process_spectral_image(width, height, &stress_film, config, |_, _| {
-        // Boost amplitude to 25.0 to simulate bright neon light source
-        // Narrow band sources need high amplitude to match broadband energy levels
-        Spectrum::new_gaussian_with_amplitude(480.0, 8.5, 25.0)
+        // Boost amplitude to simulate bright neon light source
+        // Narrow band sources need high total energy to match broadband energy levels
+        // Previous: Amp 25.0 * Width 8.5 * 2.5 ~= 530.0
+        Spectrum::new_gaussian_normalized(480.0, 8.5) * 530.0
     });
 
     ChartResult {

@@ -99,7 +99,9 @@ fn test_1_highlight_gradient_shoulder() {
         let spectrum = Spectrum::new_flat(input);
 
         // Simulate
-        let exposure = simulate_pixel_exposure(&film, &spectrum, 1.0);
+        // Portra 400 preset has very high exposure_offset (625), requiring high exposure to reach shoulder.
+        // We use exposure_time = 2000.0 to push the exposure into the dynamic range of the film.
+        let exposure = simulate_pixel_exposure(&film, &spectrum, 2000.0);
         let density = simulate_density(&film, exposure);
 
         // Use Green channel for density check (typical luminance carrier)
@@ -135,7 +137,8 @@ fn test_2_interlayer_inhibition() {
 
     // Case A: Pure Red (Reference)
     // Red Light: 650nm peak
-    let red_spectrum = Spectrum::new_gaussian(650.0, 20.0);
+    // Using normalized * 50 to match approximate energy of previous amplitude=1.0, width=20.0 (Area ~ 50)
+    let red_spectrum = Spectrum::new_gaussian_normalized(650.0, 20.0) * 50.0;
     let red_exposure = simulate_pixel_exposure(&film, &red_spectrum, 1.0);
     let _ = simulate_density(&film, red_exposure); // Check side effects if any, but result unused
 
@@ -155,14 +158,14 @@ fn test_2_interlayer_inhibition() {
     // Test: High Blue Exposure (Yellow Dye) should reduce Green/Red formation (Magenta/Cyan dyes).
 
     // 1. Reference: Moderate Green Exposure -> Produces Magenta Dye
-    let green_spectrum = Spectrum::new_gaussian(540.0, 20.0);
+    let green_spectrum = Spectrum::new_gaussian_normalized(540.0, 20.0) * 50.0;
     let green_exp = simulate_pixel_exposure(&film, &green_spectrum, 0.5); // Moderate exposure
     let _d_ref = simulate_density(&film, green_exp);
     // let _magenta_ref = d_ref.1; // Green channel maps to Magenta dye (roughly) - UNUSED
 
     // 2. Inhibition: Same Green Exposure + High Blue Exposure
     // High Blue -> High Yellow Dye -> Inhibits Magenta
-    let _blue_spectrum = Spectrum::new_gaussian(450.0, 20.0);
+    let _blue_spectrum = Spectrum::new_gaussian_normalized(450.0, 20.0) * 50.0;
     // let _mixed_spectrum = add_spectra(&green_spectrum, &blue_spectrum); // Additive light - UNUSED
 
     // Note: We need to feed the *separate* exposures to the matrix logic
@@ -260,7 +263,8 @@ fn test_4_neon_pollution() {
     // 480nm Neon Light (Cyan-ish)
     // Peaks between Blue (440-460) and Green (540-550).
     // Should stimulate both Blue and Green layers.
-    let neon_spectrum = Spectrum::new_gaussian(480.0, 10.0); // Narrow 20nm FWHM -> sigma ~ 8.5
+    // Using normalized * 25 to match approximate energy of previous amplitude=1.0, width=10.0 (Area ~ 25)
+    let neon_spectrum = Spectrum::new_gaussian_normalized(480.0, 10.0) * 25.0; // Narrow 20nm FWHM -> sigma ~ 8.5
 
     let exposures = simulate_pixel_exposure(&film, &neon_spectrum, 1.0);
     let (r_exp, g_exp, b_exp) = exposures;

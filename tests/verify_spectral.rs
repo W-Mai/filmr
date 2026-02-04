@@ -198,9 +198,11 @@ mod tests {
         let v_green = get_val(540);
         let v_red = get_val(610);
 
-        assert!(v_blue > 0.5, "White light should have Blue component");
-        assert!(v_green > 0.5, "White light should have Green component");
-        assert!(v_red > 0.5, "White light should have Red component");
+        // With normalized gaussians (Area=1), peaks are much lower (~0.013 for sigma=30)
+        // We check for presence of energy, not arbitrary amplitude 0.5
+        assert!(v_blue > 0.005, "White light should have Blue component");
+        assert!(v_green > 0.005, "White light should have Green component");
+        assert!(v_red > 0.005, "White light should have Red component");
     }
 
     #[test]

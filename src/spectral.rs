@@ -8,7 +8,7 @@ pub const LAMBDA_END: usize = 780; // Extended to 780nm for IR/Red accuracy
 pub const LAMBDA_STEP: usize = 5; // 5nm resolution
 pub const BINS: usize = (LAMBDA_END - LAMBDA_START) / LAMBDA_STEP + 1;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Spectrum {
     pub power: [f32; BINS],
 }
@@ -45,16 +45,49 @@ impl Spectrum {
         s
     }
 
+    /// Create a normalized Gaussian spectrum (integral = 1.0).
+    /// This ensures energy conservation regardless of spectral width.
+    pub fn new_gaussian_normalized(peak_nm: f32, sigma_nm: f32) -> Self {
+        let mut s = Self::new();
+        for i in 0..BINS {
+            let lambda = (LAMBDA_START + i * LAMBDA_STEP) as f32;
+            let diff = (lambda - peak_nm) / sigma_nm;
+            s.power[i] = (-0.5 * diff * diff).exp();
+        }
+
+        // Normalize area
+        let area = s.integrate_product(&Spectrum::new_flat(1.0));
+        if area > 0.0 {
+            let factor = 1.0 / area;
+            for v in &mut s.power {
+                *v *= factor;
+            }
+        }
+        s
+    }
+
+    /// Create a Blackbody spectrum using Planck's Law.
+    /// Note: This returns Relative Spectral Power Distribution (RSPD), not absolute radiance.
     pub fn new_blackbody(temperature: f32) -> Self {
         let mut s = Self::new();
-        let c1 = 3.741771e-16f32;
-        let c2 = 1.4388e-2f32;
+        let c1 = 3.741771e-16f32; // 2*h*c^2
+        let c2 = 1.4388e-2f32; // h*c/k
+
         for i in 0..BINS {
             let lambda_nm = (LAMBDA_START + i * LAMBDA_STEP) as f32;
             let lambda_m = lambda_nm * 1.0e-9;
-            let denom =
-                (lambda_m.powi(5) * ((c2 / (lambda_m * temperature)).exp() - 1.0)).max(1.0e-30f32);
-            s.power[i] = (c1 / denom).max(0.0);
+
+            let x = c2 / (lambda_m * temperature);
+            // Prevent overflow for small lambda * T
+            let exp_x = if x < 50.0 { x.exp() } else { f32::INFINITY };
+
+            let denom = lambda_m.powi(5) * (exp_x - 1.0);
+
+            if denom.is_finite() && denom > 0.0 {
+                s.power[i] = c1 / denom;
+            } else {
+                s.power[i] = 0.0;
+            }
         }
         s.normalize_max();
         s
@@ -80,14 +113,22 @@ impl Spectrum {
         let mut s = Self::new();
         let mut i = 0;
 
-        // Process 4 elements at a time using SIMD (f32x4 is safe for WASM/Neon/SSE)
+        // Process 4 elements at a time using SIMD
         while i + 4 <= BINS {
-            // Safe because we check bounds. Copy to array to ensure fixed size.
-            let chunk_self: [f32; 4] = self.power[i..i + 4].try_into().unwrap();
-            let chunk_other: [f32; 4] = other.power[i..i + 4].try_into().unwrap();
-
-            let a = f32x4::from(chunk_self);
-            let b = f32x4::from(chunk_other);
+            // Use explicit array construction to avoid slice-to-array copy overhead/panic
+            // Compiler should optimize this to a vector load
+            let a = f32x4::from([
+                self.power[i],
+                self.power[i + 1],
+                self.power[i + 2],
+                self.power[i + 3],
+            ]);
+            let b = f32x4::from([
+                other.power[i],
+                other.power[i + 1],
+                other.power[i + 2],
+                other.power[i + 3],
+            ]);
             let res = a * b;
 
             let res_arr: [f32; 4] = res.into();
@@ -106,38 +147,48 @@ impl Spectrum {
     /// Integrate the product of two spectra (inner product)
     /// Used for calculating response: Integral(Light * Sensitivity)
     pub fn integrate_product(&self, other: &Spectrum) -> f32 {
-        // Optimization: Trapezoidal rule sum = 0.5*v0 + v1 + ... + vn-1 + 0.5*vn
-        // equivalent to: Sum(all v) - 0.5*(v0 + vn)
+        // Optimization: Trapezoidal rule
+        // Sum middle points (weight 1.0) then add endpoints (weight 0.5)
 
         let mut sum_simd = f32x4::splat(0.0);
-        let mut i = 0;
+        let mut i = 1; // Start from 1 to skip first element
+        let limit = BINS - 1; // Stop before last element
 
-        while i + 4 <= BINS {
-            let chunk_self: [f32; 4] = self.power[i..i + 4].try_into().unwrap();
-            let chunk_other: [f32; 4] = other.power[i..i + 4].try_into().unwrap();
-
-            let a = f32x4::from(chunk_self);
-            let b = f32x4::from(chunk_other);
+        while i + 4 <= limit {
+            let a = f32x4::from([
+                self.power[i],
+                self.power[i + 1],
+                self.power[i + 2],
+                self.power[i + 3],
+            ]);
+            let b = f32x4::from([
+                other.power[i],
+                other.power[i + 1],
+                other.power[i + 2],
+                other.power[i + 3],
+            ]);
             sum_simd += a * b;
             i += 4;
         }
 
         let mut sum = sum_simd.reduce_add();
 
-        // Handle remainder
-        while i < BINS {
+        // Handle remainder of the middle section
+        while i < limit {
             sum += self.power[i] * other.power[i];
             i += 1;
         }
 
-        // Apply trapezoidal correction
-        let v_first = self.power[0] * other.power[0];
-        let v_last = self.power[BINS - 1] * other.power[BINS - 1];
+        // Add endpoints with 0.5 weight
+        let first = self.power[0] * other.power[0];
+        let last = self.power[BINS - 1] * other.power[BINS - 1];
 
-        (sum - 0.5 * (v_first + v_last)) * (LAMBDA_STEP as f32)
+        (sum + 0.5 * (first + last)) * (LAMBDA_STEP as f32)
     }
 }
 
+/// NOTE:
+/// Add means linear superposition of radiance.
 impl Add for Spectrum {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
@@ -149,10 +200,36 @@ impl Add for Spectrum {
     }
 }
 
+/// Support reference addition to avoid moves/clones
+impl Add<&Spectrum> for &Spectrum {
+    type Output = Spectrum;
+    fn add(self, rhs: &Spectrum) -> Spectrum {
+        let mut res = Spectrum::new();
+        for i in 0..BINS {
+            res.power[i] = self.power[i] + rhs.power[i];
+        }
+        res
+    }
+}
+
+/// NOTE:
+/// Mul means scalar exposure / gain.
 impl Mul<f32> for Spectrum {
     type Output = Self;
     fn mul(self, rhs: f32) -> Self {
         let mut res = Self::new();
+        for i in 0..BINS {
+            res.power[i] = self.power[i] * rhs;
+        }
+        res
+    }
+}
+
+/// Support reference multiplication to avoid moves/clones
+impl Mul<f32> for &Spectrum {
+    type Output = Spectrum;
+    fn mul(self, rhs: f32) -> Spectrum {
+        let mut res = Spectrum::new();
         for i in 0..BINS {
             res.power[i] = self.power[i] * rhs;
         }
@@ -174,29 +251,12 @@ impl CameraSensitivities {
         // Blue: ~450nm, Green: ~540nm, Red: ~610nm
         //
         // Target: Equal Area under curve for white balance.
-        // Area ~= peak * sigma.
-        // Using sharper sigmas for better color separation: B=15, G=15, R=15.
-        // This reduces cross-talk significantly.
-
-        // Normalize to D65 energy conservation
-        // Uplifting (1, 1, 1) should result in a spectrum that resembles D65 in terms of total energy
-        // or at least balance.
-        // Current uplift: S = 1*R + 1*G + 1*B
-        // We want Integral(S * D65) or similar metric to be consistent.
-        // Actually, we want the uplifted white to have the same chromaticity as D65.
-        // But simply: let's normalize the curves so their sum approximates a flat or D65 spectrum power.
-        // For simplicity in this "physically plausible" model, we scale them so that
-        // Integral(Curve_i) are equal, which we did roughly with amplitudes.
-        // Let's refine the amplitudes based on Gaussian integral = A * sigma * sqrt(2pi).
-        // R: 1.0 * 30 = 30
-        // G: 1.0 * 30 = 30
-        // B: 1.2 * 25 = 30
-        // They are balanced in area.
+        // Using normalized Gaussians ensures exactly equal area (energy).
 
         Self {
-            r_curve: Spectrum::new_gaussian_with_amplitude(610.0, 30.0, 1.0),
-            g_curve: Spectrum::new_gaussian_with_amplitude(540.0, 30.0, 1.0),
-            b_curve: Spectrum::new_gaussian_with_amplitude(465.0, 30.0, 1.2), // Peak shifted to 465 to match blue better
+            r_curve: Spectrum::new_gaussian_normalized(610.0, 30.0),
+            g_curve: Spectrum::new_gaussian_normalized(540.0, 30.0),
+            b_curve: Spectrum::new_gaussian_normalized(465.0, 30.0), // Peak shifted to 465
         }
     }
 
@@ -208,12 +268,12 @@ impl CameraSensitivities {
     /// L(lambda) = R * S_r + G * S_g + B * S_b
     /// Note: This is a simplification (Principle of Superposition).
     pub fn uplift(&self, r: f32, g: f32, b: f32) -> Spectrum {
-        self.r_curve * r + self.g_curve * g + self.b_curve * b
+        &self.r_curve * r + &self.g_curve * g + &self.b_curve * b
     }
 }
 
 /// Spectral sensitivities of the film layers (Red, Green, Blue sensitive)
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct FilmSensitivities {
     pub r_sensitivity: Spectrum, // Cyan forming layer (Red sensitive)
     pub g_sensitivity: Spectrum, // Magenta forming layer (Green sensitive)
@@ -294,19 +354,19 @@ impl FilmSensitivities {
 
         let mut s = Self {
             r_sensitivity: if params.r_peak > 0.0 {
-                Spectrum::new_gaussian(params.r_peak, params.r_width)
+                Spectrum::new_gaussian_normalized(params.r_peak, params.r_width)
             } else {
-                Spectrum::new_zero()
+                Spectrum::new()
             },
             g_sensitivity: if params.g_peak > 0.0 {
-                Spectrum::new_gaussian(params.g_peak, params.g_width)
+                Spectrum::new_gaussian_normalized(params.g_peak, params.g_width)
             } else {
-                Spectrum::new_zero()
+                Spectrum::new()
             },
             b_sensitivity: if params.b_peak > 0.0 {
-                Spectrum::new_gaussian(params.b_peak, params.b_width)
+                Spectrum::new_gaussian_normalized(params.b_peak, params.b_width)
             } else {
-                Spectrum::new_zero()
+                Spectrum::new()
             },
             r_factor: 1.0,
             g_factor: 1.0,
@@ -346,11 +406,5 @@ impl FilmSensitivities {
         self.r_factor = 1.0 / r_resp.max(epsilon);
         self.g_factor = 1.0 / g_resp.max(epsilon);
         self.b_factor = 1.0 / b_resp.max(epsilon);
-    }
-}
-
-impl Spectrum {
-    pub fn new_zero() -> Self {
-        Self { power: [0.0; BINS] }
     }
 }
