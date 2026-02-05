@@ -222,33 +222,59 @@ fn render_simple_controls(
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.set_min_size(ui.available_size());
-                        for idx in 0..app.stocks.len() {
-                            let stock = &app.stocks[idx];
-                            let name = stock.full_name();
-                            ui.horizontal(|ui| {
-                                if let Some(thumb) = app.preset_thumbnails.get(&name) {
-                                    ui.image((thumb.id(), egui::vec2(40.0, 40.0)));
-                                } else {
-                                    let (rect, _) = ui.allocate_exact_size(
-                                        egui::vec2(40.0, 40.0),
-                                        egui::Sense::hover(),
-                                    );
-                                    ui.painter().rect_filled(
-                                        rect,
-                                        4.0,
-                                        egui::Color32::from_gray(60),
-                                    );
-                                }
 
-                                if ui
-                                    .selectable_label(app.selected_stock_idx == idx, &name)
-                                    .clicked()
-                                {
-                                    app.selected_stock_idx = idx;
-                                    preset_changed = true;
+                        // Group stocks by brand (first word)
+                        let mut groups: std::collections::BTreeMap<String, Vec<usize>> =
+                            Default::default();
+                        for (idx, stock) in app.stocks.iter().enumerate() {
+                            let name = stock.full_name();
+                            let brand = name
+                                .split_whitespace()
+                                .next()
+                                .unwrap_or("Other")
+                                .to_string();
+                            groups.entry(brand).or_default().push(idx);
+                        }
+
+                        for (brand, indices) in groups {
+                            egui::CollapsingHeader::new(
+                                egui::RichText::new(brand).monospace().size(14.0),
+                            )
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                for idx in indices {
+                                    let stock = &app.stocks[idx];
+                                    let full_name = &stock.full_name();
+                                    let name = &stock.name;
+                                    ui.horizontal(|ui| {
+                                        if let Some(thumb) = app.preset_thumbnails.get(full_name) {
+                                            ui.image((thumb.id(), egui::vec2(40.0, 40.0)));
+                                        } else {
+                                            let (rect, _) = ui.allocate_exact_size(
+                                                egui::vec2(40.0, 40.0),
+                                                egui::Sense::hover(),
+                                            );
+                                            ui.painter().rect_filled(
+                                                rect,
+                                                4.0,
+                                                egui::Color32::from_gray(60),
+                                            );
+                                        }
+
+                                        if ui
+                                            .selectable_label(
+                                                app.selected_stock_idx == idx,
+                                                egui::RichText::new(name).monospace().size(12.0),
+                                            )
+                                            .clicked()
+                                        {
+                                            app.selected_stock_idx = idx;
+                                            preset_changed = true;
+                                        }
+                                    });
+                                    ui.add_space(2.0);
                                 }
                             });
-                            ui.add_space(2.0);
                         }
                     });
                 });
