@@ -11,6 +11,125 @@ use crate::config::UxMode;
 use crate::ui::app::{AppMode, FilmrApp};
 use egui_uix::components::toggle::Toggle;
 
+pub struct ShutterSpeed(f64);
+
+impl Default for ShutterSpeed {
+    fn default() -> Self {
+        Self(1.0 / 125.0)
+    }
+}
+
+impl ShutterSpeed {
+    #[allow(clippy::eq_op)]
+    const STOPS: &[f64] = &[
+        1.0 / 8000.0,
+        1.0 / 4000.0,
+        1.0 / 2000.0,
+        1.0 / 1000.0,
+        1.0 / 500.0,
+        1.0 / 250.0,
+        1.0 / 125.0,
+        1.0 / 60.0,
+        1.0 / 30.0,
+        1.0 / 15.0,
+        1.0 / 8.0,
+        1.0 / 4.0,
+        1.0 / 2.0,
+        1.0,
+        1.0 + 1.0 / 3.0,
+        1.0 + 2.0 / 3.0,
+        2.0,
+        2.0 + 1.0 / 3.0,
+        2.0 + 2.0 / 3.0,
+        2.0 + 3.0 / 3.0,
+        2.0 + 4.0 / 3.0,
+        2.0 + 4.0 / 3.0,
+        2.0 + 5.0 / 3.0,
+        4.0,
+        4.0 + 1.0 / 3.0,
+        4.0 + 2.0 / 3.0,
+        4.0 + 3.0 / 3.0,
+        4.0 + 4.0 / 3.0,
+        4.0 + 5.0 / 3.0,
+        4.0 + 6.0 / 3.0,
+        4.0 + 7.0 / 3.0,
+        4.0 + 8.0 / 3.0,
+        4.0 + 9.0 / 3.0,
+        4.0 + 10.0 / 3.0,
+        4.0 + 11.0 / 3.0,
+        8.0,
+        8.0 + 1.0 / 3.0,
+        8.0 + 2.0 / 3.0,
+        8.0 + 3.0 / 3.0,
+        8.0 + 4.0 / 3.0,
+        8.0 + 5.0 / 3.0,
+        8.0 + 6.0 / 3.0,
+        8.0 + 7.0 / 3.0,
+        8.0 + 8.0 / 3.0,
+        8.0 + 9.0 / 3.0,
+        8.0 + 9.0 / 3.0,
+        8.0 + 10.0 / 3.0,
+        8.0 + 11.0 / 3.0,
+        8.0 + 12.0 / 3.0,
+        8.0 + 13.0 / 3.0,
+        8.0 + 14.0 / 3.0,
+        8.0 + 15.0 / 3.0,
+        8.0 + 16.0 / 3.0,
+        8.0 + 17.0 / 3.0,
+        8.0 + 18.0 / 3.0,
+        8.0 + 19.0 / 3.0,
+        8.0 + 20.0 / 3.0,
+        15.0,
+        20.0,
+        25.0,
+        30.0,
+    ];
+
+    fn idx(&self) -> usize {
+        Self::STOPS
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| {
+                (*a - self.0)
+                    .abs()
+                    .partial_cmp(&(*b - self.0).abs())
+                    .unwrap()
+            })
+            .map(|(i, _)| i)
+            .unwrap()
+    }
+
+    pub fn display(&self) -> String {
+        if self.0 < 1.0 {
+            format!("1/{}", (1.0 / self.0).round())
+        } else {
+            format!("{:.1}\"", self.0)
+        }
+    }
+
+    pub fn ui(&mut self, ui: &mut egui::Ui) -> egui::Response {
+        let mut idx = self.idx() as f64;
+
+        let resp = ui
+            .horizontal(|ui| {
+                let slider = egui::Slider::new(&mut idx, 0.0..=(Self::STOPS.len() - 1) as f64)
+                    .step_by(1.0)
+                    .show_value(false)
+                    .trailing_fill(true);
+
+                let resp = ui.add(slider);
+                ui.label(RichText::new(self.display()).size(18.0).monospace());
+                resp
+            })
+            .inner;
+
+        if resp.changed() {
+            self.0 = Self::STOPS[(idx.round() as usize).clamp(0, Self::STOPS.len() - 1)];
+        }
+        resp
+    }
+}
+
 pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
     let mut changed = false;
     egui::SidePanel::left("controls_panel").show(ctx, |ui| {
@@ -149,56 +268,52 @@ fn render_simple_controls(
     ui.group(|ui| {
         ui.set_min_width(ui.available_width());
 
-        // Exposure -> Brightness
-        ui.horizontal(|ui| {
-            ui.label("☀ Brightness");
-            if ui
-                .add(
-                    egui::Slider::new(&mut app.exposure_time, 0.001..=4.0)
-                        .logarithmic(true)
-                        .show_value(false),
-                )
-                .changed()
-            {
-                *changed = true;
-            }
-        });
-        ui.add_space(5.0);
+        egui::Grid::new("quick_adjust_grid")
+            .num_columns(2)
+            .spacing(egui::vec2(10.0, 5.0))
+            .show(ui, |ui| {
+                // Exposure -> Brightness
+                ui.label("☀ Brightness");
+                if ui
+                    .add(egui::Slider::new(&mut app.exposure_time, 0.001..=30.0).logarithmic(true))
+                    .changed()
+                {
+                    *changed = true;
+                }
+                ui.end_row();
 
-        // Gamma -> Contrast
-        ui.horizontal(|ui| {
-            ui.label("◑ Contrast");
-            if ui
-                .add(egui::Slider::new(&mut app.gamma_boost, 0.5..=1.5).show_value(false))
-                .changed()
-            {
-                *changed = true;
-            }
-        });
-        ui.add_space(5.0);
+                // Gamma -> Contrast
+                ui.label("◑ Contrast");
+                if ui
+                    .add(egui::Slider::new(&mut app.gamma_boost, 0.5..=1.5))
+                    .changed()
+                {
+                    *changed = true;
+                }
 
-        // Warmth
-        ui.horizontal(|ui| {
-            ui.label("🔥 Warmth");
-            if ui
-                .add(egui::Slider::new(&mut app.warmth, -1.0..=1.0).show_value(false))
-                .changed()
-            {
-                *changed = true;
-            }
-        });
-        ui.add_space(5.0);
+                ui.end_row();
 
-        // Saturation
-        ui.horizontal(|ui| {
-            ui.label("🌈 Intensity");
-            if ui
-                .add(egui::Slider::new(&mut app.saturation, 0.0..=2.0).show_value(false))
-                .changed()
-            {
-                *changed = true;
-            }
-        });
+                // Warmth
+                ui.label("🔥 Warmth");
+                if ui
+                    .add(egui::Slider::new(&mut app.warmth, -1.0..=1.0))
+                    .changed()
+                {
+                    *changed = true;
+                }
+                ui.end_row();
+
+                // Saturation
+                ui.label("🌈 Intensity");
+                if ui
+                    .add(egui::Slider::new(&mut app.saturation, 0.0..=2.0))
+                    .changed()
+                {
+                    *changed = true;
+                }
+
+                ui.end_row();
+            });
     });
 
     ui.add_space(15.0);
@@ -241,16 +356,17 @@ fn render_professional_controls(
     ui.group(|ui| {
         ui.set_min_width(ui.available_width());
         ui.label(RichText::new("🔬 Physics").strong());
-        if ui
-            .add(
-                egui::Slider::new(&mut app.exposure_time, 0.001..=4.0)
-                    .text("Exposure Time")
-                    .logarithmic(true),
-            )
-            .changed()
-        {
-            *changed = true;
-        }
+
+        ui.horizontal(|ui| {
+            ui.label("Exposure Time");
+            let mut shutter = ShutterSpeed(app.exposure_time as f64);
+
+            if shutter.ui(ui).changed() {
+                *changed = true;
+            }
+
+            app.exposure_time = shutter.0 as f32;
+        });
     });
 
     ui.add_space(5.0);
