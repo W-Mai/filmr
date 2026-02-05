@@ -722,12 +722,16 @@ fn render_professional_controls(
     // 6. Technical
     ui.group(|ui| {
         ui.set_min_width(ui.available_width());
+
+        let pre_om = app.output_mode;
         ui.label(RichText::new("⚙ Technical").strong());
         ui.horizontal(|ui| {
             ui.radio_value(&mut app.output_mode, OutputMode::Positive, "Positive");
             ui.radio_value(&mut app.output_mode, OutputMode::Negative, "Negative");
         });
         ui.add_space(5.0);
+
+        let pre_wb = app.white_balance_mode;
         egui::ComboBox::from_label("White Balance")
             .selected_text(format!("{:?}", app.white_balance_mode))
             .show_ui(ui, |ui| {
@@ -740,10 +744,17 @@ fn render_professional_controls(
                 );
                 ui.selectable_value(&mut app.white_balance_mode, WhiteBalanceMode::Off, "Off");
             });
-        if ui
-            .add(egui::Slider::new(&mut app.white_balance_strength, 0.0..=1.0).text("WB Strength"))
+
+        let wb_s_changed = if app.white_balance_mode != WhiteBalanceMode::Off {
+            ui.add(
+                egui::Slider::new(&mut app.white_balance_strength, 0.0..=1.0).text("WB Strength"),
+            )
             .changed()
-        {
+        } else {
+            false
+        };
+
+        if pre_om != app.output_mode || pre_wb != app.white_balance_mode || wb_s_changed {
             *changed = true;
         }
     });
