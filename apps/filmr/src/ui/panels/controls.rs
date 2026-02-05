@@ -218,7 +218,7 @@ fn render_simple_controls(
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             egui::ScrollArea::vertical()
-                .max_height(300.0)
+                .max_height(ui.available_height() * 0.6)
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.set_min_size(ui.available_size());
