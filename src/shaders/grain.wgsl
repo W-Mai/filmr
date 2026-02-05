@@ -6,7 +6,9 @@ struct GrainUniforms {
     sigma_read: f32,
     roughness: f32,
     monochrome: u32, // 0 or 1
-    _pad: f32,
+    color_correlation: f32,
+    shadow_noise: f32,
+    highlight_coarseness: f32,
 }
 
 @group(0) @binding(0) var<storage, read> input_buffer: array<f32>;
@@ -40,14 +42,30 @@ fn box_muller(uv: vec2<f32>) -> f32 {
     return sqrt(-2.0 * log(u1)) * cos(6.2831853 * u2);
 }
 
-fn sample_noise(d: f32, uv: vec2<f32>) -> f32 {
+fn value_noise_gaussian(uv: vec2<f32>) -> f32 {
+    let i = floor(uv);
+    let f = fract(uv);
+    let u = f * f * (3.0 - 2.0 * f);
+
+    let ga = box_muller(hash2(i + vec2<f32>(0.0, 0.0)));
+    let gb = box_muller(hash2(i + vec2<f32>(1.0, 0.0)));
+    let gc = box_muller(hash2(i + vec2<f32>(0.0, 1.0)));
+    let gd = box_muller(hash2(i + vec2<f32>(1.0, 1.0)));
+
+    return mix(mix(ga, gb, u.x), mix(gc, gd, u.x), u.y);
+}
+
+fn sample_noise(d: f32, uv: vec2<f32>, scale: f32) -> f32 {
     // Section 7: Grain Statistics Model.
-    // Var(D) = alpha * D^1.5 + sigma_read^2
+    // Var(D) = alpha * D^1.5 + sigma_read^2 + shadow_noise / (D + 0.1)
     let d_clamped = max(d, 0.0);
-    let base_variance = uniforms.alpha * pow(d_clamped, 1.5) + pow(uniforms.sigma_read, 2.0);
+    
+    // Photon Shot Noise (Shadows)
+    let shot_variance = clamp(uniforms.shadow_noise * (1.0 / (d_clamped + 0.1)), 0.0, 10.0);
+    
+    let base_variance = uniforms.alpha * pow(d_clamped, 1.5) + pow(uniforms.sigma_read, 2.0) + shot_variance;
     
     // Roughness modulation:
-    // Adjusted Variance = Base_Variance * (1.0 + roughness * sin(pi * d))
     let pi = 3.14159265;
     let modulation = 1.0 + uniforms.roughness * sin(pi * clamp(d_clamped, 0.0, 1.0));
     
@@ -58,8 +76,12 @@ fn sample_noise(d: f32, uv: vec2<f32>) -> f32 {
         return 0.0;
     }
     
-    let h = hash2(uv);
-    return box_muller(h) * std_dev;
+    if (scale <= 1.001) {
+        let h = hash2(uv);
+        return box_muller(h) * std_dev;
+    } else {
+        return value_noise_gaussian(uv / scale) * std_dev;
+    }
 }
 
 @compute @workgroup_size(16, 16, 1)
@@ -74,32 +96,76 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     
     var noise = vec3<f32>(0.0);
     
+    // Highlight Coarseness Factor
+    // Scales with density (green channel proxy), D^2 behavior
+    // Normalized D (approx Dmax=2.5)
+    let d_luma_proxy = density.g;
+    let clump_intensity = pow(clamp(d_luma_proxy / 2.5, 0.0, 1.0), 2.0) * uniforms.highlight_coarseness;
+    
     if (uniforms.monochrome == 1u) {
         // Monochrome uses Green channel density (or luminance)
         let d = density.g; 
-        let n = sample_noise(d, uv);
-        noise = vec3<f32>(n);
+        let n_fine = sample_noise(d, uv, 1.0);
+        var n_total = n_fine;
+        
+        if (uniforms.highlight_coarseness > 0.0) {
+            let n_coarse = sample_noise(d, uv, 3.0);
+            n_total += n_coarse * clump_intensity;
+        }
+        
+        noise = vec3<f32>(n_total);
     } else {
-        // Need 3 independent noise values.
+        // "Natural" grain simulation:
+        // 1. Generate Luma Noise based on weighted luminance density
+        // 2. Generate Independent Chroma Noise
+        // 3. Mix based on color_correlation factor
+
+        // Calculate Luminance Density (approximate)
+        let d_lum = 0.2126 * density.r + 0.7152 * density.g + 0.0722 * density.b;
+        
+        // Master Luma Noise
+        let n_shared_fine = sample_noise(d_lum, uv, 1.0);
+        var n_shared = n_shared_fine;
+        if (uniforms.highlight_coarseness > 0.0) {
+             let n_shared_coarse = sample_noise(d_lum, uv, 3.0);
+             n_shared += n_shared_coarse * clump_intensity;
+        }
+
+        // Independent Channel Noise
         let uv_r = uv;
         let uv_g = uv + vec2<f32>(12.34, 56.78);
         let uv_b = uv + vec2<f32>(90.12, 34.56);
         
-        let n_r = sample_noise(density.r, uv_r);
-        let n_g = sample_noise(density.g, uv_g);
-        let n_b = sample_noise(density.b, uv_b);
+        // Red
+        let n_r_fine = sample_noise(density.r, uv_r, 1.0);
+        var n_r = n_r_fine;
+        if (uniforms.highlight_coarseness > 0.0) {
+            let n_r_coarse = sample_noise(density.r, uv_r, 3.0);
+            n_r += n_r_coarse * clump_intensity;
+        }
         
-        // Simple approximation of chroma scaling from CPU code:
-        // n_lum = (n_r + n_g + n_b) / 3.0
-        // pixel = n_lum + (n_ch - n_lum) * chroma_scale
-        // where chroma_scale = 0.3 (hardcoded in CPU)
+        // Green
+        let n_g_fine = sample_noise(density.g, uv_g, 1.0);
+        var n_g = n_g_fine;
+        if (uniforms.highlight_coarseness > 0.0) {
+            let n_g_coarse = sample_noise(density.g, uv_g, 3.0);
+            n_g += n_g_coarse * clump_intensity;
+        }
         
-        let n_lum = (n_r + n_g + n_b) / 3.0;
-        let chroma_scale = 0.3;
+        // Blue
+        let n_b_fine = sample_noise(density.b, uv_b, 1.0);
+        var n_b = n_b_fine;
+        if (uniforms.highlight_coarseness > 0.0) {
+            let n_b_coarse = sample_noise(density.b, uv_b, 3.0);
+            n_b += n_b_coarse * clump_intensity;
+        }
         
-        noise.r = n_lum + (n_r - n_lum) * chroma_scale;
-        noise.g = n_lum + (n_g - n_lum) * chroma_scale;
-        noise.b = n_lum + (n_b - n_lum) * chroma_scale;
+        let corr = uniforms.color_correlation;
+        
+        // Mix: Result = Correlation * Shared + (1 - Correlation) * Independent
+        noise.r = corr * n_shared + (1.0 - corr) * n_r;
+        noise.g = corr * n_shared + (1.0 - corr) * n_g;
+        noise.b = corr * n_shared + (1.0 - corr) * n_b;
     }
     
     // Additive noise to density, clamped to 0

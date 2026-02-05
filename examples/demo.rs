@@ -3,8 +3,8 @@ use image::{Rgb, RgbImage};
 
 fn main() {
     // 1. Create a test image: Horizontal Gradient Black to White
-    let width = 512;
-    let height = 256;
+    let width = 1080;
+    let height = 720;
     let mut img = RgbImage::new(width, height);
 
     for x in 0..width {
