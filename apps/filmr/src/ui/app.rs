@@ -211,6 +211,7 @@ pub struct FilmrApp {
     pub metrics_original: Option<FilmMetrics>,
     pub metrics_preview: Option<FilmMetrics>,
     pub metrics_developed: Option<FilmMetrics>,
+    pub source_path: Option<PathBuf>,
 
     // Async Processing
     tx_req: Sender<ProcessRequest>,
@@ -519,6 +520,7 @@ impl FilmrApp {
             metrics_original: None,
             metrics_preview: None,
             metrics_developed: None,
+            source_path: None,
 
             tx_req,
             rx_res,
@@ -754,11 +756,19 @@ impl FilmrApp {
     }
 
     pub fn save_image(&mut self) {
+        let default_name = self
+            .source_path
+            .as_ref()
+            .and_then(|p| p.file_stem())
+            .map(|s| format!("{}_FILMR.jpg", s.to_string_lossy()))
+            .unwrap_or_else(|| "filmr_output.jpg".to_string());
+
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(img) = &self.developed_image {
             if let Some(path) = rfd::FileDialog::new()
-                .add_filter("PNG Image", &["png"])
+                .set_file_name(&default_name)
                 .add_filter("JPEG Image", &["jpg", "jpeg"])
+                .add_filter("PNG Image", &["png"])
                 .save_file()
             {
                 if let Err(e) = img.save(&path) {
@@ -773,14 +783,13 @@ impl FilmrApp {
             if let Some(img) = &self.developed_image {
                 let mut bytes: Vec<u8> = Vec::new();
                 let mut cursor = std::io::Cursor::new(&mut bytes);
-                // Default to PNG
-                if let Err(e) = img.write_to(&mut cursor, image::ImageOutputFormat::Png) {
+                if let Err(e) = img.write_to(&mut cursor, image::ImageFormat::Jpeg) {
                     self.status_msg = format!("Failed to encode image: {}", e);
                     return;
                 }
 
                 let task = rfd::AsyncFileDialog::new()
-                    .set_file_name("filmr_output.png")
+                    .set_file_name(&default_name)
                     .save_file();
 
                 let bytes = bytes.clone();
@@ -831,6 +840,7 @@ impl App for FilmrApp {
             match result.result {
                 Ok(data) => {
                     self.original_image = Some(data.image);
+                    self.source_path = result.path.clone();
                     self.status_msg = format!("Loaded {:?}", result.path);
 
                     // Create original texture

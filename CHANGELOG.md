@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-02-07
+
+### ✨ Features
+
+- **App**: Improve save dialog with source-based default filename (`{source}_FILMR.jpg`) and JPEG as default format.
+
+### 🐛 Fixes
+
+- **App**: Fix `image::ImageOutputFormat` API change for image crate 0.25 compatibility.
+
 ## [0.6.3] - 2026-02-06
 
 ### ✨ Features
