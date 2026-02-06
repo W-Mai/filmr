@@ -247,9 +247,47 @@ impl FilmStock {
         Ok(stock)
     }
 
+    /// Precompute the 3x3 spectral matrix that maps Linear RGB -> Film Layer Exposure.
+    /// This avoids per-pixel full spectrum integration (~600 FLOPS -> 15 FLOPS).
+    /// The matrix incorporates camera sensitivities, D65 illuminant, and film sensitivities.
+    pub fn compute_spectral_matrix(&self) -> [[f32; 3]; 3] {
+        use crate::spectral::{CameraSensitivities, Spectrum};
+
+        let camera_sens = CameraSensitivities::srgb();
+        let mut film_sens = self.get_spectral_sensitivities();
+        let illuminant = Spectrum::new_d65();
+
+        let system_white = camera_sens.uplift(1.0, 1.0, 1.0).multiply(&illuminant);
+        film_sens.calibrate_to_white_point(&system_white);
+
+        let r_cam = camera_sens.r_curve.multiply(&illuminant);
+        let g_cam = camera_sens.g_curve.multiply(&illuminant);
+        let b_cam = camera_sens.b_curve.multiply(&illuminant);
+
+        [
+            [
+                film_sens.r_sensitivity.integrate_product(&r_cam) * film_sens.r_factor,
+                film_sens.r_sensitivity.integrate_product(&g_cam) * film_sens.r_factor,
+                film_sens.r_sensitivity.integrate_product(&b_cam) * film_sens.r_factor,
+            ],
+            [
+                film_sens.g_sensitivity.integrate_product(&r_cam) * film_sens.g_factor,
+                film_sens.g_sensitivity.integrate_product(&g_cam) * film_sens.g_factor,
+                film_sens.g_sensitivity.integrate_product(&b_cam) * film_sens.g_factor,
+            ],
+            [
+                film_sens.b_sensitivity.integrate_product(&r_cam) * film_sens.b_factor,
+                film_sens.b_sensitivity.integrate_product(&g_cam) * film_sens.b_factor,
+                film_sens.b_sensitivity.integrate_product(&b_cam) * film_sens.b_factor,
+            ],
+        ]
+    }
+
     /// Apply the film simulation to RGB log-exposures
     pub fn map_log_exposure(&self, log_e: [f32; 3]) -> [f32; 3] {
-        // 1. Map each channel through its curve (Simulates Section 3)
+        // 1. Map each channel through its H-D curve using logistic sigmoid
+        // (Consistent with GPU path; logistic has longer tails than erf,
+        //  better matching real film toe/shoulder behavior)
         let d_r = self.r_curve.map_smooth(log_e[0]);
         let d_g = self.g_curve.map_smooth(log_e[1]);
         let d_b = self.b_curve.map_smooth(log_e[2]);

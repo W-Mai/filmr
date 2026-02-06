@@ -5,7 +5,6 @@ use crate::pipeline::{
     create_linear_image, create_output_image, DevelopStage, GrainStage, HalationStage, MtfStage,
     PipelineContext, PipelineStage,
 };
-use crate::spectral::{CameraSensitivities, Spectrum};
 use image::RgbImage;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, instrument};
@@ -79,14 +78,15 @@ const SPECTRAL_NORM: f32 = 1.0;
 #[instrument(skip(input, film))]
 pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
     debug!("Estimating exposure time...");
-    let camera_sens = CameraSensitivities::srgb();
-    let mut film_sens = film.get_spectral_sensitivities();
-    let illuminant = Spectrum::new_d65();
-    let apply_illuminant = |s: Spectrum| s.multiply(&illuminant);
 
-    // CALIBRATION: Ensure consistency with process_image
-    let system_white = apply_illuminant(camera_sens.uplift(1.0, 1.0, 1.0));
-    film_sens.calibrate_to_white_point(&system_white);
+    let spectral_matrix = film.compute_spectral_matrix();
+    let apply_matrix = |r: f32, g: f32, b: f32| -> [f32; 3] {
+        [
+            r * spectral_matrix[0][0] + g * spectral_matrix[0][1] + b * spectral_matrix[0][2],
+            r * spectral_matrix[1][0] + g * spectral_matrix[1][1] + b * spectral_matrix[1][2],
+            r * spectral_matrix[2][0] + g * spectral_matrix[2][1] + b * spectral_matrix[2][2],
+        ]
+    };
 
     let total = (input.width() * input.height()) as usize;
     let max_samples = 20000usize;
@@ -99,8 +99,7 @@ pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
         let r = physics::srgb_to_linear(p[0] as f32 / 255.0);
         let g = physics::srgb_to_linear(p[1] as f32 / 255.0);
         let b = physics::srgb_to_linear(p[2] as f32 / 255.0);
-        let scene_spectrum = apply_illuminant(camera_sens.uplift(r, g, b));
-        let exposure_vals = film_sens.expose(&scene_spectrum);
+        let exposure_vals = apply_matrix(r, g, b);
         let r_in = (exposure_vals[0] * SPECTRAL_NORM).max(0.0);
         let g_in = (exposure_vals[1] * SPECTRAL_NORM).max(0.0);
         let b_in = (exposure_vals[2] * SPECTRAL_NORM).max(0.0);
