@@ -247,36 +247,90 @@ fn render_simple_controls(
                                     let stock = &app.stocks[idx];
                                     let full_name = &stock.full_name();
                                     let name = &stock.name;
-                                    ui.horizontal(|ui| {
-                                        if let Some(thumb) = app.preset_thumbnails.get(full_name) {
-                                            let aspect =
-                                                thumb.size()[0] as f32 / thumb.size()[1] as f32;
-                                            let h = 40.0f32;
-                                            let w = h * aspect;
-                                            ui.image((thumb.id(), egui::vec2(w, h)));
-                                        } else {
-                                            let (rect, _) = ui.allocate_exact_size(
-                                                egui::vec2(40.0, 40.0),
-                                                egui::Sense::hover(),
-                                            );
-                                            ui.painter().rect_filled(
-                                                rect,
-                                                4.0,
-                                                egui::Color32::from_gray(60),
-                                            );
-                                        }
+                                    let is_selected = app.selected_stock_idx == idx;
 
-                                        if ui
-                                            .selectable_label(
-                                                app.selected_stock_idx == idx,
-                                                egui::RichText::new(name).monospace().size(12.0),
-                                            )
-                                            .clicked()
-                                        {
-                                            app.selected_stock_idx = idx;
-                                            preset_changed = true;
-                                        }
-                                    });
+                                    let padding = 4.0f32;
+                                    let thumb_w = 56.0f32;
+                                    let thumb_h = thumb_w / 3.0 * 2.0;
+                                    let row_height = thumb_h + padding * 2.0;
+                                    let corner_radius = 8.0f32;
+                                    let inner_radius = corner_radius - padding;
+
+                                    let (rect, response) = ui.allocate_exact_size(
+                                        egui::vec2(ui.available_width(), row_height),
+                                        egui::Sense::click(),
+                                    );
+
+                                    let thumb_rect = egui::Rect::from_min_size(
+                                        rect.min + egui::vec2(padding, padding),
+                                        egui::vec2(thumb_w, thumb_h),
+                                    );
+
+                                    // Draw hover/active/selected background
+                                    if response.hovered() || is_selected {
+                                        let bg_color = if response.is_pointer_button_down_on() {
+                                            ui.visuals().widgets.active.bg_fill
+                                        } else if is_selected {
+                                            ui.visuals().selection.bg_fill
+                                        } else {
+                                            ui.visuals().widgets.hovered.bg_fill
+                                        };
+                                        ui.painter().rect_filled(rect, corner_radius, bg_color);
+                                    }
+
+                                    // Draw thumbnail with contain effect (fit within container, preserve aspect ratio)
+                                    if let Some(thumb) = app.preset_thumbnails.get(full_name) {
+                                        let img_aspect =
+                                            thumb.size()[0] as f32 / thumb.size()[1] as f32;
+                                        let container_aspect = thumb_w / thumb_h;
+
+                                        let (w, h) = if img_aspect > container_aspect {
+                                            // Image is wider than container, fit by width
+                                            (thumb_w, thumb_w / img_aspect)
+                                        } else {
+                                            // Image is taller than container, fit by height
+                                            (thumb_h * img_aspect, thumb_h)
+                                        };
+                                        let img_rect = egui::Rect::from_center_size(
+                                            thumb_rect.center(),
+                                            egui::vec2(w, h),
+                                        );
+                                        ui.painter().rect_filled(
+                                            thumb_rect,
+                                            inner_radius,
+                                            egui::Color32::from_gray(60),
+                                        );
+                                        egui::Image::new(thumb)
+                                            .corner_radius(inner_radius)
+                                            .paint_at(ui, img_rect);
+                                    } else {
+                                        ui.painter().rect_filled(
+                                            thumb_rect,
+                                            inner_radius,
+                                            egui::Color32::from_gray(60),
+                                        );
+                                    }
+
+                                    // Draw label with proper offset
+                                    let text_x = rect.min.x + padding + thumb_w + padding * 2.0;
+                                    let text_color = if is_selected {
+                                        ui.visuals().selection.stroke.color
+                                    } else {
+                                        ui.visuals().text_color()
+                                    };
+                                    ui.painter().text(
+                                        egui::pos2(text_x, rect.center().y),
+                                        egui::Align2::LEFT_CENTER,
+                                        name,
+                                        egui::FontId::monospace(14.0),
+                                        text_color,
+                                    );
+
+                                    if response.clicked() {
+                                        app.selected_stock_idx = idx;
+                                        preset_changed = true;
+                                    }
+
                                     ui.add_space(2.0);
                                 }
                             });
