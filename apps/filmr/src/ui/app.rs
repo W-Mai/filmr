@@ -212,6 +212,7 @@ pub struct FilmrApp {
     pub metrics_preview: Option<FilmMetrics>,
     pub metrics_developed: Option<FilmMetrics>,
     pub source_path: Option<PathBuf>,
+    pub source_exif: Option<little_exif::metadata::Metadata>,
 
     // Async Processing
     tx_req: Sender<ProcessRequest>,
@@ -521,6 +522,7 @@ impl FilmrApp {
             metrics_preview: None,
             metrics_developed: None,
             source_path: None,
+            source_exif: None,
 
             tx_req,
             rx_res,
@@ -755,6 +757,36 @@ impl FilmrApp {
         }
     }
 
+    /// Write EXIF metadata to the saved file, preserving original EXIF and adding Filmr copyright.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn write_exif_to_file(&self, path: &std::path::Path) {
+        use little_exif::exif_tag::ExifTag;
+        use little_exif::metadata::Metadata;
+
+        let mut metadata = if let Some(ref source_exif) = self.source_exif {
+            source_exif.clone()
+        } else {
+            Metadata::new()
+        };
+
+        // Add Filmr processing info
+        let stock_name = self.get_current_stock().name.clone();
+        metadata.set_tag(ExifTag::Software(
+            "Filmr - Physics-based Film Simulation".to_string(),
+        ));
+        metadata.set_tag(ExifTag::ImageDescription(format!(
+            "Processed with Filmr using {} film stock",
+            stock_name
+        )));
+        metadata.set_tag(ExifTag::Copyright(
+            "Processed by Filmr (https://github.com/W-Mai/filmr)".to_string(),
+        ));
+
+        if let Err(e) = metadata.write_to_file(path) {
+            tracing::warn!("Failed to write EXIF metadata: {}", e);
+        }
+    }
+
     pub fn save_image(&mut self) {
         let default_name = self
             .source_path
@@ -774,6 +806,8 @@ impl FilmrApp {
                 if let Err(e) = img.save(&path) {
                     self.status_msg = format!("Failed to save image: {}", e);
                 } else {
+                    // Write EXIF metadata to saved file
+                    self.write_exif_to_file(&path);
                     self.status_msg = format!("Saved to {:?}", path);
                 }
             }
@@ -842,6 +876,19 @@ impl App for FilmrApp {
                     self.original_image = Some(data.image);
                     self.source_path = result.path.clone();
                     self.status_msg = format!("Loaded {:?}", result.path);
+
+                    // Read EXIF metadata from source file
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        self.source_exif = result
+                            .path
+                            .as_ref()
+                            .and_then(|p| little_exif::metadata::Metadata::new_from_path(p).ok());
+                    }
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        self.source_exif = None;
+                    }
 
                     // Create original texture
                     self.original_texture = Some(ctx.load_texture(

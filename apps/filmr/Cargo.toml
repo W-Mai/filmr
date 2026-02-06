@@ -1,6 +1,6 @@
 [package]
 name = "filmr_app"
-version = "0.6.4"
+version = "0.6.5"
 edition = "2021"
 authors = ["Benign X <1341398182@qq.com>", "W-Mai"]
 description = "CLI and GUI application for filmr, a high-fidelity film simulation engine."
@@ -24,6 +24,7 @@ crate-type = ["cdylib", "rlib"]
 filmr = { version = "0.6.1", path = "../../", features = ["compute-gpu"] }
 image = "0.25"
 kamadak-exif = "0.5"
+little_exif = "0.6"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 
