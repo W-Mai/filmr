@@ -1,3 +1,4 @@
+use ab_glyph::{FontRef, PxScale};
 use filmr::presets::get_all_stocks;
 use filmr::{
     estimate_exposure_time, process_image, FilmStock, OutputMode, SimulationConfig,
@@ -6,7 +7,6 @@ use filmr::{
 use image::{Rgb, RgbImage};
 use imageproc::drawing::draw_text_mut;
 use palette::{FromColor, Hsv, Lab, Srgb};
-use rusttype::{Font, Scale};
 use std::fs;
 use std::path::Path;
 
@@ -639,10 +639,10 @@ fn generate_contact_sheet(
     }
 
     let font_data = include_bytes!("../apps/filmr/static/ark-pixel-12px-monospaced-zh_cn.otf");
-    let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
-    let scale_header = Scale { x: 20.0, y: 20.0 };
-    let scale_text = Scale { x: 16.0, y: 16.0 };
-    let scale_small = Scale { x: 12.0, y: 12.0 };
+    let font = FontRef::try_from_slice(font_data).expect("Error constructing Font");
+    let scale_header = PxScale::from(20.0);
+    let scale_text = PxScale::from(16.0);
+    let scale_small = PxScale::from(12.0);
 
     // Header
     let headers = [

@@ -1,4 +1,5 @@
 mod generate_chart;
+use ab_glyph::{FontRef, PxScale};
 use filmr::{
     estimate_exposure_time, presets, process_image, FilmMetrics, OutputMode, SimulationConfig,
     WhiteBalanceMode,
@@ -9,7 +10,6 @@ use image::{Rgb, RgbImage};
 use imageproc::drawing::{draw_filled_rect_mut, draw_line_segment_mut, draw_text_mut};
 use imageproc::rect::Rect;
 use palette::{FromColor, Lab, Srgb};
-use rusttype::{Font, Scale};
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
@@ -105,9 +105,9 @@ fn generate_contact_sheet(
     }
 
     let font_data = include_bytes!("../apps/filmr/static/ark-pixel-12px-monospaced-zh_cn.otf");
-    let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
-    let scale_title = Scale { x: 20.0, y: 20.0 };
-    let scale_text = Scale { x: 13.0, y: 13.0 }; // Slightly smaller text
+    let font = FontRef::try_from_slice(font_data).expect("Error constructing Font");
+    let scale_title = PxScale::from(20.0);
+    let scale_text = PxScale::from(13.0);
 
     for (i, (name, img, t_est, metrics, hist, lab, lbp)) in data.iter().enumerate() {
         let col = i as u32 % cols;

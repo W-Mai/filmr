@@ -1,7 +1,7 @@
 use filmr::{
     estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
-use image::io::Reader as ImageReader;
+use image::ImageReader;
 use std::path::Path;
 use std::time::Instant;
 

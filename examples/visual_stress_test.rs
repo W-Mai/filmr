@@ -1,3 +1,4 @@
+use ab_glyph::{FontRef, PxScale};
 use filmr::film::FilmStock;
 use filmr::physics::linear_to_srgb;
 use filmr::pipeline::{
@@ -10,13 +11,15 @@ use image::{GenericImage, ImageBuffer, Rgb, RgbImage};
 use imageproc::drawing::{draw_filled_rect_mut, draw_text_mut};
 use imageproc::rect::Rect;
 use rayon::prelude::*;
-use rusttype::{Font, Scale};
 use std::fs;
 use std::path::PathBuf;
 
+type Font<'a> = FontRef<'a>;
+type Scale = PxScale;
+
 /// Helper to draw a label box
 fn draw_label(img: &mut RgbImage, text: &str, x: i32, y: i32, font: &Font) {
-    let scale = Scale { x: 20.0, y: 20.0 };
+    let scale = Scale::from(20.0);
     let padding = 5;
 
     // Estimate text width (rough)
@@ -308,7 +311,7 @@ fn main() {
     };
 
     let font_data = include_bytes!("../apps/filmr/static/ark-pixel-12px-monospaced-zh_cn.otf");
-    let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
+    let font = FontRef::try_from_slice(font_data).expect("Error constructing Font");
 
     println!("Generating CHEMICAL STRESS CHARTS (Combined)...");
 

@@ -18,7 +18,8 @@ members = [
 ]
 
 [dependencies]
-image = "0.24"
+# Only use ImageBuffer data structure, no format decoders needed
+image = { version = "0.25", default-features = false }
 rand = "0.8"
 rand_distr = "0.4"
 nalgebra = "0.32"
@@ -37,8 +38,8 @@ futures = "0.3.31"
 
 [dev-dependencies]
 criterion = "0.8.1"
-imageproc = "0.23.0"
-rusttype = "0.9.3"
+imageproc = "0.26.0"
+ab_glyph = "0.2"
 
 # The profile that 'dist' will build with
 [profile.dist]
