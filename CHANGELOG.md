@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-06
+
+### ♻️ Refactoring
+
+- **Core**: Extracted spectral matrix computation into `FilmStock::compute_spectral_matrix()`, eliminating duplicated spectral integration logic across pipeline and processor modules.
+
+### ⚡️ Performance
+
+- **Spectral**: Added SIMD (`f32x4`) optimization to `Spectrum` arithmetic operators (`Add`, `Mul`), reducing per-operation cost for spectral calculations.
+
+### ✨ Features
+
+- **GPU**: Enhanced develop shader with spectral/color dual matrix pipeline, shoulder softening compression, and logistic sigmoid H-D curve (replacing erf approximation) for better CPU/GPU consistency.
+- **Grain**: Switched grain shader shadow noise model from inverse-distance to exponential decay (`exp(-2D)`), providing smoother shadow-to-midtone grain transitions.
+
+### 🐛 Fixes
+
+- **Metrics**: Fixed PSD slope calculation to use correct row-then-column 2D FFT instead of flattened 1D FFT.
+
 ## [0.5.9] - 2026-02-04
 
 ### ♻️ Refactoring
