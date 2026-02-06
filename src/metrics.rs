@@ -624,76 +624,70 @@ fn calculate_laplacian_variance(img: &RgbImage) -> f32 {
 }
 
 fn calculate_psd_slope(img: &RgbImage) -> f32 {
-    // 1D Radial PSD Slope calculation
-    // 1. Resize to 256x256 (Power of 2)
-    // 2. FFT
-    // 3. Radial Average
-    // 4. Linear Regression on log-log
+    // Radial PSD Slope via 2D FFT
+    // 1. Resize to 256x256
+    // 2. Row FFT -> Transpose -> Column FFT (correct 2D FFT with 1D RustFFT)
+    // 3. Radial average of power spectrum
+    // 4. Linear regression on log-log scale
 
-    let size = 256;
+    let size = 256u32;
+    let n = (size * size) as usize;
     let resized = image::imageops::resize(img, size, size, image::imageops::FilterType::Triangle);
 
-    let mut input: Vec<Complex<f32>> = Vec::with_capacity((size * size) as usize);
+    let mut data: Vec<Complex<f32>> = Vec::with_capacity(n);
     for y in 0..size {
         for x in 0..size {
-            let val = get_lum(&resized, x, y);
-            input.push(Complex::new(val, 0.0));
+            data.push(Complex::new(get_lum(&resized, x, y), 0.0));
         }
     }
 
     let mut planner = FftPlanner::new();
-    let fft = planner.plan_fft_forward(size as usize * size as usize);
-
-    fft.process(&mut input);
-
-    // This is 1D FFT of flattened array, which is NOT 2D FFT.
-    // RustFFT is 1D. For 2D we need to do rows then columns.
-
-    // Correct 2D FFT implementation with RustFFT:
-    // 1. FFT rows
-    // 2. Transpose
-    // 3. FFT rows (originally columns)
-    // 4. Transpose back
-
-    let mut buffer = vec![Complex::new(0.0, 0.0); (size * size) as usize];
     let fft_row = planner.plan_fft_forward(size as usize);
 
     // FFT Rows
     for y in 0..size {
         let start = (y * size) as usize;
         let end = start + size as usize;
-        fft_row.process(&mut input[start..end]);
+        fft_row.process(&mut data[start..end]);
     }
 
     // Transpose
+    let mut transposed = vec![Complex::new(0.0, 0.0); n];
     for y in 0..size {
         for x in 0..size {
-            buffer[(x * size + y) as usize] = input[(y * size + x) as usize];
+            transposed[(x * size + y) as usize] = data[(y * size + x) as usize];
         }
     }
 
-    // FFT Cols (Rows of transposed)
+    // FFT Columns (rows of transposed)
     for x in 0..size {
         let start = (x * size) as usize;
         let end = start + size as usize;
-        fft_row.process(&mut buffer[start..end]);
+        fft_row.process(&mut transposed[start..end]);
     }
 
-    // Calculate Power Spectrum & Radial Average
-    let mut radial_sum = vec![0.0; (size / 2) as usize];
-    let mut radial_count = vec![0.0; (size / 2) as usize];
+    // Radial average of power spectrum
+    let half = (size / 2) as usize;
+    let mut radial_sum = vec![0.0f32; half];
+    let mut radial_count = vec![0.0f32; half];
 
     for y in 0..size {
         for x in 0..size {
-            // Shifted coordinates
-            let dy = y as f32 - if y < size / 2 { 0.0 } else { size as f32 };
-            let dx = x as f32 - if x < size / 2 { 0.0 } else { size as f32 };
-
+            let dy = if y < size / 2 {
+                y as f32
+            } else {
+                y as f32 - size as f32
+            };
+            let dx = if x < size / 2 {
+                x as f32
+            } else {
+                x as f32 - size as f32
+            };
             let dist = (dx * dx + dy * dy).sqrt();
             let idx = dist as usize;
 
-            if idx > 0 && idx < (size / 2) as usize {
-                let amp = buffer[(x * size + y) as usize].norm_sqr();
+            if idx > 0 && idx < half {
+                let amp = transposed[(x * size + y) as usize].norm_sqr();
                 radial_sum[idx] += amp;
                 radial_count[idx] += 1.0;
             }
@@ -701,33 +695,30 @@ fn calculate_psd_slope(img: &RgbImage) -> f32 {
     }
 
     // Linear Regression: log(P) = beta * log(f) + C
-    let mut sum_x = 0.0;
-    let mut sum_y = 0.0;
-    let mut sum_xy = 0.0;
-    let mut sum_xx = 0.0;
-    let mut n = 0.0;
+    let mut sx = 0.0f32;
+    let mut sy = 0.0f32;
+    let mut sxy = 0.0f32;
+    let mut sxx = 0.0f32;
+    let mut n_pts = 0.0f32;
 
-    for i in 1..(size / 2) as usize {
+    for i in 1..half {
         if radial_count[i] > 0.0 {
-            let freq = i as f32;
             let power = radial_sum[i] / radial_count[i];
-
             if power > 0.0 {
-                let log_f = freq.ln();
-                let log_p = power.ln();
-
-                sum_x += log_f;
-                sum_y += log_p;
-                sum_xy += log_f * log_p;
-                sum_xx += log_f * log_f;
-                n += 1.0;
+                let lf = (i as f32).ln();
+                let lp = power.ln();
+                sx += lf;
+                sy += lp;
+                sxy += lf * lp;
+                sxx += lf * lf;
+                n_pts += 1.0;
             }
         }
     }
 
-    if n > 1.0 {
-        let slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x);
-        -slope // Return positive beta (1/f^beta)
+    if n_pts > 1.0 {
+        let slope = (n_pts * sxy - sx * sy) / (n_pts * sxx - sx * sx);
+        -slope
     } else {
         0.0
     }
