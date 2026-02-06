@@ -90,13 +90,27 @@ fn apply_exif_orientation(img: DynamicImage, orientation: u32) -> DynamicImage {
     }
 }
 
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
+/// Check if a path has a RAW file extension
+#[cfg(feature = "raw")]
+fn is_raw_file(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(crate::raw::is_raw_extension)
+        .unwrap_or(false)
+}
 
-    println!("Loading image: {:?}", args.input);
+/// Load image from path, supporting both standard formats and RAW files
+fn load_image(path: &PathBuf) -> Result<image::RgbImage, Box<dyn std::error::Error>> {
+    // Try RAW format first (native only)
+    #[cfg(feature = "raw")]
+    if is_raw_file(path) {
+        println!("Detected RAW format, decoding...");
+        let img = crate::raw::decode_raw_file(path)?;
+        return Ok(img.to_rgb8());
+    }
 
-    // Read EXIF orientation first
-    let orientation = std::fs::File::open(&args.input)
+    // Read EXIF orientation
+    let orientation = std::fs::File::open(path)
         .ok()
         .map(|f| {
             let mut reader = BufReader::new(f);
@@ -104,11 +118,16 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         })
         .unwrap_or(1);
 
-    // Load and apply orientation
-    let img = {
-        let raw = image::open(&args.input)?;
-        apply_exif_orientation(raw, orientation).to_rgb8()
-    };
+    // Load standard image format
+    let raw = image::open(path)?;
+    Ok(apply_exif_orientation(raw, orientation).to_rgb8())
+}
+
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+
+    println!("Loading image: {:?}", args.input);
+    let img = load_image(&args.input)?;
 
     let stock = if let Some(path) = &args.load_preset {
         println!("Loading custom preset from: {:?}", path);

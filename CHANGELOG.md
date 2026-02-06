@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Features
 
 - **App**: Add EXIF orientation support for JPEG images. Images are now automatically rotated based on EXIF Orientation tag (supports all 8 orientations).
+- **App**: Add RAW image format support via `rawler` crate. Supports CR2, CR3, NEF, ARW, RAF, ORF, RW2, PEF, DNG and many other formats. Includes bilinear demosaicing with automatic white balance. (Native only, disabled for WASM)
 
 ## [0.6.2] - 2026-02-06
 

@@ -4,6 +4,9 @@ pub mod cli;
 pub mod config;
 pub mod types;
 
+#[cfg(all(feature = "raw", not(target_arch = "wasm32")))]
+pub mod raw;
+
 #[cfg(target_arch = "wasm32")]
 pub mod bridge;
 #[cfg(target_arch = "wasm32")]

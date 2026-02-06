@@ -127,7 +127,65 @@ fn apply_exif_orientation(img: DynamicImage, orientation: u32) -> DynamicImage {
     }
 }
 
+/// Check if a path has a RAW file extension
+#[cfg(all(feature = "raw", not(target_arch = "wasm32")))]
+fn is_raw_file(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(crate::raw::is_raw_extension)
+        .unwrap_or(false)
+}
+
 fn load_worker_logic(req: LoadRequest) -> LoadResult {
+    // Try to load as RAW file first (native only)
+    #[cfg(all(feature = "raw", not(target_arch = "wasm32")))]
+    if let Some(path) = &req.path {
+        if is_raw_file(path) {
+            let result = match crate::raw::decode_raw_file(path) {
+                Ok(img) => {
+                    let rgb = img.to_rgb8();
+                    let metrics = FilmMetrics::analyze(&rgb);
+                    let texture_data = ColorImage::from_rgb(
+                        [rgb.width() as _, rgb.height() as _],
+                        rgb.as_flat_samples().as_slice(),
+                    );
+
+                    let width = img.width();
+                    let height = img.height();
+                    let preview_rgb = if width > 2048 || height > 2048 {
+                        img.resize(2048, 2048, FilterType::Lanczos3).to_rgb8()
+                    } else {
+                        rgb.clone()
+                    };
+                    let preview_texture_data = ColorImage::from_rgb(
+                        [preview_rgb.width() as _, preview_rgb.height() as _],
+                        preview_rgb.as_flat_samples().as_slice(),
+                    );
+
+                    let estimated_exposure = req
+                        .stock
+                        .as_ref()
+                        .map(|stock| estimate_exposure_time(&preview_rgb, stock));
+
+                    Ok(LoadResultData {
+                        image: img,
+                        texture_data,
+                        metrics,
+                        preview: Arc::new(preview_rgb),
+                        preview_texture_data,
+                        estimated_exposure,
+                    })
+                }
+                Err(e) => Err(e),
+            };
+
+            return LoadResult {
+                path: req.path,
+                result,
+            };
+        }
+    }
+
     // Read EXIF orientation before loading image
     let orientation = if let Some(bytes) = &req.bytes {
         let mut cursor = Cursor::new(bytes.as_ref());

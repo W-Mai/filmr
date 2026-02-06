@@ -45,6 +45,7 @@ futures = "0.3.31"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 directories = "5.0"
+rawler = { version = "0.7", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.100"
@@ -63,10 +64,11 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [features]
-default = ["cli", "ui", "compute-gpu"]
+default = ["cli", "ui", "compute-gpu", "raw"]
 cli = ["dep:clap"]
 ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:flume", "dep:rayon"]
 compute-gpu = []
+raw = ["dep:rawler"]
 
 [[bin]]
 name = "filmr"
