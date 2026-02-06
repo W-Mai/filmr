@@ -197,6 +197,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
 
     if changed {
         app.process_and_update_texture(ctx);
+        app.regenerate_thumbnails();
     }
 }
 

@@ -608,6 +608,30 @@ impl FilmrApp {
         }
     }
 
+    pub fn regenerate_thumbnails(&self) {
+        if let Some(img) = &self.original_image {
+            let thumb_base = img.thumbnail(128, 128).to_rgb8();
+            let thumb_config = SimulationConfig {
+                exposure_time: 1.0,
+                enable_grain: false,
+                use_gpu: false,
+                output_mode: self.output_mode,
+                white_balance_mode: self.white_balance_mode,
+                white_balance_strength: self.white_balance_strength,
+                warmth: self.warmth,
+                saturation: self.saturation,
+                light_leak: LightLeakConfig::default(),
+            };
+            for stock in &self.stocks {
+                let _ = self.tx_thumb.send((
+                    stock.full_name(),
+                    thumb_base.clone(),
+                    thumb_config.clone(),
+                ));
+            }
+        }
+    }
+
     pub fn develop_image(&mut self, _ctx: &egui::Context) {
         if let Some(img) = &self.original_image {
             self.status_msg = "Developing full resolution image...".to_owned();
@@ -775,30 +799,7 @@ impl App for FilmrApp {
                     self.process_and_update_texture(ctx);
 
                     // Trigger thumbnail generation with current UI config
-                    let thumb_base = self
-                        .original_image
-                        .as_ref()
-                        .unwrap()
-                        .thumbnail(128, 128)
-                        .to_rgb8();
-                    let thumb_config = SimulationConfig {
-                        exposure_time: 1.0, // overridden by auto-expose in worker
-                        enable_grain: false,
-                        use_gpu: false,
-                        output_mode: self.output_mode,
-                        white_balance_mode: self.white_balance_mode,
-                        white_balance_strength: self.white_balance_strength,
-                        warmth: self.warmth,
-                        saturation: self.saturation,
-                        light_leak: LightLeakConfig::default(),
-                    };
-                    for stock in &self.stocks {
-                        let _ = self.tx_thumb.send((
-                            stock.full_name(),
-                            thumb_base.clone(),
-                            thumb_config.clone(),
-                        ));
-                    }
+                    self.regenerate_thumbnails();
                 }
                 Err(e) => {
                     self.status_msg = format!("Failed to load image: {}", e);
