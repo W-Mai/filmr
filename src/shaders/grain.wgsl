@@ -57,12 +57,12 @@ fn value_noise_gaussian(uv: vec2<f32>) -> f32 {
 
 fn sample_noise(d: f32, uv: vec2<f32>, scale: f32) -> f32 {
     // Section 7: Grain Statistics Model.
-    // Var(D) = alpha * D^1.5 + sigma_read^2 + shadow_noise / (D + 0.1)
+    // Var(D) = alpha * D^1.5 + sigma_read^2 + shadow_noise * exp(-2D)
     let d_clamped = max(d, 0.0);
-    
-    // Photon Shot Noise (Shadows)
-    let shot_variance = clamp(uniforms.shadow_noise * (1.0 / (d_clamped + 0.1)), 0.0, 10.0);
-    
+
+    // Photon Shot Noise (Shadows): decays exponentially with density
+    let shot_variance = uniforms.shadow_noise * exp(-2.0 * d_clamped);
+
     let base_variance = uniforms.alpha * pow(d_clamped, 1.5) + pow(uniforms.sigma_read, 2.0) + shot_variance;
     
     // Roughness modulation:
