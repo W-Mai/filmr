@@ -115,9 +115,8 @@ pub async fn read_gpu_buffer(
                 staging_buffer.unmap();
 
                 return image::ImageBuffer::from_raw(gpu_buffer.width, gpu_buffer.height, result);
-            } else {
-                return None;
             }
+            return None;
         }
         // If we have the submission index, we could use Wait, but Poll works in a loop too.
         // Using Poll allows us to check the receiver.

@@ -536,9 +536,7 @@ pub fn create_output_image(
                     net_b,
                     physics::density_to_transmission(net_b),
                 );
-                let t_r_max = physics::density_to_transmission(0.0);
-                let t_g_max = physics::density_to_transmission(0.0);
-                let t_b_max = physics::density_to_transmission(0.0);
+                let t_max = physics::TRANSMISSION_AT_ZERO_DENSITY;
                 let t_r_min = physics::density_to_transmission(
                     (film.r_curve.d_max - film.r_curve.d_min).max(0.0),
                 );
@@ -558,9 +556,9 @@ pub fn create_output_image(
                     n.powf(paper_gamma)
                 };
                 (
-                    norm(t_r, t_r_min, t_r_max),
-                    norm(t_g, t_g_min, t_g_max),
-                    norm(t_b, t_b_min, t_b_max),
+                    norm(t_r, t_r_min, t_max),
+                    norm(t_g, t_g_min, t_max),
+                    norm(t_b, t_b_min, t_max),
                 )
             }
         }

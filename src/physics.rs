@@ -3,6 +3,9 @@
 //! Handles basic physical quantities and conversions described in the documentation.
 //! Section 2: Exposure and Density Mapping.
 
+/// Transmission at zero density: T = 10^(-0) = 1.0
+pub const TRANSMISSION_AT_ZERO_DENSITY: f32 = 1.0;
+
 /// Calculates Exposure (E) from Irradiance (I) and Time (t).
 /// E = I * t
 /// Unit: lux·s

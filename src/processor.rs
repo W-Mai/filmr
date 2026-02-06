@@ -137,9 +137,7 @@ pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
         let t_r = physics::density_to_transmission(net_r);
         let t_g = physics::density_to_transmission(net_g);
         let t_b = physics::density_to_transmission(net_b);
-        let t_r_max = physics::density_to_transmission(0.0);
-        let t_g_max = physics::density_to_transmission(0.0);
-        let t_b_max = physics::density_to_transmission(0.0);
+        let t_max = physics::TRANSMISSION_AT_ZERO_DENSITY;
         let t_r_min =
             physics::density_to_transmission((film.r_curve.d_max - film.r_curve.d_min).max(0.0));
         let t_g_min =
@@ -151,9 +149,9 @@ pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
             (t_max - t).clamp(0.0, denom) / denom
         };
         (
-            norm(t_r, t_r_min, t_r_max),
-            norm(t_g, t_g_min, t_g_max),
-            norm(t_b, t_b_min, t_b_max),
+            norm(t_r, t_r_min, t_max),
+            norm(t_g, t_g_min, t_max),
+            norm(t_b, t_b_min, t_max),
         )
     };
     let target_mid: f32 = 0.18;
