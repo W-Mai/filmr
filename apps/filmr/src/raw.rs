@@ -2,8 +2,12 @@
 //!
 //! This module provides RAW file decoding and demosaicing functionality.
 //! Supports CR2, CR3, NEF, ARW, RAF, ORF, RW2, PEF, DNG and many other formats.
+//! Outputs 16-bit RGB to preserve maximum dynamic range from RAW data.
 
-use image::{DynamicImage, Rgb, RgbImage};
+use image::{DynamicImage, ImageBuffer, Rgb};
+
+/// 16-bit RGB image type alias
+type Rgb16Image = ImageBuffer<Rgb<u16>, Vec<u16>>;
 
 /// Supported RAW file extensions
 pub const RAW_EXTENSIONS: &[&str] = &[
@@ -30,13 +34,29 @@ pub fn is_raw_extension(ext: &str) -> bool {
     RAW_EXTENSIONS.contains(&ext.to_lowercase().as_str())
 }
 
-/// Decode a RAW file from path and return a DynamicImage
+/// Apply orientation transform to a DynamicImage based on rawler Orientation
+fn apply_raw_orientation(img: DynamicImage, orientation: rawler::Orientation) -> DynamicImage {
+    use rawler::Orientation;
+    match orientation {
+        Orientation::Normal | Orientation::Unknown => img,
+        Orientation::HorizontalFlip => img.fliph(),
+        Orientation::Rotate180 => img.rotate180(),
+        Orientation::VerticalFlip => img.flipv(),
+        Orientation::Transpose => img.rotate90().fliph(),
+        Orientation::Rotate90 => img.rotate90(),
+        Orientation::Transverse => img.rotate270().fliph(),
+        Orientation::Rotate270 => img.rotate270(),
+    }
+}
+
+/// Decode a RAW file from path and return a 16-bit DynamicImage
 pub fn decode_raw_file(path: &std::path::Path) -> Result<DynamicImage, String> {
     let raw_image =
         rawler::decode_file(path).map_err(|e| format!("Failed to decode RAW file: {}", e))?;
 
     let width = raw_image.width;
     let height = raw_image.height;
+    let orientation = raw_image.orientation;
 
     // Get CFA pattern for demosaicing from camera definition
     let cfa = &raw_image.camera.cfa;
@@ -64,8 +84,8 @@ pub fn decode_raw_file(path: &std::path::Path) -> Result<DynamicImage, String> {
     // Get white balance multipliers
     let wb_coeffs = raw_image.wb_coeffs;
 
-    // Demosaic using bilinear interpolation
-    let rgb_image = demosaic_bilinear(
+    // Demosaic to 16-bit RGB
+    let rgb_image = demosaic_bilinear_16bit(
         &raw_data,
         width,
         height,
@@ -75,11 +95,14 @@ pub fn decode_raw_file(path: &std::path::Path) -> Result<DynamicImage, String> {
         &wb_coeffs,
     );
 
-    Ok(DynamicImage::ImageRgb8(rgb_image))
+    let img = DynamicImage::ImageRgb16(rgb_image);
+
+    // Apply orientation from RAW metadata
+    Ok(apply_raw_orientation(img, orientation))
 }
 
-/// Bilinear demosaicing algorithm
-fn demosaic_bilinear(
+/// Bilinear demosaicing algorithm outputting 16-bit RGB
+fn demosaic_bilinear_16bit(
     raw: &[u16],
     width: usize,
     height: usize,
@@ -87,8 +110,8 @@ fn demosaic_bilinear(
     black_level: f32,
     white_level: f32,
     wb_coeffs: &[f32; 4],
-) -> RgbImage {
-    let mut img = RgbImage::new(width as u32, height as u32);
+) -> Rgb16Image {
+    let mut img = Rgb16Image::new(width as u32, height as u32);
     let range = white_level - black_level;
 
     // Normalize white balance coefficients (use green as reference)
@@ -111,18 +134,15 @@ fn demosaic_bilinear(
                 wb_b,
             );
 
-            // Apply gamma correction (simple sRGB approximation)
-            let r_gamma = gamma_correct(r);
-            let g_gamma = gamma_correct(g);
-            let b_gamma = gamma_correct(b);
-
+            // Output as 16-bit linear values (no gamma, preserve dynamic range)
+            // Scale to full 16-bit range
             img.put_pixel(
                 x as u32,
                 y as u32,
                 Rgb([
-                    (r_gamma * 255.0).clamp(0.0, 255.0) as u8,
-                    (g_gamma * 255.0).clamp(0.0, 255.0) as u8,
-                    (b_gamma * 255.0).clamp(0.0, 255.0) as u8,
+                    (r * 65535.0).clamp(0.0, 65535.0) as u16,
+                    (g * 65535.0).clamp(0.0, 65535.0) as u16,
+                    (b * 65535.0).clamp(0.0, 65535.0) as u16,
                 ]),
             );
         }
@@ -152,7 +172,7 @@ fn interpolate_pixel(
 
     let color = cfa.color_at(x, y);
 
-    // Get the raw value at this position, normalized
+    // Get the raw value at this position, normalized to 0-1
     let get_normalized = |px: usize, py: usize| -> f32 {
         if px < width && py < height {
             let val = raw[py * width + px] as f32;
@@ -172,13 +192,11 @@ fn interpolate_pixel(
     match color {
         CFA_RED => {
             let r = get_normalized(x, y) * wb_r;
-            // Green: average of 4 neighbors
             let g = (get_normalized(clamp_x(xi - 1), y)
                 + get_normalized(clamp_x(xi + 1), y)
                 + get_normalized(x, clamp_y(yi - 1))
                 + get_normalized(x, clamp_y(yi + 1)))
                 / 4.0;
-            // Blue: average of 4 diagonal neighbors
             let b = (get_normalized(clamp_x(xi - 1), clamp_y(yi - 1))
                 + get_normalized(clamp_x(xi + 1), clamp_y(yi - 1))
                 + get_normalized(clamp_x(xi - 1), clamp_y(yi + 1))
@@ -189,10 +207,8 @@ fn interpolate_pixel(
         }
         CFA_GREEN => {
             let g = get_normalized(x, y);
-            // Determine if this is a green in red row or blue row
             let neighbor_color = cfa.color_at(clamp_x(xi - 1), y);
             if neighbor_color == CFA_RED {
-                // Green in red row: R left/right, B top/bottom
                 let r = (get_normalized(clamp_x(xi - 1), y) + get_normalized(clamp_x(xi + 1), y))
                     / 2.0
                     * wb_r;
@@ -201,7 +217,6 @@ fn interpolate_pixel(
                     * wb_b;
                 (r, g, b)
             } else {
-                // Green in blue row: B left/right, R top/bottom
                 let b = (get_normalized(clamp_x(xi - 1), y) + get_normalized(clamp_x(xi + 1), y))
                     / 2.0
                     * wb_b;
@@ -213,13 +228,11 @@ fn interpolate_pixel(
         }
         CFA_BLUE => {
             let b = get_normalized(x, y) * wb_b;
-            // Green: average of 4 neighbors
             let g = (get_normalized(clamp_x(xi - 1), y)
                 + get_normalized(clamp_x(xi + 1), y)
                 + get_normalized(x, clamp_y(yi - 1))
                 + get_normalized(x, clamp_y(yi + 1)))
                 / 4.0;
-            // Red: average of 4 diagonal neighbors
             let r = (get_normalized(clamp_x(xi - 1), clamp_y(yi - 1))
                 + get_normalized(clamp_x(xi + 1), clamp_y(yi - 1))
                 + get_normalized(clamp_x(xi - 1), clamp_y(yi + 1))
@@ -229,18 +242,8 @@ fn interpolate_pixel(
             (r, g, b)
         }
         _ => {
-            // For other patterns (rare), just return grayscale
             let v = get_normalized(x, y);
             (v, v, v)
         }
-    }
-}
-
-/// Simple sRGB gamma correction
-fn gamma_correct(linear: f32) -> f32 {
-    if linear <= 0.0031308 {
-        linear * 12.92
-    } else {
-        1.055 * linear.powf(1.0 / 2.4) - 0.055
     }
 }
