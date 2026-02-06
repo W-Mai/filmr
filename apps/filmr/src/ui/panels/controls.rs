@@ -248,7 +248,11 @@ fn render_simple_controls(
                                     let name = &stock.name;
                                     ui.horizontal(|ui| {
                                         if let Some(thumb) = app.preset_thumbnails.get(full_name) {
-                                            ui.image((thumb.id(), egui::vec2(40.0, 40.0)));
+                                            let aspect =
+                                                thumb.size()[0] as f32 / thumb.size()[1] as f32;
+                                            let h = 40.0f32;
+                                            let w = h * aspect;
+                                            ui.image((thumb.id(), egui::vec2(w, h)));
                                         } else {
                                             let (rect, _) = ui.allocate_exact_size(
                                                 egui::vec2(40.0, 40.0),

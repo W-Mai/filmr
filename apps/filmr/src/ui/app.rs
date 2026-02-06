@@ -222,7 +222,7 @@ pub struct FilmrApp {
     pub config_manager: Option<ConfigManager>,
 
     pub preset_thumbnails: std::collections::HashMap<String, TextureHandle>,
-    tx_thumb: Sender<(String, RgbImage)>,
+    tx_thumb: Sender<(String, RgbImage, SimulationConfig)>,
     rx_thumb: Receiver<(String, RgbImage)>,
 
     // Preset Loading (WASM)
@@ -318,7 +318,7 @@ impl FilmrApp {
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
         let (tx_load, rx_load) = unbounded::<LoadRequest>();
         let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
-        let (tx_thumb, _rx_thumb) = unbounded::<(String, RgbImage)>();
+        let (tx_thumb, _rx_thumb) = unbounded::<(String, RgbImage, SimulationConfig)>();
         let (_tx_thumb_res, rx_thumb_res) = unbounded::<(String, RgbImage)>();
 
         // Clone context for the thread
@@ -424,10 +424,10 @@ impl FilmrApp {
         // Spawn worker thread for thumbnails
         spawn_thread(move || {
             let stocks_for_thumb = presets::get_all_stocks();
-            while let Ok((name, base_img)) = _rx_thumb.recv() {
-                // Find the stock
+            while let Ok((name, base_img, mut config)) = _rx_thumb.recv() {
                 if let Some(stock) = stocks_for_thumb.iter().find(|s| s.full_name() == name) {
-                    let config = SimulationConfig::default();
+                    // Auto-expose for each stock
+                    config.exposure_time = estimate_exposure_time(&base_img, stock);
                     let processed = process_image(&base_img, stock, &config);
                     let _ = _tx_thumb_res.send((name, processed));
                     ctx_thumb.request_repaint();
@@ -774,15 +774,30 @@ impl App for FilmrApp {
                     // Auto-process logic: Immediately process the preview after loading
                     self.process_and_update_texture(ctx);
 
-                    // Trigger thumbnail generation
+                    // Trigger thumbnail generation with current UI config
                     let thumb_base = self
                         .original_image
                         .as_ref()
                         .unwrap()
                         .thumbnail(128, 128)
                         .to_rgb8();
+                    let thumb_config = SimulationConfig {
+                        exposure_time: 1.0, // overridden by auto-expose in worker
+                        enable_grain: false,
+                        use_gpu: false,
+                        output_mode: self.output_mode,
+                        white_balance_mode: self.white_balance_mode,
+                        white_balance_strength: self.white_balance_strength,
+                        warmth: self.warmth,
+                        saturation: self.saturation,
+                        light_leak: LightLeakConfig::default(),
+                    };
                     for stock in &self.stocks {
-                        let _ = self.tx_thumb.send((stock.full_name(), thumb_base.clone()));
+                        let _ = self.tx_thumb.send((
+                            stock.full_name(),
+                            thumb_base.clone(),
+                            thumb_config.clone(),
+                        ));
                     }
                 }
                 Err(e) => {
