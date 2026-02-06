@@ -27,6 +27,7 @@ pub fn render_metrics(app: &mut FilmrApp, ctx: &Context) {
                             metrics,
                             &mut app.hist_log_scale,
                             &mut app.hist_clamp_zeros,
+                            app.hist_smooth,
                             app.ux_mode,
                         );
 
@@ -47,6 +48,7 @@ fn render_rgb_histogram(
     metrics: &filmr::FilmMetrics,
     hist_log_scale: &mut bool,
     hist_clamp_zeros: &mut bool,
+    hist_smooth: bool,
     ux_mode: UxMode,
 ) {
     let mut plot_hist = |ui: &mut egui::Ui| {
@@ -63,11 +65,53 @@ fn render_rgb_histogram(
             .allow_drag(false)
             .allow_scroll(false)
             .show(ui, |plot_ui| {
+                // Apply 3-tap [1,2,1]/4 smoothing when enabled
+                let smooth3 = |hist: &[u32; 256]| -> [f64; 256] {
+                    let mut out = [0.0f64; 256];
+                    for i in 0..256 {
+                        let prev = if i > 0 {
+                            hist[i - 1] as f64
+                        } else {
+                            hist[0] as f64
+                        };
+                        let curr = hist[i] as f64;
+                        let next = if i < 255 {
+                            hist[i + 1] as f64
+                        } else {
+                            hist[255] as f64
+                        };
+                        out[i] = (prev + 2.0 * curr + next) / 4.0;
+                    }
+                    out
+                };
+
+                let raw_to_f64 = |hist: &[u32; 256]| -> [f64; 256] {
+                    let mut out = [0.0f64; 256];
+                    for i in 0..256 {
+                        out[i] = hist[i] as f64;
+                    }
+                    out
+                };
+
+                let channels: [[f64; 256]; 3] = if hist_smooth {
+                    [
+                        smooth3(&metrics.hist_rgb[0]),
+                        smooth3(&metrics.hist_rgb[1]),
+                        smooth3(&metrics.hist_rgb[2]),
+                    ]
+                } else {
+                    [
+                        raw_to_f64(&metrics.hist_rgb[0]),
+                        raw_to_f64(&metrics.hist_rgb[1]),
+                        raw_to_f64(&metrics.hist_rgb[2]),
+                    ]
+                };
+
                 let mut all_counts = Vec::with_capacity(256 * 3);
-                for c in 0..3 {
-                    for (i, &v) in metrics.hist_rgb[c].iter().enumerate() {
+                for ch in &channels {
+                    for (i, &v) in ch.iter().enumerate() {
                         if !*hist_clamp_zeros || i > 0 {
-                            all_counts.push(v as f64);
+                            all_counts.push(v);
                         }
                     }
                 }
@@ -91,14 +135,14 @@ fn render_rgb_histogram(
                     (2, egui::Color32::BLUE),
                 ] {
                     let mut line_points: Vec<[f64; 2]> = Vec::with_capacity(256);
-                    for (i, &v) in metrics.hist_rgb[c].iter().enumerate() {
+                    for (i, &v) in channels[c].iter().enumerate() {
                         if *hist_clamp_zeros && i == 0 {
                             continue;
                         }
                         let val_raw = if *hist_log_scale {
-                            (v as f64 + 1.0).log10()
+                            (v + 1.0).log10()
                         } else {
-                            v as f64
+                            v
                         };
                         let val_norm = (val_raw / norm_denom).min(1.0);
                         line_points.push([i as f64, val_norm]);

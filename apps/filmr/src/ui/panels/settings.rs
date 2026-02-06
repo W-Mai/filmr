@@ -1,5 +1,6 @@
 use crate::ui::app::FilmrApp;
 use egui::Context;
+use egui_uix::components::toggle::Toggle;
 #[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
 
@@ -15,6 +16,15 @@ pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
             if let Some(config_manager) = &mut app.config_manager {
                 ui.heading("General");
                 ui.separator();
+                ui.add_space(5.0);
+
+                ui.heading("Display");
+                ui.group(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Smooth Histogram");
+                        ui.add(Toggle::new(&mut app.hist_smooth, ""));
+                    });
+                });
                 ui.add_space(5.0);
 
                 ui.heading("Paths");

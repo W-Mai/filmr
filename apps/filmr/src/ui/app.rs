@@ -205,6 +205,7 @@ pub struct FilmrApp {
     // Metrics Display Options
     pub hist_log_scale: bool,
     pub hist_clamp_zeros: bool,
+    pub hist_smooth: bool,
 
     // App Mode
     pub mode: AppMode,
@@ -497,6 +498,7 @@ impl FilmrApp {
 
             hist_log_scale: false,
             hist_clamp_zeros: true,
+            hist_smooth: false,
 
             mode: AppMode::Develop,
             ux_mode,
