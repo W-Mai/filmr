@@ -1361,6 +1361,7 @@ impl DevelopPipeline {
         context: &GpuContext,
         input: &GpuBuffer,
         film: &crate::FilmStock,
+        spectral_matrix: &[[f32; 3]; 3],
         wb_gains: [f32; 3],
         t_eff: f32,
     ) -> Option<GpuBuffer> {
@@ -1384,6 +1385,10 @@ impl DevelopPipeline {
             d_max: f32,
             gamma: f32,
             exposure_offset: f32,
+            shoulder_point: f32,
+            _pad0: f32,
+            _pad1: f32,
+            _pad2: f32,
         }
         unsafe impl bytemuck::Zeroable for GpuCurve {}
         unsafe impl bytemuck::Pod for GpuCurve {}
@@ -1395,6 +1400,10 @@ impl DevelopPipeline {
                     d_max: c.d_max,
                     gamma: c.gamma,
                     exposure_offset: c.exposure_offset,
+                    shoulder_point: c.shoulder_point,
+                    _pad0: 0.0,
+                    _pad1: 0.0,
+                    _pad2: 0.0,
                 }
             }
         }
@@ -1402,9 +1411,12 @@ impl DevelopPipeline {
         #[repr(C)]
         #[derive(Copy, Clone)]
         struct Uniforms {
-            matrix_r: [f32; 4],
-            matrix_g: [f32; 4],
-            matrix_b: [f32; 4],
+            spectral_r: [f32; 4],
+            spectral_g: [f32; 4],
+            spectral_b: [f32; 4],
+            color_r: [f32; 4],
+            color_g: [f32; 4],
+            color_b: [f32; 4],
             curve_r: GpuCurve,
             curve_g: GpuCurve,
             curve_b: GpuCurve,
@@ -1419,11 +1431,15 @@ impl DevelopPipeline {
         unsafe impl bytemuck::Zeroable for Uniforms {}
         unsafe impl bytemuck::Pod for Uniforms {}
 
-        let m = film.color_matrix;
+        let sm = spectral_matrix;
+        let cm = film.color_matrix;
         let uniforms = Uniforms {
-            matrix_r: [m[0][0], m[0][1], m[0][2], 0.0],
-            matrix_g: [m[1][0], m[1][1], m[1][2], 0.0],
-            matrix_b: [m[2][0], m[2][1], m[2][2], 0.0],
+            spectral_r: [sm[0][0], sm[0][1], sm[0][2], 0.0],
+            spectral_g: [sm[1][0], sm[1][1], sm[1][2], 0.0],
+            spectral_b: [sm[2][0], sm[2][1], sm[2][2], 0.0],
+            color_r: [cm[0][0], cm[0][1], cm[0][2], 0.0],
+            color_g: [cm[1][0], cm[1][1], cm[1][2], 0.0],
+            color_b: [cm[2][0], cm[2][1], cm[2][2], 0.0],
             curve_r: GpuCurve::from(&film.r_curve),
             curve_g: GpuCurve::from(&film.g_curve),
             curve_b: GpuCurve::from(&film.b_curve),
