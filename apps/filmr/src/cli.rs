@@ -4,6 +4,8 @@ use filmr::presets;
 use filmr::processor::{
     estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
+use image::DynamicImage;
+use std::io::{BufReader, Seek};
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -59,11 +61,54 @@ enum CliWhiteBalance {
     Off,
 }
 
+/// Read EXIF orientation from a file and return the orientation value (1-8).
+fn read_exif_orientation<R: std::io::BufRead + Seek>(reader: &mut R) -> u32 {
+    let exif_reader = exif::Reader::new();
+    match exif_reader.read_from_container(reader) {
+        Ok(exif) => {
+            if let Some(field) = exif.get_field(exif::Tag::Orientation, exif::In::PRIMARY) {
+                field.value.get_uint(0).unwrap_or(1)
+            } else {
+                1
+            }
+        }
+        Err(_) => 1,
+    }
+}
+
+/// Apply EXIF orientation transform to a DynamicImage.
+fn apply_exif_orientation(img: DynamicImage, orientation: u32) -> DynamicImage {
+    match orientation {
+        2 => img.fliph(),
+        3 => img.rotate180(),
+        4 => img.flipv(),
+        5 => img.rotate90().fliph(),
+        6 => img.rotate90(),
+        7 => img.rotate270().fliph(),
+        8 => img.rotate270(),
+        _ => img,
+    }
+}
+
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     println!("Loading image: {:?}", args.input);
-    let img = image::open(&args.input)?.to_rgb8();
+
+    // Read EXIF orientation first
+    let orientation = std::fs::File::open(&args.input)
+        .ok()
+        .map(|f| {
+            let mut reader = BufReader::new(f);
+            read_exif_orientation(&mut reader)
+        })
+        .unwrap_or(1);
+
+    // Load and apply orientation
+    let img = {
+        let raw = image::open(&args.input)?;
+        apply_exif_orientation(raw, orientation).to_rgb8()
+    };
 
     let stock = if let Some(path) = &args.load_preset {
         println!("Loading custom preset from: {:?}", path);
