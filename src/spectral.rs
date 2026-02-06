@@ -193,8 +193,27 @@ impl Add for Spectrum {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
         let mut res = Self::new();
-        for i in 0..BINS {
+        let mut i = 0;
+        while i + 4 <= BINS {
+            let a = f32x4::from([
+                self.power[i],
+                self.power[i + 1],
+                self.power[i + 2],
+                self.power[i + 3],
+            ]);
+            let b = f32x4::from([
+                rhs.power[i],
+                rhs.power[i + 1],
+                rhs.power[i + 2],
+                rhs.power[i + 3],
+            ]);
+            let r: [f32; 4] = (a + b).into();
+            res.power[i..i + 4].copy_from_slice(&r);
+            i += 4;
+        }
+        while i < BINS {
             res.power[i] = self.power[i] + rhs.power[i];
+            i += 1;
         }
         res
     }
@@ -205,8 +224,27 @@ impl Add<&Spectrum> for &Spectrum {
     type Output = Spectrum;
     fn add(self, rhs: &Spectrum) -> Spectrum {
         let mut res = Spectrum::new();
-        for i in 0..BINS {
+        let mut i = 0;
+        while i + 4 <= BINS {
+            let a = f32x4::from([
+                self.power[i],
+                self.power[i + 1],
+                self.power[i + 2],
+                self.power[i + 3],
+            ]);
+            let b = f32x4::from([
+                rhs.power[i],
+                rhs.power[i + 1],
+                rhs.power[i + 2],
+                rhs.power[i + 3],
+            ]);
+            let r: [f32; 4] = (a + b).into();
+            res.power[i..i + 4].copy_from_slice(&r);
+            i += 4;
+        }
+        while i < BINS {
             res.power[i] = self.power[i] + rhs.power[i];
+            i += 1;
         }
         res
     }
@@ -218,8 +256,22 @@ impl Mul<f32> for Spectrum {
     type Output = Self;
     fn mul(self, rhs: f32) -> Self {
         let mut res = Self::new();
-        for i in 0..BINS {
+        let v = f32x4::splat(rhs);
+        let mut i = 0;
+        while i + 4 <= BINS {
+            let a = f32x4::from([
+                self.power[i],
+                self.power[i + 1],
+                self.power[i + 2],
+                self.power[i + 3],
+            ]);
+            let r: [f32; 4] = (a * v).into();
+            res.power[i..i + 4].copy_from_slice(&r);
+            i += 4;
+        }
+        while i < BINS {
             res.power[i] = self.power[i] * rhs;
+            i += 1;
         }
         res
     }
@@ -230,8 +282,22 @@ impl Mul<f32> for &Spectrum {
     type Output = Spectrum;
     fn mul(self, rhs: f32) -> Spectrum {
         let mut res = Spectrum::new();
-        for i in 0..BINS {
+        let v = f32x4::splat(rhs);
+        let mut i = 0;
+        while i + 4 <= BINS {
+            let a = f32x4::from([
+                self.power[i],
+                self.power[i + 1],
+                self.power[i + 2],
+                self.power[i + 3],
+            ]);
+            let r: [f32; 4] = (a * v).into();
+            res.power[i..i + 4].copy_from_slice(&r);
+            i += 4;
+        }
+        while i < BINS {
             res.power[i] = self.power[i] * rhs;
+            i += 1;
         }
         res
     }
