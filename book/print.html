@@ -1,0 +1,754 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js oranda-light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Filmr Knowledge Base</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="oranda-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "oranda-light" : "oranda-light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('orandamdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('orandamdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('orandamdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('oranda-light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="photochemistry.html"><strong aria-hidden="true">2.</strong> Photochemistry Core</a></li><li class="chapter-item expanded "><a href="film_characteristics.html"><strong aria-hidden="true">3.</strong> Film Characteristics</a></li><li class="chapter-item expanded "><a href="reference_data.html"><strong aria-hidden="true">4.</strong> Reference Data</a></li><li class="chapter-item expanded "><a href="spectral_sensitivity.html"><strong aria-hidden="true">5.</strong> Spectral Sensitivity</a></li><li class="chapter-item expanded "><a href="validation.html"><strong aria-hidden="true">6.</strong> Validation Framework</a></li><li class="chapter-item expanded "><a href="metrics.html"><strong aria-hidden="true">7.</strong> Metrics & Diagnosis</a></li><li class="chapter-item expanded "><a href="dynamic_range.html"><strong aria-hidden="true">8.</strong> Dynamic Range & Highlights</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="oranda-light">Cupcake</button></li>
+
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Filmr Knowledge Base</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="filmr-knowledge-base"><a class="header" href="#filmr-knowledge-base">Filmr Knowledge Base</a></h1>
+<p>Welcome to the technical documentation for <strong>Filmr</strong>, a high-fidelity, physics-based film simulation engine.</p>
+<p>This book details the mathematical models and physical principles used in the simulation, including:</p>
+<ul>
+<li>Spectral Sensitivity</li>
+<li>Reciprocity Failure</li>
+<li>Chemical Color Coupling</li>
+<li>Grain Synthesis</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="photochemistry-core-quantum-scale"><a class="header" href="#photochemistry-core-quantum-scale">Photochemistry Core (Quantum Scale)</a></h1>
+<p>When photons strike a silver halide crystal (AgX), a photolytic reaction is triggered:</p>
+<h2 id="11-photoelectron-excitation"><a class="header" href="#11-photoelectron-excitation">1.1 Photoelectron Excitation</a></h2>
+<p>$$ \text{AgX} + h\nu \xrightarrow{k_{\text{photo}}} \text{Ag}^+ + \text{e}^- + \text{X}^0 $$</p>
+<p>Where:</p>
+<ul>
+<li>$h\nu$ is the photon energy ($\nu$ is frequency)</li>
+<li>$k_{\text{photo}}$ is the photochemical reaction rate constant, following the quantum efficiency model:
+$$ k_{\text{photo}} = \eta \cdot \sigma_{\text{abs}} \cdot \Phi $$
+<ul>
+<li>$\eta$: Quantum efficiency (≈0.6-0.9)</li>
+<li>$\sigma_{\text{abs}}$: Crystal absorption cross-section</li>
+<li>$\Phi$: Photon flux (photons/(cm²·s))</li>
+</ul>
+</li>
+</ul>
+<h2 id="12-latent-image-center-formation"><a class="header" href="#12-latent-image-center-formation">1.2 Latent Image Center Formation</a></h2>
+<p>Released electrons are trapped by silver ions, forming silver atom clusters:</p>
+<p>$$ \text{Ag}^+ + \text{e}^- \xrightarrow{k_{\text{trap}}} \text{Ag}^0 $$</p>
+<p><strong>Critical Condition</strong>: A <strong>stable latent image center</strong> is formed when a single crystal surface accumulates <strong>5-10 silver atoms</strong>:</p>
+<p>$$ n_{\text{Ag}} \geq n_{\text{critical}} \approx 5-10 $$</p>
+<p>This process can be modeled using a <strong>Poisson distribution</strong>:</p>
+<p>$$ P(n_{\text{Ag}} \geq n_{\text{crit}}) = 1 - \sum_{k=0}^{n_{\text{crit}}-1} \frac{\lambda^k e^{-\lambda}}{k!} $$</p>
+<p>Where $\lambda = \eta \cdot N_{\text{photons}}$ is the expected number of electrons.</p>
+<hr />
+<h1 id="exposure-and-density-mapping-macro-scale"><a class="header" href="#exposure-and-density-mapping-macro-scale">Exposure and Density Mapping (Macro Scale)</a></h1>
+<h2 id="21-exposure-definition"><a class="header" href="#21-exposure-definition">2.1 Exposure Definition</a></h2>
+<p>$$ E = I \cdot t $$</p>
+<ul>
+<li>$I$: Irradiance (lux)</li>
+<li>$t$: Exposure time (s)</li>
+<li>$E$: Exposure (lux·s)</li>
+</ul>
+<h2 id="22-optical-density"><a class="header" href="#22-optical-density">2.2 Optical Density</a></h2>
+<p>The ability of silver grains to block light after development is quantified by <strong>Optical Density</strong> $D$:</p>
+<p>$$ D = \log_{10}\left(\frac{I_0}{I_t}\right) = -\log_{10}(T) $$</p>
+<ul>
+<li>$I_0$: Incident light intensity</li>
+<li>$I_t$: Transmitted light intensity</li>
+<li>$T = I_t/I_0$: Transmittance</li>
+</ul>
+<hr />
+<h1 id="characteristic-curve-hurter-driffield-curve"><a class="header" href="#characteristic-curve-hurter-driffield-curve">Characteristic Curve (Hurter-Driffield Curve)</a></h1>
+<p>This is the <strong>core mathematical model</strong> of film imaging, describing the S-shaped relationship between $D$ and $\log_{10}E$:</p>
+<h2 id="31-piecewise-linear-model-engineering-simplification"><a class="header" href="#31-piecewise-linear-model-engineering-simplification">3.1 Piecewise Linear Model (Engineering Simplification)</a></h2>
+<p>$$
+D(\log E) = \begin{cases}
+D_{\text{min}} + \frac{\log E - \log E_{\text{toe}}}{\gamma_{\text{toe}}} &amp; \text{Toe (Underexposed)} \
+D_{\text{min}} + \gamma \cdot (\log E - \log E_0) &amp; \text{Linear Region (Normal Exposure)} \
+D_{\text{max}} - \frac{\log E_{\text{shoulder}} - \log E}{\gamma_{\text{shoulder}}} &amp; \text{Shoulder (Overexposed)}
+\end{cases}
+$$</p>
+<p><strong>Key Parameters</strong>:</p>
+<ul>
+<li>$\gamma$: Contrast coefficient (slope of the linear region)
+$$ \gamma = \frac{\Delta D}{\Delta \log E} = \frac{D_2 - D_1}{\log E_2 - \log E_1} $$</li>
+<li>Dynamic Range: $\text{DR} = \log_{10}(E_{\text{max}}/E_{\text{min}}) \approx 2.0$ (corresponding to 100:1 brightness ratio)</li>
+</ul>
+<h2 id="32-precise-error-function-model-scientific-grade"><a class="header" href="#32-precise-error-function-model-scientific-grade">3.2 Precise Error Function Model (Scientific Grade)</a></h2>
+<p>Analytical solution provided by Kodak technical documents:</p>
+<p>$$
+D(E) = \frac{D_0}{2}\left[1 + \text{erf}\left(X + \ln\frac{E - E_0}{E_g - E_0}\right)\right]
+$$</p>
+<p>Where the error function is:</p>
+<p>$$
+\text{erf}(y) = \frac{1}{\sqrt{\pi}} \int_{-\infty}^{y} e^{-z^2} dz
+$$</p>
+<p>Parameter meanings:</p>
+<ul>
+<li>$D_0$: Maximum saturation density</li>
+<li>$E_0$: Threshold exposure</li>
+<li>$E_g$: Sensitivity reference point</li>
+<li>$X$: Development condition correction term</li>
+</ul>
+<hr />
+<h1 id="development-kinetics-chemical-amplification"><a class="header" href="#development-kinetics-chemical-amplification">Development Kinetics (Chemical Amplification)</a></h1>
+<p>Development amplifies latent image centers by $10^6$-$10^8$ times. Its rate equation:</p>
+<h2 id="41-first-order-kinetics-model"><a class="header" href="#41-first-order-kinetics-model">4.1 First-Order Kinetics Model</a></h2>
+<p>$$
+\frac{d[\text{Ag}]}{dt} = k_{\text{dev}} \cdot [\text{Dev}] \cdot [\text{Ag}^+] \cdot N_{\text{latent}}
+$$</p>
+<ul>
+<li>$[\text{Dev}]$: Developer concentration</li>
+<li>$N_{\text{latent}}$: Number of latent image centers (proportional to exposure)</li>
+</ul>
+<h2 id="42-time-temperature-compensation-arrhenius-equation"><a class="header" href="#42-time-temperature-compensation-arrhenius-equation">4.2 Time-Temperature Compensation (Arrhenius Equation)</a></h2>
+<p>$$
+k_{\text{dev}} = A \cdot e^{-E_a/(RT)}
+$$</p>
+<ul>
+<li>$E_a$: Activation energy (≈50-70 kJ/mol)</li>
+<li>$R$: Gas constant</li>
+<li>$T$: Absolute temperature (K)</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="film-characteristics"><a class="header" href="#film-characteristics">Film Characteristics</a></h1>
+<p>The &quot;flavor&quot; differences between films from different manufacturers are essentially reflected in <strong>measurable parameters</strong> determined by <strong>chemical formulas</strong> and <strong>crystal structures</strong>. Below are real parameters from authoritative technical data sheets.</p>
+<hr />
+<h2 id="1-kodak-tri-x-400-classic-news-film"><a class="header" href="#1-kodak-tri-x-400-classic-news-film">1. KODAK TRI-X 400 (Classic News Film)</a></h2>
+<p><strong>Source</strong>: Kodak Official Technical Data Sheet F-4017</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Sensitivity</strong></td><td>ISO 400/27°</td><td>Base exposure index</td></tr>
+<tr><td><strong>RMS Granularity</strong></td><td>17 (D-96 dev, 6 min)</td><td>Higher value means more visible grain</td></tr>
+<tr><td><strong>Gamma (Contrast)</strong></td><td>0.70 (Standard dev)</td><td>Medium contrast, good shadow detail retention</td></tr>
+<tr><td><strong>Dmax</strong></td><td>2.2-2.4</td><td>Maximum black density</td></tr>
+<tr><td><strong>Dmin</strong></td><td>0.10-0.12</td><td>Base + fog density</td></tr>
+<tr><td><strong>Spectral Sensitivity</strong></td><td>Panchromatic, peak ~550nm</td><td>Response extends to ~690nm</td></tr>
+<tr><td><strong>Resolution</strong></td><td>100 lp/mm (1000:1 contrast)</td><td>Resolving power at high contrast</td></tr>
+<tr><td><strong>Reciprocity Failure</strong></td><td>+1 stop compensation at 1s</td><td>Long exposure characteristic</td></tr>
+</tbody></table>
+</div>
+<p><strong>Flavor Characteristics</strong>: Wide exposure latitude (±2 stops still usable), rugged &quot;breathing&quot; grain, good shadow detail retention.</p>
+<hr />
+<h2 id="2-fujifilm-velvia-50-landscape-slide-film"><a class="header" href="#2-fujifilm-velvia-50-landscape-slide-film">2. FUJIFILM Velvia 50 (Landscape Slide Film)</a></h2>
+<p><strong>Source</strong>: Fujifilm Technical Data Sheet</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Sensitivity</strong></td><td>ISO 50/18°</td><td>Daylight base</td></tr>
+<tr><td><strong>Gamma</strong></td><td>1.2-1.4 (E-6 process)</td><td>Extremely high contrast, saturated colors</td></tr>
+<tr><td><strong>Dmax</strong></td><td>3.5-4.0</td><td>Higher maximum density for slide film</td></tr>
+<tr><td><strong>Dmin</strong></td><td>0.15-0.20</td><td>Transparent base density</td></tr>
+<tr><td><strong>Granularity</strong></td><td>RMS 9 (Granularity Index)</td><td>Extremely fine grain</td></tr>
+<tr><td><strong>Spectral Sensitivity</strong></td><td>Peak R=650nm, G=550nm, B=450nm</td><td>Strong red layer response, darkened blue sky</td></tr>
+<tr><td><strong>Resolution</strong></td><td>160 lp/mm</td><td>Ultra-high resolution, sharp details</td></tr>
+<tr><td><strong>Reciprocity Failure</strong></td><td>+1/3 stop above 1/4000s</td><td>Short exposure characteristic</td></tr>
+</tbody></table>
+</div>
+<p><strong>Flavor Characteristics</strong>: High color saturation (especially red, orange), strong contrast, deeper blue sky rendering, fine grain but narrow exposure latitude (±0.5 stops).</p>
+<hr />
+<h2 id="3-ilford-hp5-plus-general-purpose-bw"><a class="header" href="#3-ilford-hp5-plus-general-purpose-bw">3. ILFORD HP5 Plus (General Purpose B&amp;W)</a></h2>
+<p><strong>Source</strong>: ILFORD Official Data Sheet</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Sensitivity</strong></td><td>ISO 400/27°</td><td>Base value, pushable to EI 3200</td></tr>
+<tr><td><strong>RMS Granularity</strong></td><td>16 (D-96 dev)</td><td>Close to Tri-X, traditional cubic crystals</td></tr>
+<tr><td><strong>Gamma</strong></td><td>0.65-0.75</td><td>Low-medium contrast, suitable for scanning</td></tr>
+<tr><td><strong>Dmax</strong></td><td>2.1-2.3</td><td>Maximum density</td></tr>
+<tr><td><strong>Dmin</strong></td><td>0.08-0.10</td><td>High base transparency</td></tr>
+<tr><td><strong>Spectral Sensitivity</strong></td><td>Panchromatic, tested at 2850K Tungsten</td><td>Red response slightly lower than Tri-X</td></tr>
+<tr><td><strong>Resolution</strong></td><td>95 lp/mm</td><td>Slightly lower than Tri-X</td></tr>
+<tr><td><strong>Push Characteristics</strong></td><td>Gamma rises to 0.9 at EI 1600</td><td>Significant contrast increase when pushed</td></tr>
+</tbody></table>
+</div>
+<p><strong>Flavor Characteristics</strong>: Excellent push performance (usable at EI 3200), soft grain structure, smooth highlight roll-off, rich shadow gradations.</p>
+<hr />
+<h2 id="4-mathematical-expression-of-parameter-differences"><a class="header" href="#4-mathematical-expression-of-parameter-differences">4. Mathematical Expression of Parameter Differences</a></h2>
+<p>These parameters directly determine the shape of the <strong>H-D Curve</strong>:</p>
+<p>$$
+D(E) = D_{\text{min}} + \frac{D_{\text{max}}-D_{\text{min}}}{1 + 10^{\gamma(\log E_0 - \log E)}}
+$$</p>
+<ul>
+<li><strong>Tri-X</strong>: Lower $E_0$, long toe, large latitude</li>
+<li><strong>Velvia</strong>: Extremely high $D_{\text{max}}$, large $\gamma$, steep shoulder</li>
+<li><strong>HP5</strong>: Lower $D_{\text{min}}$, $E_0$ shifts right when pushed</li>
+</ul>
+<p><strong>Spectral Sensitivity Differences</strong>:
+$$ S(\lambda)<em>{\text{Velvia}} &gt; S(\lambda)</em>{\text{Tri-X}} &gt; S(\lambda)_{\text{HP5}} \quad (\lambda &gt; 600\text{nm}) $$</p>
+<hr />
+<h2 id="5-authoritative-verification-suggestions"><a class="header" href="#5-authoritative-verification-suggestions">5. Authoritative Verification Suggestions</a></h2>
+<ol>
+<li><strong>Official Data Sheets</strong>: Kodak Alaris (kodakprofessional.com), Fujifilm, ILFORD (ilfordphoto.com)</li>
+<li><strong>Third-party Testing</strong>: Imatest software MTF analysis, X-Rite densitometer measurement of Dmax/Dmin</li>
+<li><strong>Measurement Methods</strong>: Verify Gamma using Stouffer step wedge + standard development process</li>
+</ol>
+<p>These parameters are direct quantifications of film <strong>chemical formulas</strong> and <strong>crystal technologies</strong>, which are more reliable than subjective &quot;flavor&quot; descriptions.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="reference-data"><a class="header" href="#reference-data">Reference Data</a></h1>
+<p>All data comes from manufacturer official technical data sheets and ISO standard tests. Measurement conditions are unified as: Status M density, 48μm aperture microdensitometer, density 1.0 above Dmin.</p>
+<hr />
+<h2 id="1-fujifilm-color-reversal-film-e-6-process"><a class="header" href="#1-fujifilm-color-reversal-film-e-6-process">1. Fujifilm Color Reversal Film (E-6 Process)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Film Stock</th><th>ISO</th><th>RMS Granularity</th><th>Resolution (lp/mm)</th><th>Gamma</th><th>Dmax</th><th>Dmin</th><th>Spectral Peak</th><th>Push Limit</th><th>Source</th></tr></thead><tbody>
+<tr><td><strong>Velvia 50</strong></td><td>50</td><td>9</td><td>160</td><td>1.2-1.4</td><td>3.5-4.0</td><td>0.15</td><td>R650/G550/B450</td><td>+1 stop</td><td>Fujifilm 2020 Data Sheet</td></tr>
+<tr><td><strong>Velvia 100F</strong></td><td>100</td><td><strong>8</strong></td><td>160</td><td>1.2</td><td>3.8</td><td>0.15</td><td>R640/G550/B450</td><td>+2 stops</td><td>Fujifilm 2020 Data Sheet</td></tr>
+<tr><td><strong>Velvia 100</strong></td><td>100</td><td>9</td><td>160</td><td>1.3</td><td>3.7</td><td>0.16</td><td>R640/G550/B450</td><td>+1 stop</td><td>Fujifilm 2018 Tech Bulletin</td></tr>
+<tr><td><strong>Provia 100F</strong></td><td>100</td><td>8</td><td>135</td><td>0.9-1.0</td><td>3.2</td><td>0.12</td><td>R645/G545/B445</td><td>+2 stops</td><td>Fujifilm 2020 Data Sheet</td></tr>
+<tr><td><strong>Astia 100F</strong></td><td>100</td><td>8</td><td>135</td><td>0.7</td><td>3.0</td><td>0.12</td><td>R640/G540/B440</td><td>+1 stop</td><td>Fujifilm 2016 Data Sheet</td></tr>
+<tr><td><strong>Provia 400X</strong></td><td>400</td><td>11</td><td>125</td><td>0.95</td><td>3.4</td><td>0.14</td><td>R645/G545/B445</td><td>+3 stops</td><td>Fujifilm 2013 Data Sheet</td></tr>
+<tr><td><strong>TREBI 400</strong></td><td>400</td><td>11</td><td>125</td><td>1.0</td><td>3.3</td><td>0.15</td><td>Panchromatic</td><td>+2 stops</td><td>Fujifilm 2005 Data Sheet</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="2-fujifilm-color-negative-film-c-41-process"><a class="header" href="#2-fujifilm-color-negative-film-c-41-process">2. Fujifilm Color Negative Film (C-41 Process)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Film Stock</th><th>ISO</th><th>RMS Granularity</th><th>Resolution (lp/mm)</th><th>Latitude (stops)</th><th>Dmax</th><th>Dmin</th><th>Skin Tone Index</th><th>Source</th></tr></thead><tbody>
+<tr><td><strong>Pro 400H</strong></td><td>400</td><td>12</td><td>125</td><td>±2.5</td><td>2.8</td><td>0.10</td><td>98</td><td>Fujifilm 2020 Data Sheet</td></tr>
+<tr><td><strong>Pro 160NS</strong></td><td>160</td><td>8</td><td>135</td><td>+3/-1</td><td>2.6</td><td>0.08</td><td>99</td><td>Fujifilm 2020 Data Sheet</td></tr>
+<tr><td><strong>Pro 160NC</strong></td><td>160</td><td>8</td><td>125</td><td>+3/-1</td><td>2.5</td><td>0.08</td><td>97</td><td>Fujifilm 2016 Data Sheet</td></tr>
+<tr><td><strong>Superia 200</strong></td><td>200</td><td>11</td><td>125</td><td>±2.0</td><td>2.7</td><td>0.10</td><td>92</td><td>Fujifilm 2018 Data Sheet</td></tr>
+<tr><td><strong>Superia X-tra 800</strong></td><td>800</td><td>13</td><td>110</td><td>±1.5</td><td>2.9</td><td>0.12</td><td>88</td><td>Fujifilm 2019 Data Sheet</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="3-kodak-bw-negative-film"><a class="header" href="#3-kodak-bw-negative-film">3. Kodak B&amp;W Negative Film</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Film Stock</th><th>ISO</th><th>Grain Index (RMS)</th><th>Resolution (lp/mm)</th><th>Gamma (Std Dev)</th><th>Dmax</th><th>Crystal Structure</th><th>Push Perf</th><th>Source</th></tr></thead><tbody>
+<tr><td><strong>Tri-X 400</strong></td><td>400</td><td><strong>17</strong></td><td>100</td><td>0.70</td><td>2.2</td><td>Traditional Cubic</td><td>To EI 3200</td><td>Kodak F-4017</td></tr>
+<tr><td><strong>T-Max 400</strong></td><td>400</td><td><strong>10</strong></td><td>125</td><td>0.85</td><td>2.4</td><td>T-Grain (Tabular)</td><td>To EI 1600</td><td>Kodak F-4016</td></tr>
+<tr><td><strong>T-Max 100</strong></td><td>100</td><td><strong>8</strong></td><td>200</td><td>0.80</td><td>2.3</td><td>T-Grain (Tabular)</td><td>To EI 400</td><td>Kodak F-4016</td></tr>
+<tr><td><strong>T-Max 3200</strong></td><td>3200</td><td><strong>18</strong></td><td>80</td><td>0.75</td><td>2.1</td><td>T-Grain (Tabular)</td><td>Native EI 800-6400</td><td>Kodak F-4016</td></tr>
+<tr><td><strong>Plus-X 125</strong></td><td>125</td><td>13</td><td>125</td><td>0.65</td><td>2.1</td><td>Traditional Cubic</td><td>To EI 500</td><td>Kodak F-4017</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="4-ilford-bw-negative-film"><a class="header" href="#4-ilford-bw-negative-film">4. ILFORD B&amp;W Negative Film</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Film Stock</th><th>ISO</th><th>RMS Granularity</th><th>Resolution (lp/mm)</th><th>Gamma</th><th>Dmax</th><th>Crystal Tech</th><th>Dev Suggestion</th><th>Source</th></tr></thead><tbody>
+<tr><td><strong>HP5 Plus</strong></td><td>400</td><td>16*</td><td>95</td><td>0.65</td><td>2.1</td><td>Traditional Cubic</td><td>DD-X Best</td><td>Ilford 2021 Data Sheet</td></tr>
+<tr><td><strong>FP4 Plus</strong></td><td>125</td><td>11</td><td>135</td><td>0.65</td><td>2.0</td><td>Traditional Cubic</td><td>ID-11 Preferred</td><td>Ilford 2021 Data Sheet</td></tr>
+<tr><td><strong>Delta 100</strong></td><td>100</td><td><strong>7</strong></td><td>160</td><td>0.70</td><td>2.2</td><td>Core-Shell™</td><td>DD-X/Perceptol</td><td>Ilford 2021 Data Sheet</td></tr>
+<tr><td><strong>Delta 400</strong></td><td>400</td><td><strong>11</strong></td><td>125</td><td>0.75</td><td>2.3</td><td>Core-Shell™</td><td>DD-X</td><td>Ilford 2021 Data Sheet</td></tr>
+<tr><td><strong>Pan F Plus</strong></td><td>50</td><td><strong>5</strong></td><td>180</td><td>0.60</td><td>1.9</td><td>Traditional Cubic</td><td>Precise Exp Req</td><td>Ilford 2021 Data Sheet</td></tr>
+<tr><td><strong>SFX 200</strong></td><td>200</td><td>14</td><td>100</td><td>0.65</td><td>2.0</td><td>Infrared Sens</td><td>Special Filter</td><td>Ilford 2021 Data Sheet</td></tr>
+</tbody></table>
+</div>
+<p><em>Note: Ilford does not publish RMS values; data from independent testing (analog.cafe).</em></p>
+<hr />
+<h2 id="5-kodak-color-negative-film"><a class="header" href="#5-kodak-color-negative-film">5. Kodak Color Negative Film</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Film Stock</th><th>ISO</th><th>Grain Index (PGI)</th><th>Resolution (lp/mm)</th><th>DR (stops)</th><th>Dmax</th><th>Saturation</th><th>Scan Friendliness</th><th>Source</th></tr></thead><tbody>
+<tr><td><strong>Portra 400</strong></td><td>400</td><td>35*</td><td>115</td><td>±2.5</td><td>2.9</td><td>Neutral+15%</td><td>Excellent</td><td>Kodak E-7053</td></tr>
+<tr><td><strong>Portra 160</strong></td><td>160</td><td>28*</td><td>125</td><td>±3.0</td><td>2.8</td><td>Neutral+10%</td><td>Excellent</td><td>Kodak E-7053</td></tr>
+<tr><td><strong>Ektar 100</strong></td><td>100</td><td>25*</td><td>150</td><td>±2.0</td><td>3.2</td><td>High+25%</td><td>Good</td><td>Kodak E-7043</td></tr>
+<tr><td><strong>Gold 200</strong></td><td>200</td><td>40*</td><td>110</td><td>±2.0</td><td>2.7</td><td>Warm+20%</td><td>Average</td><td>Kodak E-7041</td></tr>
+</tbody></table>
+</div>
+<p><em>Note: Kodak switched to PGI (Print Grain Index) after 2007. Lower is better. PGI 25 ≈ RMS 8.</em></p>
+<hr />
+<h2 id="6-classic-discontinued-films-historical-data"><a class="header" href="#6-classic-discontinued-films-historical-data">6. Classic Discontinued Films (Historical Data)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Film Stock</th><th>ISO</th><th>RMS</th><th>Resolution</th><th>Unique Feature</th><th>Discontinued</th><th>Source</th></tr></thead><tbody>
+<tr><td><strong>Kodachrome 25</strong></td><td>25</td><td><strong>5</strong></td><td>200</td><td>Dye coupling process, archival</td><td>2001</td><td>Kodak 1998 Archives</td></tr>
+<tr><td><strong>Kodachrome 64</strong></td><td>64</td><td>7</td><td>160</td><td>Color stability &gt;100 years</td><td>2009</td><td>Kodak 2008 Archives</td></tr>
+<tr><td><strong>Ektachrome 100VS</strong></td><td>100</td><td>9</td><td>140</td><td>Gamma=1.25, Velvia competitor</td><td>2012</td><td>Kodak 2010 Archives</td></tr>
+<tr><td><strong>Neopan ACROS 100</strong></td><td>100</td><td><strong>7</strong></td><td>160</td><td>High reciprocity characteristics</td><td>2018</td><td>Fujifilm 2019 Statement</td></tr>
+<tr><td><strong>Polaroid SX-70</strong></td><td>150</td><td>-</td><td>50</td><td>Instant dev, Dmax=2.0</td><td>2006</td><td>Polaroid 2005 Tech Doc</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="7-data-authenticity-assurance"><a class="header" href="#7-data-authenticity-assurance">7. Data Authenticity Assurance</a></h2>
+<p><strong>Measurement Standard Traceability</strong>:</p>
+<ul>
+<li><strong>ISO Sensitivity</strong>: ISO 5800:1987, measured at +1, 0, -1 stops in specified developer.</li>
+<li><strong>RMS Granularity</strong>: ISO 6328:2000, 48μm aperture, measured at density 1.0, 12x magnification.</li>
+<li><strong>Resolution</strong>: ISO 6328, USAF 1951 chart, tested at 1000:1 and 1.6:1 contrast.</li>
+<li><strong>Gamma</strong>: Slope of linear region of characteristic curve, measured between density 1.0-2.0.</li>
+</ul>
+<p><strong>Data Source Verification</strong>:</p>
+<ul>
+<li>Kodak: imaging.kodakalaris.com Official Data Sheets (F-4017, F-4016 series).</li>
+<li>Ilford: ilfordphoto.com 2021 Technical Specification White Papers.</li>
+<li>Fujifilm: fujifilm.com 2020 &quot;Professional Film Data Guide&quot;.</li>
+<li>Independent Verification: analog.cafe re-tests using X-Rite 361T densitometer.</li>
+</ul>
+<p><strong>Update Note</strong>:</p>
+<ul>
+<li>Portra 400 produced after 2024 uses improved emulsion, PGI improved to 32 (finer grain).</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="spectral-intuition-and-color-shift"><a class="header" href="#spectral-intuition-and-color-shift">Spectral Intuition and Color Shift</a></h1>
+<hr />
+<h2 id="1-key-premise-clarification"><a class="header" href="#1-key-premise-clarification">1. Key Premise Clarification</a></h2>
+<blockquote>
+<p><strong>Film Simulation ≠ Color Preservation Algorithm</strong></p>
+</blockquote>
+<p>Film simulation typically <strong>allows for overall tonal changes</strong> (such as warm tones, cool tones, curve compression),
+<strong>but does NOT allow:</strong></p>
+<ul>
+<li>Unexpected channel crosstalk (e.g., Red being asymmetrically pulled)</li>
+<li>Neutral colors becoming non-neutral</li>
+<li>Uncontrollable hue shifts related to luminance</li>
+</ul>
+<p>So the goal is not &quot;Output = Input&quot;, but rather:</p>
+<blockquote>
+<p><strong>Verify if there are abnormal color shifts within the &quot;known acceptable range of variation&quot;</strong></p>
+</blockquote>
+<hr />
+<h2 id="2-core-idea-use-diagnostic-images"><a class="header" href="#2-core-idea-use-diagnostic-images">2. Core Idea: Use &quot;Diagnostic Images&quot;</a></h2>
+<p>Natural photos <strong>cannot be used for algorithm verification</strong> because you can never prove whether the color cast comes from the algorithm or the content itself.</p>
+<p>You need <strong>Synthetic / Diagnostic Images</strong>.</p>
+<hr />
+<h2 id="3-category-1-neutral-axis-verification-most-important"><a class="header" href="#3-category-1-neutral-axis-verification-most-important">3. Category 1: Neutral Axis Verification (Most Important)</a></h2>
+<h3 id="1-input-ideal-neutral-grayscale"><a class="header" href="#1-input-ideal-neutral-grayscale">1️⃣ Input: Ideal Neutral Grayscale</a></h3>
+<p>Construct an image:</p>
+<ul>
+<li>R = G = B</li>
+<li>From 0 → 255 (or linear 0 → 1)</li>
+<li>Include different luminance sections (Shadows / Mid-gray / Highlights)</li>
+</ul>
+<h3 id="expected-behavior"><a class="header" href="#expected-behavior">Expected Behavior</a></h3>
+<ul>
+<li>After film simulation:
+<ul>
+<li><strong>R′ ≈ G′ ≈ B′</strong></li>
+<li>Overall brightening/darkening/curve changes are allowed</li>
+<li><strong>Systematic deviation of Δ(R′−G′) with luminance is NOT allowed</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="calculable-metrics"><a class="header" href="#calculable-metrics">Calculable Metrics</a></h3>
+<h4 id="metric-a-neutral-color-deviation"><a class="header" href="#metric-a-neutral-color-deviation">Metric A: Neutral Color Deviation</a></h4>
+<pre><code class="language-text">Δ_neutral = mean(|R' - G'| + |G' - B'| + |B' - R'|)
+</code></pre>
+<h4 id="metric-b-luminance-correlated-deviation"><a class="header" href="#metric-b-luminance-correlated-deviation">Metric B: Luminance-Correlated Deviation</a></h4>
+<pre><code class="language-text">corr(L_in, (R'-G'))
+corr(L_in, (G'-B'))
+</code></pre>
+<blockquote>
+<p>If color cast changes with luminance → <strong>Typical Algorithmic Error</strong>
+(Commonly seen when incorrect curves are applied in RGB space instead of luminance space)</p>
+</blockquote>
+<hr />
+<h2 id="4-category-2-pure-color-channel-integrity-test"><a class="header" href="#4-category-2-pure-color-channel-integrity-test">4. Category 2: Pure Color Channel Integrity Test</a></h2>
+<h3 id="2-input-pure-colors-and-single-channel-gradients"><a class="header" href="#2-input-pure-colors-and-single-channel-gradients">2️⃣ Input: Pure Colors and Single Channel Gradients</a></h3>
+<p>Construct:</p>
+<ul>
+<li>(R=1, G=0, B=0)</li>
+<li>(0,1,0)</li>
+<li>(0,0,1)</li>
+<li>And gradients for each channel 0→1</li>
+</ul>
+<h3 id="expected-behavior-1"><a class="header" href="#expected-behavior-1">Expected Behavior</a></h3>
+<ul>
+<li>Film allows:
+<ul>
+<li>Pure Red → Shifts to Orange / Magenta (This is style)</li>
+</ul>
+</li>
+<li><strong>But it must be explainable and symmetric</strong></li>
+</ul>
+<h3 id="calculable-metrics-1"><a class="header" href="#calculable-metrics-1">Calculable Metrics</a></h3>
+<h4 id="metric-c-channel-leakage-matrix"><a class="header" href="#metric-c-channel-leakage-matrix">Metric C: Channel Leakage Matrix</a></h4>
+<p>You can approximate a 3×3 matrix:</p>
+<pre><code class="language-text">[ R' ]   [ a b c ] [ R ]
+[ G' ] ≈ [ d e f ] [ G ]
+[ B' ]   [ g h i ] [ B ]
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="validation-framework"><a class="header" href="#validation-framework">Validation Framework</a></h1>
+<p>To pass <strong>industrial-grade film simulation certification</strong>, a measurement standard from <strong>molecular scale to perceptual scale</strong> must be established. Below is the complete <strong>7-layer verification system</strong>, with quantifiable thresholds and Rust-readable test protocols for each layer:</p>
+<hr />
+<h2 id="layer-0-spectral-fidelity"><a class="header" href="#layer-0-spectral-fidelity">Layer 0: Spectral Fidelity</a></h2>
+<h3 id="01-emulsion-spectral-sensitivity-slambda"><a class="header" href="#01-emulsion-spectral-sensitivity-slambda">0.1 Emulsion Spectral Sensitivity $S(\lambda)$</a></h3>
+<p><strong>Standard</strong>: ISO 5800:2001 / ISO 6846
+<strong>Measurement Object</strong>: Quantum efficiency of Blue/Green/Red sensitive layers to monochromatic light
+<strong>Data Format</strong>: 380–780 nm, 5 nm step, 81-dimensional vector
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>Peak wavelength error $&lt; \pm 5$ nm</li>
+<li>Full Width at Half Maximum (FWHM) error $&lt; \pm 15$ nm</li>
+<li>Interlayer crosstalk (Blue/Green sensitivity ratio at 480 nm) $&lt; 15%$</li>
+</ul>
+<p><strong>Reference Data Source</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Kodak Portra 400 Official Sensitivity (Pre-normalization)
+const S_BLUE: [f32; 81] = [0.01, 0.03, ..., 0.95, 0.02]; // 380-780nm, 5nm step
+const S_GREEN: [f32; 81] = [...];
+const S_RED: [f32; 81] = [...];
+<span class="boring">}</span></code></pre></pre>
+<h3 id="02-dye-spectral-absorption-cross-section-varepsilonlambda"><a class="header" href="#02-dye-spectral-absorption-cross-section-varepsilonlambda">0.2 Dye Spectral Absorption Cross-section $\varepsilon(\lambda)$</a></h3>
+<p><strong>Standard</strong>: Status A Densitometry Calibration (ISO 5-3)
+<strong>Measurement Object</strong>: Absorption spectra of Yellow/Magenta/Cyan dyes at maximum density
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>Peak absorbance correlation with Kodak patent data $R^2 &gt; 0.995$</li>
+<li>Dye overlap (Yellow dye absorbance at 550 nm $&lt; 12%$ of peak)</li>
+</ul>
+<hr />
+<h2 id="layer-1-exposure-response"><a class="header" href="#layer-1-exposure-response">Layer 1: Exposure Response</a></h2>
+<h3 id="11-h-d-curve-hurter-driffield"><a class="header" href="#11-h-d-curve-hurter-driffield">1.1 H-D Curve (Hurter-Driffield)</a></h3>
+<p><strong>Standard</strong>: ISO 6 (B&amp;W) / ISO 5800 (Color)
+<strong>Measurement Object</strong>: $\log_{10}(\text{Exposure})$ vs Density $D$
+<strong>Key Parameters</strong>:
+| Parameter | Symbol | Acceptable Range | Measurement Method |
+|-----------|--------|------------------|-------------------|
+| Fog Density | $D_{\min}$ | $0.15 \pm 0.03$ | Unexposed base |
+| Max Density | $D_{\max}$ | $&gt; 2.8$ | Overexposed by 5 stops |
+| Contrast | $\gamma$ | $0.55 \pm 0.05$ | Slope of linear region |
+| Latitude | $L$ | $&gt; 2.8$ stops | $D_{\min}+0.1$ to $D_{\max}-0.1$ |</p>
+<p><strong>Rust Verification</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>assert!(hd_curve.gamma &gt;= 0.50 &amp;&amp; hd_curve.gamma &lt;= 0.60);
+assert!(hd_curve.d_max &gt;= 2.8);
+<span class="boring">}</span></code></pre></pre>
+<h3 id="12-reciprocity-failure"><a class="header" href="#12-reciprocity-failure">1.2 Reciprocity Failure</a></h3>
+<p><strong>Standard</strong>: ISO 839
+<strong>Measurement Object</strong>: Exposure time $t$ from 1/1000 s to 10 s, keeping $H = I \cdot t$ constant
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>Density drift $&lt; 0.15$ (1/1000 s to 1 s)</li>
+<li>Color shift $\Delta E_{00} &lt; 3.0$ (Layer failure desynchronization at long exposures)</li>
+</ul>
+<hr />
+<h2 id="layer-2-chemical-coupling-dye-coupling"><a class="header" href="#layer-2-chemical-coupling-dye-coupling">Layer 2: Chemical Coupling (Dye Coupling)</a></h2>
+<h3 id="21-coupling-efficiency-beta"><a class="header" href="#21-coupling-efficiency-beta">2.1 Coupling Efficiency $\beta$</a></h3>
+<p><strong>Standard</strong>: Kodak internal process specs (reverse engineerable)
+<strong>Measurement Object</strong>: Dye density generated per unit silver density
+<strong>Formula</strong>: $D_{\text{dye}} = \beta \cdot (D_{\text{silver}} - D_{\min})$
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>Yellow layer $\beta_Y = 1.8 \pm 0.1$</li>
+<li>Magenta layer $\beta_M = 2.0 \pm 0.1$ (Higher extinction coefficient for Magenta dye)</li>
+<li>Cyan layer $\beta_C = 1.9 \pm 0.1$</li>
+</ul>
+<h3 id="22-interlayer-interimage-effects-iie"><a class="header" href="#22-interlayer-interimage-effects-iie">2.2 Interlayer Interimage Effects (IIE)</a></h3>
+<p><strong>Standard</strong>: ISO 4090
+<strong>Measurement Object</strong>: Inhibition/Enhancement of lower layer development by upper layer exposure
+<strong>Test Chart</strong>: Red/Green/Blue monochromatic wedges + Neutral gray wedge side-by-side
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>Development inhibition rate $&lt; 8%$ (High density in upper layer causes density drop in lower layer)</li>
+<li>Edge Effect MTF 50% frequency $&gt; 40$ lp/mm</li>
+</ul>
+<hr />
+<h2 id="layer-3-optical-output"><a class="header" href="#layer-3-optical-output">Layer 3: Optical Output</a></h2>
+<h3 id="31-status-a-density-print-viewing"><a class="header" href="#31-status-a-density-print-viewing">3.1 Status A Density (Print Viewing)</a></h3>
+<p><strong>Standard</strong>: ISO 5-3
+<strong>Measurement Object</strong>: RGB density measured through Wratten 106/92/88 filters
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>Neutral Gray $R=G=B \pm 0.05$ (Status A)</li>
+<li>Orange Mask Base Color $D_R - D_B = 0.70 \pm 0.05$ (Typical Color Negative Mask)</li>
+</ul>
+<h3 id="32-spectral-transmittance-tlambda"><a class="header" href="#32-spectral-transmittance-tlambda">3.2 Spectral Transmittance $T(\lambda)$</a></h3>
+<p><strong>Standard</strong>: ISO 5-1
+<strong>Measurement Object</strong>: $T(\lambda) = 10^{-A(\lambda)}$, where $A(\lambda) = \sum C_i \varepsilon_i(\lambda)$
+<strong>Pass Thresholds</strong>:</p>
+<ul>
+<li>RMSE with real film transmittance spectra $&lt; 0.02$ (400-700 nm)</li>
+</ul>
+<hr />
+<h2 id="layer-4-colorimetric-accuracy"><a class="header" href="#layer-4-colorimetric-accuracy">Layer 4: Colorimetric Accuracy</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="metrics-and-diagnosis"><a class="header" href="#metrics-and-diagnosis">Metrics and Diagnosis</a></h1>
+<div class="table-wrapper"><table><thead><tr><th>Metric/Method</th><th>Category</th><th>Calculation/Core Principle</th><th>Simulation Usage/Diagnostic Value</th></tr></thead><tbody>
+<tr><td><strong>Histogram</strong></td><td>Basic Stats</td><td>Pixel value binning, 1D distribution</td><td>Overall exposure distribution, dynamic range check</td></tr>
+<tr><td><strong>Quantiles (p50/p90/p99)</strong></td><td>Basic Stats</td><td>Percentiles of CDF</td><td>Locating median color casts (e.g., <code>rg_mid p50</code>)</td></tr>
+<tr><td><strong>Mean/Median</strong></td><td>Basic Stats</td><td>Weighted average or p50</td><td>Overall exposure level baseline</td></tr>
+<tr><td><strong>Standard Deviation</strong></td><td>Basic Stats</td><td>Sqrt of variance</td><td>Contrast quantification (film usually lower than digital)</td></tr>
+<tr><td><strong>Skewness</strong></td><td>Basic Stats</td><td>3rd central moment</td><td>Asymmetry, negative skew = more highlight detail (film trait)</td></tr>
+<tr><td><strong>Kurtosis</strong></td><td>Basic Stats</td><td>4th central moment</td><td>Tail thickness, high kurtosis = clipped blacks/whites</td></tr>
+<tr><td><strong>Entropy</strong></td><td>Basic Stats</td><td><code>-Σp(x)log p(x)</code></td><td>Information density, grain increases local entropy</td></tr>
+<tr><td><strong>Clipped Pixel Ratio</strong></td><td>Basic Stats</td><td>Ratio of extreme values</td><td>Proportion of dead blacks and blown highlights</td></tr>
+<tr><td><strong>Dynamic Range</strong></td><td>Basic Stats</td><td>p99/p1 or p995/p005</td><td>Effective latitude quantification</td></tr>
+<tr><td><strong>RgMid/BgMid</strong></td><td>Color Science</td><td>R/G, B/G ratio at mid-gray</td><td>White balance baseline, deviation from 1.0 = cast</td></tr>
+<tr><td><strong>Lab Space Stats</strong></td><td>Color Science</td><td>L<em>a</em>b* channel mean/var</td><td>L* lightness latitude, a*/b* shows cast direction</td></tr>
+<tr><td><strong>CCT &amp; Tint</strong></td><td>Color Science</td><td>Inverted gray point estimation</td><td>White balance calibration verification</td></tr>
+<tr><td><strong>Saturation Dist</strong></td><td>Color Science</td><td>HSV S-channel skewness</td><td>Asymmetric saturation distribution of film</td></tr>
+<tr><td><strong>Delta E 2000</strong></td><td>Color Science</td><td>CIEDE2000 formula</td><td>Difference between simulation and target scan</td></tr>
+<tr><td><strong>PSD (Power Spectral Density)</strong></td><td>Frequency/Texture</td><td>Radial avg of FFT</td><td>Grain frequency distribution (<code>1/f^β</code> noise)</td></tr>
+<tr><td><strong>MTF</strong></td><td>Frequency/Texture</td><td>Contrast vs Spatial Frequency</td><td>Sharpness quantification, edge retention</td></tr>
+<tr><td><strong>Laplacian Variance</strong></td><td>Frequency/Texture</td><td>2nd derivative stats</td><td>Fast sharpness estimation</td></tr>
+<tr><td><strong>LBP (Local Binary Patterns)</strong></td><td>Frequency/Texture</td><td>Local texture coding</td><td>Grain structure difference quantification</td></tr>
+<tr><td><strong>SSIM/MS-SSIM</strong></td><td>Perceptual/Struct</td><td>Structural Similarity</td><td>Structure fidelity (Sim vs Ref)</td></tr>
+<tr><td><strong>LPIPS</strong></td><td>Perceptual/Struct</td><td>VGG feature distance</td><td>Perceptual distance, better than L2</td></tr>
+<tr><td><strong>CID (Contrast Index)</strong></td><td>Perceptual/Struct</td><td>CIE-based contrast index</td><td>Contrast difference quantification</td></tr>
+<tr><td><strong>Dye Density Curve</strong></td><td>Film Specific</td><td>Density vs log Exposure</td><td>H&amp;D curve fitting (R²/RMSE)</td></tr>
+<tr><td><strong>Mask Density</strong></td><td>Film Specific</td><td>Orange mask a*/b* offset</td><td>Negative-to-positive mask correction verification</td></tr>
+<tr><td><strong>Reciprocity Curve</strong></td><td>Film Specific</td><td>Time-Density non-linearity</td><td>Short/Long exposure simulation accuracy</td></tr>
+<tr><td><strong>Grain Autocorrelation</strong></td><td>Film Specific</td><td>Spatial correlation of noise</td><td>Film grain is not pure random noise</td></tr>
+<tr><td><strong>HSV Histogram</strong></td><td>Color Space</td><td>1D/Multi-D binning</td><td>Hue shifts, saturation asymmetry</td></tr>
+<tr><td><strong>Lab Histogram</strong></td><td>Color Space</td><td>L<em>a</em>b* channel stats</td><td>Lightness latitude, color cast direction</td></tr>
+<tr><td><strong>YCbCr Histogram</strong></td><td>Color Space</td><td>Luma/Chroma separation</td><td>Chroma range check (film gamut is often narrower)</td></tr>
+<tr><td><strong>RGB Joint Hist (3D)</strong></td><td>Color Space</td><td>R×G×B cube binning</td><td>Color mapping linearity, neutral axis shift</td></tr>
+<tr><td><strong>2D Joint Hist</strong></td><td>Spatial Relation</td><td>Joint prob (e.g., R-G)</td><td>Channel correlation, neutral axis diagonal check</td></tr>
+<tr><td><strong>GLCM</strong></td><td>Spatial Relation</td><td>Co-occurrence probability</td><td>Grain texture quantification, uniformity</td></tr>
+<tr><td><strong>Tile Histogram</strong></td><td>Spatial Relation</td><td>Block-wise stats</td><td>Vignetting, uneven development detection</td></tr>
+<tr><td><strong>Power Spectrum Hist</strong></td><td>Frequency</td><td>2D FFT radial binning</td><td><code>Energy vs Frequency</code>, grain feature extraction</td></tr>
+<tr><td><strong>Wavelet Hist</strong></td><td>Frequency</td><td>Multi-scale coeff stats</td><td>Multi-layer grain structure capture</td></tr>
+<tr><td><strong>Gradient Hist</strong></td><td>Gradient/Edge</td><td>Edge direction stats</td><td>Silver halide crystal anisotropy detection</td></tr>
+<tr><td><strong>Laplacian Hist</strong></td><td>Gradient/Edge</td><td>2nd derivative stats</td><td>Sharpness/Softness measurement</td></tr>
+<tr><td><strong>Ratio Hist (R/G)</strong></td><td>Ratio/Log Space</td><td>Channel ratio binning</td><td>Illumination-robust cast detection</td></tr>
+<tr><td><strong>Log Exposure Hist</strong></td><td>Ratio/Log Space</td><td>Log-space binning</td><td>Direct fitting of H&amp;D curve toe/shoulder</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="dynamic-range-and-highlight-roll-off"><a class="header" href="#dynamic-range-and-highlight-roll-off">Dynamic Range and Highlight Roll-off</a></h1>
+<p>A common observation in film simulation is that <strong>digital dynamic range numbers win, but film highlight behavior wins on &quot;character&quot;</strong>. This is not a &quot;resolution&quot; issue, but a <strong>dimensionality superiority of chemical response</strong>.</p>
+<hr />
+<h2 id="1-dynamic-range-the-definition-trap"><a class="header" href="#1-dynamic-range-the-definition-trap">1. Dynamic Range: The Definition Trap</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Metric</th><th>High-end CMOS (Sony A7R V)</th><th>Kodak Portra 400</th></tr></thead><tbody>
+<tr><td><strong>Engineering DR</strong></td><td>15.3 stops (Linear RAW)</td><td>13.2 stops (Density 2.8)</td></tr>
+<tr><td><strong>Effective DR</strong></td><td>13.5 stops (Noise ≤ 1 ADU)</td><td><strong>18+ stops (Printable Highlights)</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: CMOS hard clips at 14 bit (Full Well Capacity), whereas film dye continues to stack after $D_{\max}=2.8$—it just transitions from <strong>linear growth to logarithmic decay</strong>. Scanners might clip, but optical enlargers can retrieve this, giving film its &quot;highlight retention&quot; ability.</p>
+<hr />
+<h2 id="2-three-stages-of-chemical-highlight-roll-off"><a class="header" href="#2-three-stages-of-chemical-highlight-roll-off">2. Three Stages of Chemical Highlight Roll-off</a></h2>
+<h3 id="stage-1-linear-region-008-density"><a class="header" href="#stage-1-linear-region-008-density">Stage 1: Linear Region (0–0.8 Density)</a></h3>
+<p>Silver halide grains respond linearly according to Beer-Lambert law: $D = \gamma \cdot \log_{10}(H)$. This looks like standard LOG encoding.</p>
+<h3 id="stage-2-shoulder-softening-0818-density"><a class="header" href="#stage-2-shoulder-softening-0818-density">Stage 2: Shoulder Softening (0.8–1.8 Density)</a></h3>
+<p><strong>Chemical Mechanisms</strong>:</p>
+<ol>
+<li>Grain surface development centers saturate → Electron trapping efficiency $\eta$ drops, following <strong>Mott-Gurney Space Charge Limit</strong>: $J \propto V^2/d^3$</li>
+<li>Developer oxidation product (QDI) decomposes at high pH → Coupling rate $k_{\text{coupling}}$ decays</li>
+<li><strong>Interlayer Inhibition</strong>: High density in upper layers releases Bromide ions (Br⁻) to lower layers, inhibiting their development (ISO 4090 IIE effect)</li>
+</ol>
+<p>Mathematically:
+$$
+D(H) = \gamma \log_{10}(H) \cdot \left(1 - \frac{H}{H_{\text{sat}}}\right)^{\alpha}
+$$
+Where $\alpha \approx 0.65$ (Kodak Patent US4508812A). This is the <strong>core of highlight softening</strong>.</p>
+<h3 id="stage-3-toe-clipping-18-density"><a class="header" href="#stage-3-toe-clipping-18-density">Stage 3: Toe Clipping (&gt;1.8 Density)</a></h3>
+<p>Dye molecules stack to the <strong>Förster Resonance Energy Transfer</strong> distance (&lt; 2 nm), quenching energy → Density growth approaches $D_{\max}$ asymptotically.</p>
+<hr />
+<h2 id="3-why-digital-post-processing-falls-short"><a class="header" href="#3-why-digital-post-processing-falls-short">3. Why Digital Post-Processing Falls Short</a></h2>
+<h3 id="31-dimensionality-gap"><a class="header" href="#31-dimensionality-gap">3.1 Dimensionality Gap</a></h3>
+<p>CMOS highlights have only <strong>16384 discrete levels (14 bit)</strong>. Once clipped, data is gone.
+Film highlights still have <strong>31-dimensional spectral</strong> changes, just with slower density growth. Post-processing can only <strong>interpolate</strong>, not <strong>extrapolate</strong> real spectra.</p>
+<h3 id="32-irreversibility-of-non-linear-coupling"><a class="header" href="#32-irreversibility-of-non-linear-coupling">3.2 Irreversibility of Non-linear Coupling</a></h3>
+<p>Photoshop's &quot;Highlight Compression&quot; is $y = \log(x + \epsilon)$ or $y = x^{0.8}$, applied <strong>independently per channel</strong>.
+Film involves <strong>Yellow + Magenta + Cyan dye densities inhibiting each other</strong>. Mathematically, it's a <strong>ternary non-linear coupled system</strong>:</p>
+<p>$$
+\begin{cases}
+C_Y = f_Y(H_B, H_G, H_R) \
+C_M = f_M(H_G, H_R, H_Y) \
+C_C = f_C(H_R, H_Y, H_G)
+\end{cases}
+$$</p>
+<p>Standard tools don't model &quot;upper layer exposure poisoning lower layer&quot;.</p>
+<h3 id="33-noise-texture-differences"><a class="header" href="#33-noise-texture-differences">3.3 Noise Texture Differences</a></h3>
+<p>CMOS highlight noise is <strong>Poisson + Readout Noise</strong>. Film is <strong>Granularity following Wiener Spectrum</strong>: $G(f) = \frac{a}{f^2 + b}$, which <strong>decreases</strong> as density increases.
+Digital noise addition is just &quot;adding salt&quot;, lacking density-dependent grain size distribution.</p>
+<hr />
+<h2 id="4-hard-simulation-adding-chemical-constraints"><a class="header" href="#4-hard-simulation-adding-chemical-constraints">4. Hard Simulation: Adding &quot;Chemical Constraints&quot;</a></h2>
+<h3 id="41-shoulder-softening-model"><a class="header" href="#41-shoulder-softening-model">4.1 Shoulder Softening Model</a></h3>
+<p>Apply a <strong>space charge limit</strong> after Exposure → Density mapping:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn shoulder_softening(density: f32, shoulder_point: f32) -&gt; f32 {
+    if density &gt; shoulder_point {
+        let excess = density - shoulder_point;
+        density - excess * excess / (shoulder_point + excess)
+    } else {
+        density
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Where <code>shoulder_point = 0.8</code> (ISO 5800 standard point).</p>
+<h3 id="42-interlayer-inhibition-matrix"><a class="header" href="#42-interlayer-inhibition-matrix">4.2 Interlayer Inhibition Matrix</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Interlayer effect matrix from ISO 4090 measurements
+// Row i = Real Dye i / Theoretical Dye i
+let interlayer: nalgebra::Matrix3&lt;f32&gt; = nalgebra::Matrix3::new(
+    1.00, -0.08, -0.03, // Yellow inhibited by Magenta/Cyan
+    -0.05, 1.00, -0.07, // Magenta inhibited by Yellow/Cyan
+    -0.02, -0.06, 1.00, // Cyan inhibited by Yellow/Magenta
+);
+
+let dyes_real = interlayer * dyes_theoretical;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="43-dye-self-absorption-correction"><a class="header" href="#43-dye-self-absorption-correction">4.3 Dye Self-Absorption Correction</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Dye self-absorption causes spectral shift at high densities
+fn dye_self_absorb(c: f32, t: &amp;mut [f32]) {
+    // c: dye concentration, t: transmittance spectrum
+    for wl in 0..31 {
+        // Beer's law deviation of 1-3% when density &gt; 1.5
+        let correction = 1.0 + (c - 1.5) * 0.02;
+        t[wl] *= correction.clamp(0.97, 1.03);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

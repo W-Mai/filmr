@@ -1,0 +1,267 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js oranda-light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Film Characteristics - Filmr Knowledge Base</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="oranda-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "oranda-light" : "oranda-light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('orandamdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('orandamdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('orandamdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('oranda-light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="photochemistry.html"><strong aria-hidden="true">2.</strong> Photochemistry Core</a></li><li class="chapter-item expanded "><a href="film_characteristics.html" class="active"><strong aria-hidden="true">3.</strong> Film Characteristics</a></li><li class="chapter-item expanded "><a href="reference_data.html"><strong aria-hidden="true">4.</strong> Reference Data</a></li><li class="chapter-item expanded "><a href="spectral_sensitivity.html"><strong aria-hidden="true">5.</strong> Spectral Sensitivity</a></li><li class="chapter-item expanded "><a href="validation.html"><strong aria-hidden="true">6.</strong> Validation Framework</a></li><li class="chapter-item expanded "><a href="metrics.html"><strong aria-hidden="true">7.</strong> Metrics & Diagnosis</a></li><li class="chapter-item expanded "><a href="dynamic_range.html"><strong aria-hidden="true">8.</strong> Dynamic Range & Highlights</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="oranda-light">Cupcake</button></li>
+
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Filmr Knowledge Base</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="film-characteristics"><a class="header" href="#film-characteristics">Film Characteristics</a></h1>
+<p>The &quot;flavor&quot; differences between films from different manufacturers are essentially reflected in <strong>measurable parameters</strong> determined by <strong>chemical formulas</strong> and <strong>crystal structures</strong>. Below are real parameters from authoritative technical data sheets.</p>
+<hr />
+<h2 id="1-kodak-tri-x-400-classic-news-film"><a class="header" href="#1-kodak-tri-x-400-classic-news-film">1. KODAK TRI-X 400 (Classic News Film)</a></h2>
+<p><strong>Source</strong>: Kodak Official Technical Data Sheet F-4017</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Sensitivity</strong></td><td>ISO 400/27°</td><td>Base exposure index</td></tr>
+<tr><td><strong>RMS Granularity</strong></td><td>17 (D-96 dev, 6 min)</td><td>Higher value means more visible grain</td></tr>
+<tr><td><strong>Gamma (Contrast)</strong></td><td>0.70 (Standard dev)</td><td>Medium contrast, good shadow detail retention</td></tr>
+<tr><td><strong>Dmax</strong></td><td>2.2-2.4</td><td>Maximum black density</td></tr>
+<tr><td><strong>Dmin</strong></td><td>0.10-0.12</td><td>Base + fog density</td></tr>
+<tr><td><strong>Spectral Sensitivity</strong></td><td>Panchromatic, peak ~550nm</td><td>Response extends to ~690nm</td></tr>
+<tr><td><strong>Resolution</strong></td><td>100 lp/mm (1000:1 contrast)</td><td>Resolving power at high contrast</td></tr>
+<tr><td><strong>Reciprocity Failure</strong></td><td>+1 stop compensation at 1s</td><td>Long exposure characteristic</td></tr>
+</tbody></table>
+</div>
+<p><strong>Flavor Characteristics</strong>: Wide exposure latitude (±2 stops still usable), rugged &quot;breathing&quot; grain, good shadow detail retention.</p>
+<hr />
+<h2 id="2-fujifilm-velvia-50-landscape-slide-film"><a class="header" href="#2-fujifilm-velvia-50-landscape-slide-film">2. FUJIFILM Velvia 50 (Landscape Slide Film)</a></h2>
+<p><strong>Source</strong>: Fujifilm Technical Data Sheet</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Sensitivity</strong></td><td>ISO 50/18°</td><td>Daylight base</td></tr>
+<tr><td><strong>Gamma</strong></td><td>1.2-1.4 (E-6 process)</td><td>Extremely high contrast, saturated colors</td></tr>
+<tr><td><strong>Dmax</strong></td><td>3.5-4.0</td><td>Higher maximum density for slide film</td></tr>
+<tr><td><strong>Dmin</strong></td><td>0.15-0.20</td><td>Transparent base density</td></tr>
+<tr><td><strong>Granularity</strong></td><td>RMS 9 (Granularity Index)</td><td>Extremely fine grain</td></tr>
+<tr><td><strong>Spectral Sensitivity</strong></td><td>Peak R=650nm, G=550nm, B=450nm</td><td>Strong red layer response, darkened blue sky</td></tr>
+<tr><td><strong>Resolution</strong></td><td>160 lp/mm</td><td>Ultra-high resolution, sharp details</td></tr>
+<tr><td><strong>Reciprocity Failure</strong></td><td>+1/3 stop above 1/4000s</td><td>Short exposure characteristic</td></tr>
+</tbody></table>
+</div>
+<p><strong>Flavor Characteristics</strong>: High color saturation (especially red, orange), strong contrast, deeper blue sky rendering, fine grain but narrow exposure latitude (±0.5 stops).</p>
+<hr />
+<h2 id="3-ilford-hp5-plus-general-purpose-bw"><a class="header" href="#3-ilford-hp5-plus-general-purpose-bw">3. ILFORD HP5 Plus (General Purpose B&amp;W)</a></h2>
+<p><strong>Source</strong>: ILFORD Official Data Sheet</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Sensitivity</strong></td><td>ISO 400/27°</td><td>Base value, pushable to EI 3200</td></tr>
+<tr><td><strong>RMS Granularity</strong></td><td>16 (D-96 dev)</td><td>Close to Tri-X, traditional cubic crystals</td></tr>
+<tr><td><strong>Gamma</strong></td><td>0.65-0.75</td><td>Low-medium contrast, suitable for scanning</td></tr>
+<tr><td><strong>Dmax</strong></td><td>2.1-2.3</td><td>Maximum density</td></tr>
+<tr><td><strong>Dmin</strong></td><td>0.08-0.10</td><td>High base transparency</td></tr>
+<tr><td><strong>Spectral Sensitivity</strong></td><td>Panchromatic, tested at 2850K Tungsten</td><td>Red response slightly lower than Tri-X</td></tr>
+<tr><td><strong>Resolution</strong></td><td>95 lp/mm</td><td>Slightly lower than Tri-X</td></tr>
+<tr><td><strong>Push Characteristics</strong></td><td>Gamma rises to 0.9 at EI 1600</td><td>Significant contrast increase when pushed</td></tr>
+</tbody></table>
+</div>
+<p><strong>Flavor Characteristics</strong>: Excellent push performance (usable at EI 3200), soft grain structure, smooth highlight roll-off, rich shadow gradations.</p>
+<hr />
+<h2 id="4-mathematical-expression-of-parameter-differences"><a class="header" href="#4-mathematical-expression-of-parameter-differences">4. Mathematical Expression of Parameter Differences</a></h2>
+<p>These parameters directly determine the shape of the <strong>H-D Curve</strong>:</p>
+<p>$$
+D(E) = D_{\text{min}} + \frac{D_{\text{max}}-D_{\text{min}}}{1 + 10^{\gamma(\log E_0 - \log E)}}
+$$</p>
+<ul>
+<li><strong>Tri-X</strong>: Lower $E_0$, long toe, large latitude</li>
+<li><strong>Velvia</strong>: Extremely high $D_{\text{max}}$, large $\gamma$, steep shoulder</li>
+<li><strong>HP5</strong>: Lower $D_{\text{min}}$, $E_0$ shifts right when pushed</li>
+</ul>
+<p><strong>Spectral Sensitivity Differences</strong>:
+$$ S(\lambda)<em>{\text{Velvia}} &gt; S(\lambda)</em>{\text{Tri-X}} &gt; S(\lambda)_{\text{HP5}} \quad (\lambda &gt; 600\text{nm}) $$</p>
+<hr />
+<h2 id="5-authoritative-verification-suggestions"><a class="header" href="#5-authoritative-verification-suggestions">5. Authoritative Verification Suggestions</a></h2>
+<ol>
+<li><strong>Official Data Sheets</strong>: Kodak Alaris (kodakprofessional.com), Fujifilm, ILFORD (ilfordphoto.com)</li>
+<li><strong>Third-party Testing</strong>: Imatest software MTF analysis, X-Rite densitometer measurement of Dmax/Dmin</li>
+<li><strong>Measurement Methods</strong>: Verify Gamma using Stouffer step wedge + standard development process</li>
+</ol>
+<p>These parameters are direct quantifications of film <strong>chemical formulas</strong> and <strong>crystal technologies</strong>, which are more reliable than subjective &quot;flavor&quot; descriptions.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="photochemistry.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="reference_data.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="photochemistry.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="reference_data.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
