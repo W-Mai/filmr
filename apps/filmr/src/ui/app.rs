@@ -222,7 +222,7 @@ pub struct FilmrApp {
     pub config_manager: Option<ConfigManager>,
 
     pub preset_thumbnails: std::collections::HashMap<String, TextureHandle>,
-    tx_thumb: Sender<(String, RgbImage, SimulationConfig)>,
+    tx_thumb: Sender<(String, RgbImage, SimulationConfig, FilmStock)>,
     rx_thumb: Receiver<(String, RgbImage)>,
 
     // Preset Loading (WASM)
@@ -318,7 +318,7 @@ impl FilmrApp {
         let (tx_res, rx_res) = unbounded::<ProcessResult>();
         let (tx_load, rx_load) = unbounded::<LoadRequest>();
         let (tx_load_res, rx_load_res) = unbounded::<LoadResult>();
-        let (tx_thumb, _rx_thumb) = unbounded::<(String, RgbImage, SimulationConfig)>();
+        let (tx_thumb, _rx_thumb) = unbounded::<(String, RgbImage, SimulationConfig, FilmStock)>();
         let (_tx_thumb_res, rx_thumb_res) = unbounded::<(String, RgbImage)>();
 
         // Clone context for the thread
@@ -423,15 +423,23 @@ impl FilmrApp {
 
         // Spawn worker thread for thumbnails
         spawn_thread(move || {
-            let stocks_for_thumb = presets::get_all_stocks();
-            while let Ok((name, base_img, mut config)) = _rx_thumb.recv() {
-                if let Some(stock) = stocks_for_thumb.iter().find(|s| s.full_name() == name) {
-                    // Auto-expose for each stock
-                    config.exposure_time = estimate_exposure_time(&base_img, stock);
-                    let processed = process_image(&base_img, stock, &config);
-                    let _ = _tx_thumb_res.send((name, processed));
-                    ctx_thumb.request_repaint();
+            while let Ok(first) = _rx_thumb.recv() {
+                // Drain channel to get the latest batch, discard stale requests
+                let mut latest: std::collections::HashMap<
+                    String,
+                    (RgbImage, SimulationConfig, FilmStock),
+                > = std::collections::HashMap::new();
+                latest.insert(first.0, (first.1, first.2, first.3));
+                while let Ok((name, img, config, stock)) = _rx_thumb.try_recv() {
+                    latest.insert(name, (img, config, stock));
                 }
+
+                for (name, (base_img, mut config, stock)) in latest {
+                    config.exposure_time = estimate_exposure_time(&base_img, &stock);
+                    let processed = process_image(&base_img, &stock, &config);
+                    let _ = _tx_thumb_res.send((name, processed));
+                }
+                ctx_thumb.request_repaint();
             }
         });
 
@@ -623,10 +631,16 @@ impl FilmrApp {
                 light_leak: LightLeakConfig::default(),
             };
             for stock in &self.stocks {
+                let mut thumb_stock = stock.as_ref().clone();
+                // Apply gamma boost to thumbnail
+                thumb_stock.r_curve.gamma *= self.gamma_boost;
+                thumb_stock.g_curve.gamma *= self.gamma_boost;
+                thumb_stock.b_curve.gamma *= self.gamma_boost;
                 let _ = self.tx_thumb.send((
                     stock.full_name(),
                     thumb_base.clone(),
                     thumb_config.clone(),
+                    thumb_stock,
                 ));
             }
         }
