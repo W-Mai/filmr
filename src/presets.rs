@@ -174,8 +174,8 @@ pub fn FUJIFILM_VELVIA_50() -> FilmStock {
 /// ISO: 400
 /// RMS: 16 -> Alpha = 10^-4 * 16^2 = 0.0256
 /// Gamma: 0.70
-/// Dmax: 2.2, Dmin: 0.09
-/// Resolution: 95 lp/mm
+/// Dmax: 2.5, Dmin: 0.09
+/// Resolution: 150 lp/mm
 /// Reciprocity: Good
 /// Spectral: Slightly lower Red response
 pub fn ILFORD_HP5_PLUS() -> FilmStock {
@@ -186,21 +186,21 @@ pub fn ILFORD_HP5_PLUS() -> FilmStock {
         iso: 400.0,
         r_curve: SegmentedCurve {
             d_min: 0.09,
-            d_max: 2.2,
+            d_max: 2.5,
             gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 34.22952,
         },
         g_curve: SegmentedCurve {
             d_min: 0.09,
-            d_max: 2.2,
+            d_max: 2.5,
             gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 34.22952,
         },
         b_curve: SegmentedCurve {
             d_min: 0.09,
-            d_max: 2.2,
+            d_max: 2.5,
             gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 34.22952,
@@ -217,7 +217,7 @@ pub fn ILFORD_HP5_PLUS() -> FilmStock {
             shadow_noise: 0.001,
             highlight_coarseness: 0.05,
         }, // RMS 16
-        resolution_lp_mm: 95.0,
+        resolution_lp_mm: 150.0,
         reciprocity: crate::film::ReciprocityFailure { beta: 0.05 },
         halation_strength: 0.25,
         halation_threshold: 0.8,
@@ -304,21 +304,21 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 3.2,
-            gamma: 0.85,
+            gamma: 0.75,
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         g_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 3.2,
-            gamma: 0.85,
+            gamma: 0.75,
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         b_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 3.2,
-            gamma: 0.85,
+            gamma: 0.75,
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
@@ -696,7 +696,7 @@ pub fn FUJIFILM_PROVIA_100F() -> FilmStock {
 /// Source: Fujifilm 2016 Data Sheet
 /// ISO: 100
 /// RMS: 8 -> Alpha = 0.0064
-/// Gamma: 0.7
+/// Gamma: 0.9
 /// Dmax: 3.0, Dmin: 0.12
 /// Resolution: 135 lp/mm
 pub fn FUJIFILM_ASTIA_100F() -> FilmStock {
@@ -751,7 +751,7 @@ pub fn FUJIFILM_ASTIA_100F() -> FilmStock {
 /// Source: Fujifilm 2013 Data Sheet
 /// ISO: 400
 /// RMS: 11 -> Alpha = 0.0121
-/// Gamma: 0.95
+/// Gamma: 1.1
 /// Dmax: 3.4, Dmin: 0.14
 /// Resolution: 125 lp/mm
 pub fn FUJIFILM_PROVIA_400X() -> FilmStock {
@@ -1257,7 +1257,7 @@ pub fn KODAK_PLUS_X_125() -> FilmStock {
 /// Ilford FP4 Plus (Fine Grain B&W)
 /// Source: Ilford 2021 Data Sheet
 /// ISO: 125
-/// RMS: 11 -> Alpha = 0.0121
+/// RMS: 9 -> Alpha = 0.0081
 /// Gamma: 0.65
 /// Dmax: 2.0, Dmin: 0.08
 /// Resolution: 135 lp/mm
@@ -1293,7 +1293,7 @@ pub fn ILFORD_FP4_PLUS() -> FilmStock {
         grain_model: GrainModel {
             alpha: 0.0081,
             sigma_read: 0.005,
-            monochrome: false,
+            monochrome: true,
             blur_radius: 0.4,
             roughness: 0.4,
             color_correlation: 0.8,
@@ -1491,21 +1491,21 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.10,
             d_max: 2.8,
-            gamma: 0.75,
+            gamma: 0.65,
             shoulder_point: 0.8,
             exposure_offset: 0.125,
         },
         g_curve: SegmentedCurve {
             d_min: 0.10,
             d_max: 2.8,
-            gamma: 0.75,
+            gamma: 0.65,
             shoulder_point: 0.8,
             exposure_offset: 0.125,
         },
         b_curve: SegmentedCurve {
             d_min: 0.10,
             d_max: 2.8,
-            gamma: 0.75,
+            gamma: 0.65,
             shoulder_point: 0.8,
             exposure_offset: 0.125,
         },
