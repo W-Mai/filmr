@@ -410,3 +410,16 @@ pub fn POLAROID_55_BW() -> FilmStock {
         halation_tint: [0.88, 0.88, 0.88],
     }
 }
+
+/// Get all Polaroid film stocks
+pub fn get_stocks() -> Vec<FilmStock> {
+    vec![
+        POLAROID_600_COLOR(),
+        POLAROID_SX70_COLOR(),
+        POLAROID_I_TYPE_COLOR(),
+        POLAROID_BW_667(),
+        POLAROID_SPECTRA_COLOR(),
+        POLAROID_100_COLOR(),
+        POLAROID_55_BW(),
+    ]
+}

@@ -445,3 +445,17 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
         halation_tint: [0.93, 0.93, 0.93],
     }
 }
+
+/// Get all Ilford film stocks
+pub fn get_stocks() -> Vec<FilmStock> {
+    vec![
+        HP5_PLUS_400(),
+        FP4_PLUS_125(),
+        PAN_F_PLUS_50(),
+        DELTA_100_PROFESSIONAL(),
+        DELTA_400_PROFESSIONAL(),
+        ORTHO_PLUS_80(),
+        XP2_SUPER_400(),
+        SFX_200(),
+    ]
+}

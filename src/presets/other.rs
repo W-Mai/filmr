@@ -514,3 +514,18 @@ pub fn ORWO_UN64() -> FilmStock {
         halation_tint: [0.94, 0.94, 0.94],
     }
 }
+
+/// Get all other manufacturer film stocks
+pub fn get_stocks() -> Vec<FilmStock> {
+    vec![
+        STANDARD_DAYLIGHT(),
+        CINESTILL_800T(),
+        CINESTILL_50D(),
+        LOMOGRAPHY_COLOR_CHROME(),
+        LOMOGRAPHY_LOMOCHROME_PURPLE(),
+        FERRANIA_SOLARIS_400(),
+        FERRANIA_SOLARIS_100(),
+        ORWO_UN54(),
+        ORWO_UN64(),
+    ]
+}

@@ -10,49 +10,32 @@ pub mod kodak;
 pub mod other;
 pub mod polaroid;
 
-// Re-export all presets for convenience
-pub use agfa::*;
-pub use fujifilm::*;
-pub use ilford::*;
-pub use kodak::*;
-pub use other::*;
-pub use polaroid::*;
+// Re-export commonly used presets for convenience
+pub use agfa::{VISTA_100, VISTA_200, VISTA_400};
+pub use fujifilm::{ASTIA_100F, NEOPAN_100, PROVIA_100F, SUPERIA_200, SUPERIA_400, VELVIA_50};
+pub use ilford::{
+    DELTA_100_PROFESSIONAL, DELTA_400_PROFESSIONAL, FP4_PLUS_125, HP5_PLUS_400, PAN_F_PLUS_50,
+    SFX_200,
+};
+pub use kodak::{
+    KODAK_EKTACHROME_100VS, KODAK_EKTAR_100, KODAK_GOLD_200, KODAK_KODACHROME_25,
+    KODAK_KODACHROME_64, KODAK_PLUS_X_125, KODAK_PORTRA_160, KODAK_PORTRA_400, KODAK_PORTRA_800,
+    KODAK_TRI_X_400,
+};
+pub use other::STANDARD_DAYLIGHT;
+pub use polaroid::POLAROID_SX70_COLOR;
 
 /// Get all available film stock presets
 pub fn get_all_stocks() -> Vec<Rc<FilmStock>> {
-    vec![
-        Rc::from(STANDARD_DAYLIGHT()),
-        Rc::from(KODAK_TRI_X_400()),
-        Rc::from(VELVIA_50()),
-        Rc::from(HP5_PLUS_400()),
-        Rc::from(KODAK_PORTRA_400()),
-        Rc::from(KODAK_EKTAR_100()),
-        Rc::from(KODAK_PORTRA_800()),
-        Rc::from(DELTA_100_PROFESSIONAL()),
-        Rc::from(SUPERIA_400()),
-        Rc::from(VELVIA_50()),
-        Rc::from(VISTA_100()),
-        Rc::from(PROVIA_100F()),
-        Rc::from(ASTIA_100F()),
-        Rc::from(SUPERIA_400()),
-        Rc::from(SUPERIA_200()),
-        Rc::from(VISTA_200()),
-        Rc::from(VISTA_400()),
-        Rc::from(SUPERIA_200()),
-        Rc::from(SUPERIA_400()),
-        Rc::from(KODAK_TRI_X_400()),
-        Rc::from(KODAK_EKTAR_100()),
-        Rc::from(KODAK_PLUS_X_125()),
-        Rc::from(FP4_PLUS_125()),
-        Rc::from(DELTA_400_PROFESSIONAL()),
-        Rc::from(PAN_F_PLUS_50()),
-        Rc::from(SFX_200()),
-        Rc::from(KODAK_PORTRA_160()),
-        Rc::from(KODAK_GOLD_200()),
-        Rc::from(KODAK_KODACHROME_25()),
-        Rc::from(KODAK_KODACHROME_64()),
-        Rc::from(KODAK_EKTACHROME_100VS()),
-        Rc::from(NEOPAN_100()),
-        Rc::from(POLAROID_SX70_COLOR()),
-    ]
+    let mut stocks = Vec::new();
+
+    // Collect stocks from all manufacturers
+    stocks.extend(kodak::get_stocks().into_iter().map(Rc::from));
+    stocks.extend(fujifilm::get_stocks().into_iter().map(Rc::from));
+    stocks.extend(ilford::get_stocks().into_iter().map(Rc::from));
+    stocks.extend(agfa::get_stocks().into_iter().map(Rc::from));
+    stocks.extend(polaroid::get_stocks().into_iter().map(Rc::from));
+    stocks.extend(other::get_stocks().into_iter().map(Rc::from));
+
+    stocks
 }

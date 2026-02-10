@@ -469,3 +469,17 @@ pub fn ASTIA_100F() -> FilmStock {
         halation_tint: [0.98, 0.98, 1.0],
     }
 }
+
+/// Get all Fujifilm film stocks
+pub fn get_stocks() -> Vec<FilmStock> {
+    vec![
+        SUPERIA_400(),
+        SUPERIA_200(),
+        SUPERIA_100(),
+        PROVIA_100F(),
+        VELVIA_50(),
+        NEOPAN_400(),
+        NEOPAN_100(),
+        ASTIA_100F(),
+    ]
+}

@@ -646,3 +646,20 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
         halation_tint: [1.0, 0.30, 0.30],
     }
 }
+
+/// Get all Kodak film stocks
+pub fn get_stocks() -> Vec<FilmStock> {
+    vec![
+        KODAK_PORTRA_400(),
+        KODAK_PORTRA_160(),
+        KODAK_PORTRA_800(),
+        KODAK_TRI_X_400(),
+        KODAK_PLUS_X_125(),
+        KODAK_EKTACHROME_100(),
+        KODAK_EKTACHROME_100VS(),
+        KODAK_KODACHROME_64(),
+        KODAK_GOLD_200(),
+        KODAK_EKTAR_100(),
+        KODAK_KODACHROME_25(),
+    ]
+}

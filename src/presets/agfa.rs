@@ -465,3 +465,17 @@ pub fn OPTIMA_200() -> FilmStock {
         halation_tint: [1.0, 0.68, 0.48],
     }
 }
+
+/// Get all Agfa film stocks
+pub fn get_stocks() -> Vec<FilmStock> {
+    vec![
+        VISTA_200(),
+        VISTA_400(),
+        VISTA_100(),
+        APX_400(),
+        APX_100(),
+        PRECISA_100(),
+        SCALA_200(),
+        OPTIMA_200(),
+    ]
+}
