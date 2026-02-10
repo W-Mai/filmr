@@ -2,6 +2,7 @@
 pub mod cli;
 
 pub mod config;
+pub mod exif_utils;
 pub mod types;
 
 #[cfg(target_arch = "wasm32")]

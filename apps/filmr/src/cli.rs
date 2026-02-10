@@ -1,11 +1,11 @@
+use crate::exif_utils::{apply_exif_orientation, read_exif_orientation};
 use clap::{Parser, ValueEnum};
 use filmr::film::{FilmStock, FilmStockCollection};
 use filmr::presets;
 use filmr::processor::{
     estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
-use image::DynamicImage;
-use std::io::{BufReader, Seek};
+use std::io::BufReader;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -59,35 +59,6 @@ enum CliOutputMode {
 enum CliWhiteBalance {
     Auto,
     Off,
-}
-
-/// Read EXIF orientation from a file and return the orientation value (1-8).
-fn read_exif_orientation<R: std::io::BufRead + Seek>(reader: &mut R) -> u32 {
-    let exif_reader = exif::Reader::new();
-    match exif_reader.read_from_container(reader) {
-        Ok(exif) => {
-            if let Some(field) = exif.get_field(exif::Tag::Orientation, exif::In::PRIMARY) {
-                field.value.get_uint(0).unwrap_or(1)
-            } else {
-                1
-            }
-        }
-        Err(_) => 1,
-    }
-}
-
-/// Apply EXIF orientation transform to a DynamicImage.
-fn apply_exif_orientation(img: DynamicImage, orientation: u32) -> DynamicImage {
-    match orientation {
-        2 => img.fliph(),
-        3 => img.rotate180(),
-        4 => img.flipv(),
-        5 => img.rotate90().fliph(),
-        6 => img.rotate90(),
-        7 => img.rotate270().fliph(),
-        8 => img.rotate270(),
-        _ => img,
-    }
 }
 
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
