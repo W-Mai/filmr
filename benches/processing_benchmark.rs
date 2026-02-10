@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use filmr::presets::KODAK_PORTRA_400;
+use filmr::presets::kodak::KODAK_PORTRA_400;
 use filmr::processor::{process_image, SimulationConfig};
 use image::{Rgb, RgbImage};
 

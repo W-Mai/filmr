@@ -8,7 +8,7 @@ use std::time::Instant;
 // Import presets directly from source (if public) or copy them
 // Since presets are in src/presets.rs and public, we can use them if lib.rs exposes them.
 // Let's check lib.rs again. It exposes `presets` mod.
-use filmr::presets;
+use filmr::presets::{fujifilm, ilford, kodak};
 
 fn main() {
     let input_path = "DSC_2497.JPG";
@@ -28,22 +28,22 @@ fn main() {
     let stocks = [
         (
             "Kodak_Tri-X_400",
-            presets::KODAK_TRI_X_400(),
+            kodak::KODAK_TRI_X_400(),
             OutputMode::Positive,
         ),
         (
             "Fujifilm_Velvia_50",
-            presets::VELVIA_50(),
+            fujifilm::VELVIA_50(),
             OutputMode::Positive,
         ),
         (
             "Ilford_HP5_Plus",
-            presets::HP5_PLUS_400(),
+            ilford::HP5_PLUS_400(),
             OutputMode::Positive,
         ),
         (
             "Kodak_Portra_400",
-            presets::KODAK_PORTRA_400(),
+            kodak::KODAK_PORTRA_400(),
             OutputMode::Positive,
         ),
     ];

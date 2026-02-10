@@ -1,5 +1,5 @@
 use filmr::film::FilmStock;
-use filmr::presets::KODAK_PORTRA_400;
+use filmr::presets::kodak::KODAK_PORTRA_400;
 use filmr::processor::{OutputMode, SimulationConfig};
 use filmr::spectral::{Spectrum, BINS};
 use image::{Rgb, RgbImage};

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use filmr::presets::STANDARD_DAYLIGHT;
+    use filmr::presets::other::STANDARD_DAYLIGHT;
     use filmr::processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
     use filmr::spectral::{
         CameraSensitivities, FilmSensitivities, FilmSpectralParams, Spectrum, BINS, LAMBDA_START,

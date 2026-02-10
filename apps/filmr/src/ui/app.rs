@@ -535,7 +535,7 @@ impl FilmrApp {
 
             mode: AppMode::Develop,
             ux_mode,
-            studio_stock: presets::STANDARD_DAYLIGHT(),
+            studio_stock: presets::other::STANDARD_DAYLIGHT(),
             builtin_stock_count,
 
             studio_stock_idx: None,

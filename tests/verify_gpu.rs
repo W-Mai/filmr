@@ -1,4 +1,4 @@
-use filmr::presets;
+use filmr::presets::other::STANDARD_DAYLIGHT;
 use filmr::processor::{process_image, SimulationConfig, WhiteBalanceMode};
 use image::{Rgb, RgbImage};
 
@@ -10,7 +10,7 @@ fn test_gpu_full_pipeline() {
         Rgb([(x % 255) as u8, (y % 255) as u8, 128])
     });
 
-    let film = presets::STANDARD_DAYLIGHT();
+    let film = STANDARD_DAYLIGHT();
     let config = SimulationConfig {
         use_gpu: true,
         light_leak: filmr::light_leak::LightLeakConfig {
@@ -48,7 +48,7 @@ fn test_gpu_halation_effect() {
         }
     });
 
-    let mut film = presets::STANDARD_DAYLIGHT();
+    let mut film = STANDARD_DAYLIGHT();
     film.halation_strength = 1.0; // Strong halation
     film.halation_threshold = 0.0; // Trigger on EVERYTHING
     film.halation_sigma = 0.1; // Large radius

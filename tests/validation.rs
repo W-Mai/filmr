@@ -1,4 +1,4 @@
-use filmr::presets;
+use filmr::presets::other::STANDARD_DAYLIGHT;
 use filmr::processor::{
     estimate_exposure_time, process_image, OutputMode, SimulationConfig, WhiteBalanceMode,
 };
@@ -18,7 +18,7 @@ fn test_neutral_axis_stability() {
         }
     }
 
-    let film = presets::STANDARD_DAYLIGHT();
+    let film = STANDARD_DAYLIGHT();
     let mut config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: false, // Disable grain for pure color check
@@ -83,7 +83,7 @@ fn test_neutral_axis_stability() {
 fn test_channel_integrity() {
     // Check pure red input
     let input = RgbImage::from_fn(50, 50, |_, _| Rgb([200, 0, 0]));
-    let film = presets::STANDARD_DAYLIGHT();
+    let film = STANDARD_DAYLIGHT();
     let mut config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: false,

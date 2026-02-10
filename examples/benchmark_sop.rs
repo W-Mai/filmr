@@ -1,4 +1,4 @@
-use filmr::presets::KODAK_PORTRA_400;
+use filmr::presets::kodak::KODAK_PORTRA_400;
 use filmr::processor::{process_image, SimulationConfig, WhiteBalanceMode};
 use image::{Rgb, RgbImage};
 use std::time::Instant;

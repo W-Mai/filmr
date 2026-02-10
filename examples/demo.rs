@@ -1,4 +1,4 @@
-use filmr::{presets, process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
+use filmr::{presets::other, process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
 use image::{Rgb, RgbImage};
 
 fn main() {
@@ -18,7 +18,7 @@ fn main() {
 
     // 2. Setup Film Simulation
     // Use preset
-    let film = presets::STANDARD_DAYLIGHT();
+    let film = other::STANDARD_DAYLIGHT();
     let config = SimulationConfig {
         exposure_time: 1.0,
         enable_grain: true,

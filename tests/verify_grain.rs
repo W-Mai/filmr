@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use filmr::presets::KODAK_TRI_X_400;
+    use filmr::presets::kodak::KODAK_TRI_X_400;
     use filmr::processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
     use image::{Rgb, RgbImage};
 

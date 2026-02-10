@@ -4,7 +4,7 @@ use filmr::physics::linear_to_srgb;
 use filmr::pipeline::{
     create_output_image, GrainStage, HalationStage, PipelineContext, PipelineStage,
 };
-use filmr::presets::KODAK_PORTRA_400;
+use filmr::presets::kodak::KODAK_PORTRA_400;
 use filmr::processor::{OutputMode, SimulationConfig};
 use filmr::spectral::{CameraSensitivities, Spectrum};
 use image::{GenericImage, ImageBuffer, Rgb, RgbImage};
