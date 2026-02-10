@@ -33,12 +33,12 @@ fn main() {
         ),
         (
             "Fujifilm_Velvia_50",
-            presets::FUJIFILM_VELVIA_50(),
+            presets::VELVIA_50(),
             OutputMode::Positive,
         ),
         (
             "Ilford_HP5_Plus",
-            presets::ILFORD_HP5_PLUS(),
+            presets::HP5_PLUS_400(),
             OutputMode::Positive,
         ),
         (
