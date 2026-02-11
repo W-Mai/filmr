@@ -47,7 +47,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0225,
+            alpha: 0.000225,
             sigma_read: 0.008,
             monochrome: false,
             blur_radius: 0.8,
@@ -106,7 +106,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000207,
             sigma_read: 0.006,
             monochrome: false,
             blur_radius: 0.8,
@@ -165,7 +165,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0256,
+            alpha: 0.000256,
             sigma_read: 0.009,
             monochrome: false,
             blur_radius: 0.8,
@@ -220,7 +220,7 @@ pub fn POLAROID_BW_667() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0400,
+            alpha: 0.000400,
             sigma_read: 0.012,
             monochrome: true,
             blur_radius: 1.0,
@@ -279,7 +279,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0256,
+            alpha: 0.000256,
             sigma_read: 0.009,
             monochrome: false,
             blur_radius: 0.8,
@@ -338,7 +338,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.7,
@@ -393,7 +393,7 @@ pub fn POLAROID_55_BW() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: true,
             blur_radius: 0.7,

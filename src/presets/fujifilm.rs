@@ -47,7 +47,7 @@ pub fn SUPERIA_400() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000207,
             sigma_read: 0.006,
             monochrome: false,
             blur_radius: 0.5,
@@ -106,7 +106,7 @@ pub fn SUPERIA_200() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.5,
@@ -165,7 +165,7 @@ pub fn SUPERIA_100() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -220,7 +220,7 @@ pub fn NEOPAN_400() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0196,
+            alpha: 0.000384,
             sigma_read: 0.007,
             monochrome: true,
             blur_radius: 0.5,
@@ -275,7 +275,7 @@ pub fn NEOPAN_100() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0081,
+            alpha: 0.000066,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -334,7 +334,7 @@ pub fn PROVIA_100F() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -452,7 +452,7 @@ pub fn ASTIA_100F() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,

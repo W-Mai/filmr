@@ -98,7 +98,7 @@ pub fn FP4_PLUS_125() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0081,
+            alpha: 0.000066,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -153,7 +153,7 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0121,
+            alpha: 0.000146,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -208,7 +208,7 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: true,
             blur_radius: 0.5,
@@ -263,7 +263,7 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0036,
+            alpha: 0.000013,
             sigma_read: 0.003,
             monochrome: true,
             blur_radius: 0.5,
@@ -318,7 +318,7 @@ pub fn XP2_SUPER_400() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -373,7 +373,7 @@ pub fn SFX_200() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -428,7 +428,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: true,
             blur_radius: 0.5,

@@ -107,7 +107,7 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0081,
+            alpha: 0.000066,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -166,7 +166,7 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0169,
+            alpha: 0.000286,
             sigma_read: 0.007,
             monochrome: false,
             blur_radius: 0.5,
@@ -283,7 +283,7 @@ pub fn KODAK_PLUS_X_125() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0081,
+            alpha: 0.000066,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -342,7 +342,7 @@ pub fn KODAK_EKTACHROME_100() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -401,7 +401,7 @@ pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -460,7 +460,7 @@ pub fn KODAK_KODACHROME_64() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0049,
+            alpha: 0.000024,
             sigma_read: 0.003,
             monochrome: false,
             blur_radius: 0.5,
@@ -519,7 +519,7 @@ pub fn KODAK_GOLD_200() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.5,
@@ -578,7 +578,7 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -637,7 +637,7 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0025,
+            alpha: 0.000025,
             sigma_read: 0.002,
             monochrome: false,
             blur_radius: 0.4,

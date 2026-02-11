@@ -37,7 +37,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
         color_matrix: [[1.00, 0.05, 0.02], [0.04, 1.00, 0.04], [0.01, 0.05, 1.00]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.05,
+            alpha: 0.0005,
             sigma_read: 0.01,
             monochrome: false,
             blur_radius: 0.5,
@@ -96,7 +96,7 @@ pub fn CINESTILL_800T() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0169,
+            alpha: 0.000286,
             sigma_read: 0.007,
             monochrome: false,
             blur_radius: 0.5,
@@ -155,7 +155,7 @@ pub fn CINESTILL_50D() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0036,
+            alpha: 0.000013,
             sigma_read: 0.003,
             monochrome: false,
             blur_radius: 0.5,
@@ -214,7 +214,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.5,
@@ -269,7 +269,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
         color_matrix: [[0.95, 0.05, 0.00], [0.00, 0.95, 0.05], [0.05, 0.00, 0.95]],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000207,
             sigma_read: 0.006,
             monochrome: false,
             blur_radius: 0.5,
@@ -328,7 +328,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000207,
             sigma_read: 0.006,
             monochrome: false,
             blur_radius: 0.5,
@@ -387,7 +387,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -442,7 +442,7 @@ pub fn ORWO_UN54() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000207,
             sigma_read: 0.006,
             monochrome: true,
             blur_radius: 0.5,
@@ -497,7 +497,7 @@ pub fn ORWO_UN64() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0049,
+            alpha: 0.000024,
             sigma_read: 0.003,
             monochrome: true,
             blur_radius: 0.5,

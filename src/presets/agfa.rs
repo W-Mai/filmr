@@ -47,7 +47,7 @@ pub fn VISTA_400() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000207,
             sigma_read: 0.006,
             monochrome: false,
             blur_radius: 0.5,
@@ -106,7 +106,7 @@ pub fn VISTA_200() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.5,
@@ -165,7 +165,7 @@ pub fn VISTA_100() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -220,7 +220,7 @@ pub fn APX_400() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0169,
+            alpha: 0.000286,
             sigma_read: 0.007,
             monochrome: true,
             blur_radius: 0.5,
@@ -275,7 +275,7 @@ pub fn APX_100() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0081,
+            alpha: 0.000066,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -334,7 +334,7 @@ pub fn PRECISA_100() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0064,
+            alpha: 0.000041,
             sigma_read: 0.004,
             monochrome: false,
             blur_radius: 0.5,
@@ -389,7 +389,7 @@ pub fn SCALA_200() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: true,
             blur_radius: 0.5,
@@ -448,7 +448,7 @@ pub fn OPTIMA_200() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0100,
+            alpha: 0.000100,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.5,
