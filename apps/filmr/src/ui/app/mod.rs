@@ -82,6 +82,7 @@ pub struct FilmrApp {
     // Selection
     pub stocks: Vec<std::rc::Rc<FilmStock>>,
     pub selected_stock_idx: usize,
+    pub film_style: filmr::FilmStyle,
 
     pub output_mode: OutputMode,
     pub white_balance_mode: WhiteBalanceMode,
@@ -209,6 +210,7 @@ impl FilmrApp {
 
             stocks,
             selected_stock_idx: 0, // Default to first
+            film_style: filmr::FilmStyle::Accurate,
             output_mode: OutputMode::Positive,
             white_balance_mode: WhiteBalanceMode::Auto,
             white_balance_strength: 1.0,
@@ -237,7 +239,7 @@ impl FilmrApp {
         }
     }
 
-    /// Get the currently selected film stock.
+    /// Get the currently selected film stock with applied style.
     pub fn get_current_stock(&self) -> std::rc::Rc<FilmStock> {
         let index = if self.selected_stock_idx < self.stocks.len() {
             self.selected_stock_idx
@@ -245,7 +247,9 @@ impl FilmrApp {
             0
         };
 
-        self.stocks[index].clone()
+        let base_stock = self.stocks[index].as_ref().clone();
+        let styled_stock = base_stock.with_style(self.film_style);
+        std::rc::Rc::new(styled_stock)
     }
 
     // --- Private helper methods ---

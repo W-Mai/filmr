@@ -1,6 +1,6 @@
 use egui::{Context, RichText};
 use filmr::light_leak::{LightLeak, LightLeakShape};
-use filmr::{OutputMode, WhiteBalanceMode};
+use filmr::{FilmStyle, OutputMode, WhiteBalanceMode};
 
 use crate::ui::app::{AppMode, FilmrApp};
 
@@ -147,6 +147,46 @@ fn render_film_stock_section(
                 app.load_preset_values();
                 *changed = true;
             }
+
+            // Film Style Selector
+            ui.add_space(5.0);
+            ui.label("🎨 Rendering Style");
+            let prev_style = app.film_style;
+            egui::ComboBox::from_id_salt("film_style")
+                .selected_text(format!("{:?}", app.film_style))
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut app.film_style,
+                        FilmStyle::Accurate,
+                        "Accurate (Physical)",
+                    );
+                    ui.selectable_value(
+                        &mut app.film_style,
+                        FilmStyle::Artistic,
+                        "Artistic (Enhanced)",
+                    );
+                    ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage (Faded)");
+                    ui.selectable_value(
+                        &mut app.film_style,
+                        FilmStyle::HighContrast,
+                        "High Contrast",
+                    );
+                    ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel (Soft)");
+                });
+
+            if app.film_style != prev_style {
+                *changed = true;
+            }
+
+            // Style description
+            let description = match app.film_style {
+                FilmStyle::Accurate => "Physical accuracy based on datasheets",
+                FilmStyle::Artistic => "Enhanced colors, contrast, and grain",
+                FilmStyle::Vintage => "Aged film with faded colors",
+                FilmStyle::HighContrast => "Dramatic B&W look",
+                FilmStyle::Pastel => "Soft, muted tones",
+            };
+            ui.small(description);
         } else {
             // Studio Mode: Show only the temporary stock
             ui.group(|ui| {
