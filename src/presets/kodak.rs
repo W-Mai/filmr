@@ -66,6 +66,35 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
     }
 }
 
+/// Kodak Portra 400 - Artistic (Enhanced for visual appeal)
+/// Based on Portra 400 with boosted color separation, contrast, and grain
+pub fn KODAK_PORTRA_400_ARTISTIC() -> FilmStock {
+    let mut stock = KODAK_PORTRA_400();
+
+    // Enhanced color separation (warmer skin tones, richer colors)
+    stock.color_matrix = [
+        [1.12, -0.08, -0.04],
+        [-0.06, 1.15, -0.09],
+        [-0.05, -0.10, 1.18],
+    ];
+
+    // Increased contrast
+    stock.r_curve.gamma = 0.72;
+    stock.g_curve.gamma = 0.72;
+    stock.b_curve.gamma = 0.72;
+
+    // More visible grain
+    stock.grain_model.alpha *= 1.6;
+    stock.grain_model.blur_radius *= 1.15;
+
+    // Enhanced halation
+    stock.halation_strength = 0.22;
+    stock.halation_sigma = 0.018;
+
+    stock.name = "Portra 400 Artistic".to_string();
+    stock
+}
+
 /// Kodak Portra 160 (Fine Grain Color Negative)
 /// Source: Kodak Technical Data
 /// ISO: 160
@@ -244,6 +273,33 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         halation_sigma: 0.016,
         halation_tint: [0.85, 0.85, 0.85],
     }
+}
+
+/// Kodak Tri-X 400 - Artistic (Enhanced high-contrast street photography look)
+/// Based on Tri-X 400 with boosted contrast, grain, and halation
+pub fn KODAK_TRI_X_400_ARTISTIC() -> FilmStock {
+    let mut stock = KODAK_TRI_X_400();
+
+    // Higher contrast (classic pushed Tri-X look)
+    stock.r_curve.gamma = 0.80;
+    stock.g_curve.gamma = 0.80;
+    stock.b_curve.gamma = 0.80;
+
+    // Earlier shoulder for more dramatic highlights
+    stock.r_curve.shoulder_point = 0.72;
+    stock.g_curve.shoulder_point = 0.72;
+    stock.b_curve.shoulder_point = 0.72;
+
+    // More prominent grain
+    stock.grain_model.alpha *= 1.8;
+    stock.grain_model.roughness = 0.7;
+
+    // Enhanced halation for glow
+    stock.halation_strength = 0.28;
+    stock.halation_sigma = 0.020;
+
+    stock.name = "Tri-X 400 Artistic".to_string();
+    stock
 }
 
 /// Kodak Plus-X 125 (Fine Grain B&W)
@@ -659,9 +715,11 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
 pub fn get_stocks() -> Vec<FilmStock> {
     vec![
         KODAK_PORTRA_400(),
+        KODAK_PORTRA_400_ARTISTIC(),
         KODAK_PORTRA_160(),
         KODAK_PORTRA_800(),
         KODAK_TRI_X_400(),
+        KODAK_TRI_X_400_ARTISTIC(),
         KODAK_PLUS_X_125(),
         KODAK_EKTACHROME_100(),
         KODAK_EKTACHROME_100VS(),

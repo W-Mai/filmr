@@ -61,6 +61,28 @@ pub fn HP5_PLUS_400() -> FilmStock {
     }
 }
 
+/// Ilford HP5 Plus 400 - Artistic (Classic documentary look)
+/// Based on HP5 Plus with enhanced grain and contrast
+pub fn HP5_PLUS_400_ARTISTIC() -> FilmStock {
+    let mut stock = HP5_PLUS_400();
+
+    // Increased contrast (classic pushed HP5 look)
+    stock.r_curve.gamma = 0.75;
+    stock.g_curve.gamma = 0.75;
+    stock.b_curve.gamma = 0.75;
+
+    // More prominent grain
+    stock.grain_model.alpha *= 1.7;
+    stock.grain_model.roughness = 0.65;
+
+    // Enhanced halation
+    stock.halation_strength = 0.25;
+    stock.halation_sigma = 0.018;
+
+    stock.name = "HP5 Plus 400 Artistic".to_string();
+    stock
+}
+
 /// Ilford FP4 Plus 125 (Fine Grain B&W)
 /// Source: Ilford Technical Data
 /// ISO: 125
@@ -450,6 +472,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
 pub fn get_stocks() -> Vec<FilmStock> {
     vec![
         HP5_PLUS_400(),
+        HP5_PLUS_400_ARTISTIC(),
         FP4_PLUS_125(),
         PAN_F_PLUS_50(),
         DELTA_100_PROFESSIONAL(),

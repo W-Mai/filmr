@@ -411,6 +411,33 @@ pub fn VELVIA_50() -> FilmStock {
     }
 }
 
+/// Fujifilm Velvia 50 - Artistic (Ultra-saturated landscape look)
+/// Based on Velvia 50 with even more extreme color saturation
+pub fn VELVIA_50_ARTISTIC() -> FilmStock {
+    let mut stock = VELVIA_50();
+
+    // Extreme color separation (legendary Velvia saturation)
+    stock.color_matrix = [
+        [1.40, -0.20, -0.20],
+        [-0.20, 1.45, -0.25],
+        [-0.20, -0.25, 1.45],
+    ];
+
+    // Slightly higher contrast
+    stock.r_curve.gamma = 1.50;
+    stock.g_curve.gamma = 1.50;
+    stock.b_curve.gamma = 1.50;
+
+    // More visible grain (even though Velvia is fine-grained)
+    stock.grain_model.alpha *= 1.4;
+
+    // Subtle halation boost
+    stock.halation_strength = 0.12;
+
+    stock.name = "Velvia 50 Artistic".to_string();
+    stock
+}
+
 /// Fujifilm Astia 100F (Soft Tone Slide Film)
 /// Source: Fujifilm Technical Data
 /// ISO: 100
@@ -478,6 +505,7 @@ pub fn get_stocks() -> Vec<FilmStock> {
         SUPERIA_100(),
         PROVIA_100F(),
         VELVIA_50(),
+        VELVIA_50_ARTISTIC(),
         NEOPAN_400(),
         NEOPAN_100(),
         ASTIA_100F(),
