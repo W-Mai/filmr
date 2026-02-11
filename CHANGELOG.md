@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.7] - 2026-02-11
+
+### ♻️ Refactor
+
+- **IO**: Separate EXIF metadata building from file I/O operations.
+- **IO**: Unify image encoding and EXIF writing to memory (`Vec<u8>`) before file output.
+- **IO**: Use `write_to_vec()` instead of `write_to_file()` for EXIF metadata to enable cross-platform support.
+- **IO**: Remove platform-specific `#[cfg]` guards from `build_exif_metadata()` - now works on both desktop and WASM.
+- **IO**: Consolidate file I/O to single point: `std::fs::write()` for desktop, `handle.write()` for WASM.
+- **UI**: Split `controls.rs` into modular components (film_list, technical, simple).
+- **UI**: Split `app.rs` into modular components (io, state, update).
+- **GPU**: Split `gpu_pipelines.rs` into modular pipeline stages.
+- **Presets**: Split into manufacturer-specific modules (kodak, fujifilm, ilford, vintage).
+- **App**: Extract EXIF orientation utils to shared module.
+
+### 💄 Style
+
+- **UI**: Update window size to 1200x800 and rename title.
+
+### 🔧 Fixes
+
+- **Presets**: Fix imports after module refactoring.
+- **Presets**: Fix `get_stocks()` function calls in all preset modules.
+- **Examples**: Update preset function names after module split.
+
 ## [0.6.6] - 2026-02-07
 
 ### ✨ Features
