@@ -47,6 +47,7 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             // UX Mode Switcher
             ui.horizontal_centered(|ui| {
                 ui.set_min_height(24.0);
+                let prev_mode = app.ux_mode;
                 let mut toggle_flag = app.ux_mode == UxMode::Professional;
 
                 ui.label("👶");
@@ -65,6 +66,10 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 } else {
                     UxMode::Simple
                 };
+
+                if prev_mode != app.ux_mode {
+                    changed = true;
+                }
 
                 ui.allocate_ui_with_layout(
                     ui.available_size(),
