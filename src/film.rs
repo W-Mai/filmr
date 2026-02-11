@@ -8,6 +8,23 @@ use crate::spectral::{FilmSensitivities, FilmSpectralParams};
 /// Section 3 & 5 of the documentation.
 use serde::{Deserialize, Serialize};
 
+/// Film rendering style
+/// Controls the balance between physical accuracy and artistic appeal
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum FilmStyle {
+    /// Physical accuracy - based on manufacturer datasheets
+    #[default]
+    Accurate,
+    /// Enhanced for visual appeal - boosted colors, contrast, grain
+    Artistic,
+    /// Aged/faded film look - reduced contrast, color shifts
+    Vintage,
+    /// High contrast black & white look
+    HighContrast,
+    /// Soft, muted pastel tones
+    Pastel,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilmStockCollection {
     pub stocks: std::collections::HashMap<String, FilmStock>,
@@ -231,6 +248,98 @@ impl FilmStock {
         self
     }
 
+    /// Apply a rendering style to the film stock
+    /// Modifies parameters to achieve different aesthetic goals
+    pub fn with_style(mut self, style: FilmStyle) -> Self {
+        match style {
+            FilmStyle::Accurate => self, // No changes
+            FilmStyle::Artistic => {
+                // Boost color separation
+                self.color_matrix = boost_color_matrix(self.color_matrix, 1.15);
+
+                // Increase contrast
+                self.r_curve.gamma *= 1.12;
+                self.g_curve.gamma *= 1.12;
+                self.b_curve.gamma *= 1.12;
+
+                // More visible grain
+                self.grain_model.alpha *= 1.6;
+                self.grain_model.blur_radius *= 1.15;
+
+                // Enhanced halation
+                self.halation_strength *= 1.4;
+                self.halation_sigma *= 1.2;
+
+                self
+            }
+            FilmStyle::Vintage => {
+                // Reduce contrast (faded look)
+                self.r_curve.gamma *= 0.85;
+                self.g_curve.gamma *= 0.85;
+                self.b_curve.gamma *= 0.85;
+
+                // Increase D_min (fog/base density)
+                self.r_curve.d_min += 0.08;
+                self.g_curve.d_min += 0.08;
+                self.b_curve.d_min += 0.08;
+
+                // Color shift (yellowing)
+                self.color_matrix[0][1] += 0.05; // R from G (yellow shift)
+                self.color_matrix[1][2] -= 0.03; // G less from B (cyan loss)
+
+                // More grain (aging)
+                self.grain_model.alpha *= 1.3;
+
+                self
+            }
+            FilmStyle::HighContrast => {
+                // Extreme contrast
+                self.r_curve.gamma *= 1.35;
+                self.g_curve.gamma *= 1.35;
+                self.b_curve.gamma *= 1.35;
+
+                // Earlier shoulder (crushed highlights)
+                self.r_curve.shoulder_point *= 0.85;
+                self.g_curve.shoulder_point *= 0.85;
+                self.b_curve.shoulder_point *= 0.85;
+
+                // Reduce color (B&W-like for color films)
+                if self.film_type != FilmType::BwNegative {
+                    self.color_matrix = reduce_saturation(self.color_matrix, 0.7);
+                }
+
+                // Prominent grain
+                self.grain_model.alpha *= 2.0;
+                self.grain_model.roughness = self.grain_model.roughness.max(0.7);
+
+                self
+            }
+            FilmStyle::Pastel => {
+                // Reduce contrast (soft)
+                self.r_curve.gamma *= 0.80;
+                self.g_curve.gamma *= 0.80;
+                self.b_curve.gamma *= 0.80;
+
+                // Lift shadows (reduce D_max)
+                self.r_curve.d_max *= 0.90;
+                self.g_curve.d_max *= 0.90;
+                self.b_curve.d_max *= 0.90;
+
+                // Muted colors
+                self.color_matrix = reduce_saturation(self.color_matrix, 0.75);
+
+                // Fine grain
+                self.grain_model.alpha *= 0.7;
+
+                // Soft halation
+                self.halation_strength *= 1.2;
+                self.halation_threshold *= 0.95;
+
+                self
+            }
+        }
+    }
+
     /// Save the film stock to a JSON file
     pub fn save_to_file<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), std::io::Error> {
         let file = std::fs::File::create(path)?;
@@ -323,6 +432,35 @@ impl FilmStock {
             d_b_out + self.b_curve.d_min,
         ]
     }
+}
+
+/// Boost color matrix cross-talk for enhanced color separation
+fn boost_color_matrix(matrix: [[f32; 3]; 3], factor: f32) -> [[f32; 3]; 3] {
+    let mut result = matrix;
+    for i in 0..3 {
+        for j in 0..3 {
+            if i == j {
+                // Boost diagonal (main channel)
+                result[i][j] = 1.0 + (matrix[i][j] - 1.0) * factor;
+            } else {
+                // Boost off-diagonal (cross-talk)
+                result[i][j] = matrix[i][j] * factor;
+            }
+        }
+    }
+    result
+}
+
+/// Reduce color saturation by moving matrix towards grayscale
+fn reduce_saturation(matrix: [[f32; 3]; 3], amount: f32) -> [[f32; 3]; 3] {
+    let gray = [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]];
+    let mut result = matrix;
+    for i in 0..3 {
+        for j in 0..3 {
+            result[i][j] = matrix[i][j] * amount + gray[i][j] * (1.0 - amount);
+        }
+    }
+    result
 }
 
 #[cfg(test)]
@@ -433,5 +571,45 @@ mod tests {
 
         assert_eq!(stock.iso, 100.0);
         assert_eq!(stock.film_type, FilmType::ColorNegative);
+    }
+
+    #[test]
+    fn test_film_style_artistic() {
+        let curve = SegmentedCurve::new(0.1, 2.0, 0.65, 1.0);
+        let stock = FilmStock::new(
+            FilmType::ColorNegative,
+            400.0,
+            curve,
+            curve,
+            curve,
+            [
+                [1.05, -0.03, -0.02],
+                [-0.02, 1.05, -0.03],
+                [-0.03, -0.02, 1.05],
+            ],
+            FilmSpectralParams::new_color_negative_standard(),
+            GrainModel::medium_grain(),
+            100.0,
+            ReciprocityFailure { beta: 0.05 },
+            0.15,
+            0.85,
+            0.015,
+            [1.0, 0.7, 0.5],
+            "Test".to_string(),
+            "Film".to_string(),
+        );
+
+        let original_gamma = stock.r_curve.gamma;
+        let original_alpha = stock.grain_model.alpha;
+        let original_halation = stock.halation_strength;
+
+        let artistic = stock.with_style(FilmStyle::Artistic);
+
+        // Check gamma increased
+        assert!(artistic.r_curve.gamma > original_gamma);
+        // Check grain increased
+        assert!(artistic.grain_model.alpha > original_alpha);
+        // Check halation increased
+        assert!(artistic.halation_strength > original_halation);
     }
 }

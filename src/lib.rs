@@ -13,7 +13,7 @@ pub mod processor;
 pub mod spectral;
 pub mod utils;
 
-pub use film::FilmStock;
+pub use film::{FilmStock, FilmStyle};
 pub use grain::GrainModel;
 pub use metrics::FilmMetrics;
 pub use processor::{
