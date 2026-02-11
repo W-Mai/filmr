@@ -11,7 +11,7 @@ use crate::spectral::FilmSpectralParams;
 /// ISO: 400
 /// RMS: 11 -> Alpha = 0.0121
 /// Gamma: 0.65
-/// Dmax: 2.8, Dmin: 0.12
+/// Dmax: 2.9, Dmin: 0.15
 /// Resolution: 125 lp/mm
 pub fn KODAK_PORTRA_400() -> FilmStock {
     FilmStock {
@@ -20,25 +20,25 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
         film_type: FilmType::ColorNegative,
         iso: 400.0,
         r_curve: SegmentedCurve {
-            d_min: 0.12,
-            d_max: 2.8,
+            d_min: 0.15,
+            d_max: 2.9,
             gamma: 0.65,
             shoulder_point: 0.8,
-            exposure_offset: 0.05,
+            exposure_offset: 625.046_9,
         },
         g_curve: SegmentedCurve {
-            d_min: 0.12,
-            d_max: 2.8,
+            d_min: 0.15,
+            d_max: 2.9,
             gamma: 0.65,
             shoulder_point: 0.8,
-            exposure_offset: 0.05,
+            exposure_offset: 625.046_9,
         },
         b_curve: SegmentedCurve {
-            d_min: 0.12,
-            d_max: 2.8,
+            d_min: 0.15,
+            d_max: 2.9,
             gamma: 0.65,
             shoulder_point: 0.8,
-            exposure_offset: 0.05,
+            exposure_offset: 625.046_9,
         },
         color_matrix: [
             [1.07, -0.04, -0.03],
@@ -198,24 +198,24 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         iso: 400.0,
         r_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 2.2,
+            d_max: 3.0,
             gamma: 0.70,
             shoulder_point: 0.8,
-            exposure_offset: 0.05,
+            exposure_offset: 48.87788,
         },
         g_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 2.2,
+            d_max: 3.0,
             gamma: 0.70,
             shoulder_point: 0.8,
-            exposure_offset: 0.05,
+            exposure_offset: 48.87788,
         },
         b_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 2.2,
+            d_max: 3.0,
             gamma: 0.70,
             shoulder_point: 0.8,
-            exposure_offset: 0.05,
+            exposure_offset: 48.87788,
         },
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
