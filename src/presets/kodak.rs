@@ -7,12 +7,13 @@ use crate::grain::GrainModel;
 use crate::spectral::FilmSpectralParams;
 
 /// Kodak Portra 400 (Professional Color Negative)
-/// Source: Kodak Technical Data
+/// Kodak Portra 400 (Professional Color Negative)
+/// Source: Kodak E-7053
 /// ISO: 400
-/// RMS: 11 -> Alpha = 0.0121
+/// PGI: 35 -> RMS: 11.2 -> Alpha = 0.000125
 /// Gamma: 0.65
 /// Dmax: 2.9, Dmin: 0.15
-/// Resolution: 125 lp/mm
+/// Resolution: 115 lp/mm
 pub fn KODAK_PORTRA_400() -> FilmStock {
     FilmStock {
         manufacturer: "Kodak".to_string(),
@@ -47,7 +48,7 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_color_negative_standard(),
         grain_model: GrainModel {
-            alpha: 0.0121,
+            alpha: 0.000125,
             sigma_read: 0.005,
             monochrome: false,
             blur_radius: 0.5,
@@ -56,7 +57,7 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
             shadow_noise: 0.001,
             highlight_coarseness: 0.05,
         },
-        resolution_lp_mm: 125.0,
+        resolution_lp_mm: 115.0,
         reciprocity: ReciprocityFailure { beta: 0.05 },
         halation_strength: 0.15,
         halation_threshold: 0.85,
@@ -190,6 +191,13 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
 /// Gamma: 0.70
 /// Dmax: 2.2, Dmin: 0.10
 /// Resolution: 115 lp/mm
+/// Kodak Tri-X 400 (Classic B&W)
+/// Source: Kodak F-4017
+/// ISO: 400
+/// RMS: 17 -> Alpha = 0.000289
+/// Gamma: 0.70
+/// Dmax: 2.2, Dmin: 0.10
+/// Resolution: 100 lp/mm
 pub fn KODAK_TRI_X_400() -> FilmStock {
     FilmStock {
         manufacturer: "Kodak".to_string(),
@@ -198,21 +206,21 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         iso: 400.0,
         r_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 3.0,
+            d_max: 2.2,
             gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 48.87788,
         },
         g_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 3.0,
+            d_max: 2.2,
             gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 48.87788,
         },
         b_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 3.0,
+            d_max: 2.2,
             gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 48.87788,
@@ -220,7 +228,7 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0196,
+            alpha: 0.000289,
             sigma_read: 0.007,
             monochrome: true,
             blur_radius: 0.5,
@@ -229,7 +237,7 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
             shadow_noise: 0.001,
             highlight_coarseness: 0.05,
         },
-        resolution_lp_mm: 115.0,
+        resolution_lp_mm: 100.0,
         reciprocity: ReciprocityFailure { beta: 0.05 },
         halation_strength: 0.20,
         halation_threshold: 0.82,

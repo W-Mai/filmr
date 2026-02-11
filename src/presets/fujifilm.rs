@@ -352,12 +352,12 @@ pub fn PROVIA_100F() -> FilmStock {
     }
 }
 
-/// Fujifilm Velvia 50 (High Saturation Slide Film)
-/// Source: Fujifilm Technical Data
+/// Fujifilm Velvia 50 (Ultra Vivid Slide Film)
+/// Source: Fujifilm 2020 Data Sheet
 /// ISO: 50
-/// RMS: 6 -> Alpha = 0.0036
-/// Gamma: 1.4
-/// Dmax: 3.6, Dmin: 0.10
+/// RMS: 9 -> Alpha = 0.000081
+/// Gamma: 1.2-1.4
+/// Dmax: 3.5-4.0, Dmin: 0.15
 /// Resolution: 160 lp/mm
 pub fn VELVIA_50() -> FilmStock {
     FilmStock {
@@ -366,21 +366,21 @@ pub fn VELVIA_50() -> FilmStock {
         film_type: FilmType::ColorSlide,
         iso: 50.0,
         r_curve: SegmentedCurve {
-            d_min: 0.10,
+            d_min: 0.15,
             d_max: 3.6,
             gamma: 1.4,
             shoulder_point: 0.8,
             exposure_offset: 49.22617,
         },
         g_curve: SegmentedCurve {
-            d_min: 0.10,
+            d_min: 0.15,
             d_max: 3.6,
             gamma: 1.4,
             shoulder_point: 0.8,
             exposure_offset: 49.22617,
         },
         b_curve: SegmentedCurve {
-            d_min: 0.10,
+            d_min: 0.15,
             d_max: 3.6,
             gamma: 1.4,
             shoulder_point: 0.8,
@@ -393,7 +393,7 @@ pub fn VELVIA_50() -> FilmStock {
         ],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0036,
+            alpha: 0.000081,
             sigma_read: 0.003,
             monochrome: false,
             blur_radius: 0.5,

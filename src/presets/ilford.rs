@@ -7,12 +7,12 @@ use crate::grain::GrainModel;
 use crate::spectral::FilmSpectralParams;
 
 /// Ilford HP5 Plus 400 (Professional B&W)
-/// Source: Ilford Technical Data
+/// Source: Ilford 2021 Data Sheet
 /// ISO: 400
-/// RMS: 12 -> Alpha = 0.0144
-/// Gamma: 0.70
-/// Dmax: 2.2, Dmin: 0.10
-/// Resolution: 120 lp/mm
+/// RMS: 16 -> Alpha = 0.000256
+/// Gamma: 0.65
+/// Dmax: 2.1, Dmin: 0.10
+/// Resolution: 95 lp/mm
 pub fn HP5_PLUS_400() -> FilmStock {
     FilmStock {
         manufacturer: "Ilford".to_string(),
@@ -21,29 +21,29 @@ pub fn HP5_PLUS_400() -> FilmStock {
         iso: 400.0,
         r_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 3.0,
-            gamma: 0.70,
+            d_max: 2.1,
+            gamma: 0.65,
             shoulder_point: 0.8,
             exposure_offset: 34.22952,
         },
         g_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 3.0,
-            gamma: 0.70,
+            d_max: 2.1,
+            gamma: 0.65,
             shoulder_point: 0.8,
             exposure_offset: 34.22952,
         },
         b_curve: SegmentedCurve {
             d_min: 0.10,
-            d_max: 3.0,
-            gamma: 0.70,
+            d_max: 2.1,
+            gamma: 0.65,
             shoulder_point: 0.8,
             exposure_offset: 34.22952,
         },
         color_matrix: [[0.33, 0.33, 0.33], [0.33, 0.33, 0.33], [0.33, 0.33, 0.33]],
         spectral_params: FilmSpectralParams::new_panchromatic(),
         grain_model: GrainModel {
-            alpha: 0.0144,
+            alpha: 0.000256,
             sigma_read: 0.006,
             monochrome: true,
             blur_radius: 0.5,
@@ -52,7 +52,7 @@ pub fn HP5_PLUS_400() -> FilmStock {
             shadow_noise: 0.001,
             highlight_coarseness: 0.05,
         },
-        resolution_lp_mm: 120.0,
+        resolution_lp_mm: 95.0,
         reciprocity: ReciprocityFailure { beta: 0.05 },
         halation_strength: 0.18,
         halation_threshold: 0.83,
