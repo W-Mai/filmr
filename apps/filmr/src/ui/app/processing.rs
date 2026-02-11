@@ -46,7 +46,11 @@ impl FilmrApp {
                 enable_grain: true,
                 use_gpu: true,
                 output_mode: self.output_mode,
-                white_balance_mode: self.white_balance_mode,
+                white_balance_mode: if self.ux_mode == crate::config::UxMode::Simple {
+                    filmr::WhiteBalanceMode::Off
+                } else {
+                    self.white_balance_mode
+                },
                 white_balance_strength: self.white_balance_strength,
                 warmth: self.warmth,
                 saturation: self.saturation,
@@ -76,7 +80,11 @@ impl FilmrApp {
                 enable_grain: false,
                 use_gpu: false,
                 output_mode: self.output_mode,
-                white_balance_mode: self.white_balance_mode,
+                white_balance_mode: if self.ux_mode == crate::config::UxMode::Simple {
+                    filmr::WhiteBalanceMode::Off
+                } else {
+                    self.white_balance_mode
+                },
                 white_balance_strength: self.white_balance_strength,
                 warmth: self.warmth,
                 saturation: self.saturation,
@@ -128,7 +136,11 @@ impl FilmrApp {
                 enable_grain: true,
                 use_gpu: true,
                 output_mode: self.output_mode,
-                white_balance_mode: self.white_balance_mode,
+                white_balance_mode: if self.ux_mode == crate::config::UxMode::Simple {
+                    filmr::WhiteBalanceMode::Off
+                } else {
+                    self.white_balance_mode
+                },
                 white_balance_strength: self.white_balance_strength,
                 warmth: self.warmth,
                 saturation: self.saturation,
