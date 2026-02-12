@@ -25,6 +25,52 @@ pub enum FilmStyle {
     Pastel,
 }
 
+impl FilmStyle {
+    /// Returns all available film styles
+    pub const fn all() -> [FilmStyle; 5] {
+        [
+            FilmStyle::Accurate,
+            FilmStyle::Artistic,
+            FilmStyle::Vintage,
+            FilmStyle::HighContrast,
+            FilmStyle::Pastel,
+        ]
+    }
+
+    /// Returns a short display name
+    pub const fn name(&self) -> &'static str {
+        match self {
+            FilmStyle::Accurate => "Accurate",
+            FilmStyle::Artistic => "Artistic",
+            FilmStyle::Vintage => "Vintage",
+            FilmStyle::HighContrast => "High Contrast",
+            FilmStyle::Pastel => "Pastel",
+        }
+    }
+
+    /// Returns a description for UI
+    pub const fn description(&self) -> &'static str {
+        match self {
+            FilmStyle::Accurate => "Physical accuracy based on datasheets",
+            FilmStyle::Artistic => "Enhanced colors, contrast, and grain",
+            FilmStyle::Vintage => "Aged film with faded colors",
+            FilmStyle::HighContrast => "Dramatic B&W look",
+            FilmStyle::Pastel => "Soft, muted tones",
+        }
+    }
+
+    /// Returns a short description for simple mode
+    pub const fn short_description(&self) -> &'static str {
+        match self {
+            FilmStyle::Accurate => "Physical accuracy",
+            FilmStyle::Artistic => "Enhanced colors & grain",
+            FilmStyle::Vintage => "Aged film look",
+            FilmStyle::HighContrast => "Dramatic B&W",
+            FilmStyle::Pastel => "Soft, muted tones",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilmStockCollection {
     pub stocks: std::collections::HashMap<String, FilmStock>,

@@ -248,29 +248,16 @@ fn render_rendering_style(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
 
         let prev_style = app.film_style;
         ui.horizontal_wrapped(|ui| {
-            ui.selectable_value(&mut app.film_style, FilmStyle::Accurate, "Accurate");
-            ui.selectable_value(&mut app.film_style, FilmStyle::Artistic, "Artistic");
-            ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage");
-            ui.selectable_value(
-                &mut app.film_style,
-                FilmStyle::HighContrast,
-                "High Contrast",
-            );
-            ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel");
+            for style in FilmStyle::all() {
+                ui.selectable_value(&mut app.film_style, style, style.name());
+            }
         });
 
         if app.film_style != prev_style {
             *changed = true;
         }
 
-        let description = match app.film_style {
-            FilmStyle::Accurate => "Physical accuracy based on datasheets",
-            FilmStyle::Artistic => "Enhanced colors, contrast, and grain",
-            FilmStyle::Vintage => "Aged film with faded colors",
-            FilmStyle::HighContrast => "Dramatic B&W look",
-            FilmStyle::Pastel => "Soft, muted tones",
-        };
-        ui.small(description);
+        ui.small(app.film_style.description());
     });
 }
 

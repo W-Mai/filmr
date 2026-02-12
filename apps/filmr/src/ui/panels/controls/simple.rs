@@ -21,7 +21,7 @@ pub fn render_simple_controls(
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             egui::ScrollArea::vertical()
-                .max_height(ui.available_height() * 0.6)
+                .max_height(ui.available_height() - 400.0)
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.set_min_size(ui.available_size());
@@ -157,25 +157,16 @@ pub fn render_simple_controls(
 
         let prev_style = app.film_style;
         ui.horizontal_wrapped(|ui| {
-            ui.selectable_value(&mut app.film_style, FilmStyle::Accurate, "Accurate");
-            ui.selectable_value(&mut app.film_style, FilmStyle::Artistic, "Artistic");
-            ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage");
-            ui.selectable_value(&mut app.film_style, FilmStyle::HighContrast, "High Contrast");
-            ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel");
+            for style in FilmStyle::all() {
+                ui.selectable_value(&mut app.film_style, style, style.name());
+            }
         });
 
         if app.film_style != prev_style {
             *changed = true;
         }
 
-        let description = match app.film_style {
-            FilmStyle::Accurate => "Physical accuracy",
-            FilmStyle::Artistic => "Enhanced colors & grain",
-            FilmStyle::Vintage => "Aged film look",
-            FilmStyle::HighContrast => "Dramatic B&W",
-            FilmStyle::Pastel => "Soft, muted tones",
-        };
-        ui.small(description);
+        ui.small(app.film_style.short_description());
     });
 
     ui.add_space(15.0);
