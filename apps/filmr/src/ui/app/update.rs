@@ -85,6 +85,9 @@ impl App for FilmrApp {
                         egui::TextureOptions::LINEAR,
                     ));
 
+                    // Load preset values to ensure grain and other parameters are correct
+                    self.load_preset_values();
+
                     if self.mode == AppMode::Develop {
                         // Estimate exposure for the loaded image if in Develop mode
                         if let Some(exposure) = data.estimated_exposure {

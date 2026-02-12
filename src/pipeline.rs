@@ -362,8 +362,15 @@ impl PipelineStage for GrainStage {
         // Dampening factor adjusted to 0.25 * sigma for a balanced look
         let dampening = 1.0f32 / (1.0f32 + 0.35f32 * system_sigma);
 
+        // Visual compensation factor: grain is physically correct but visually too weak
+        // Real film scans show grain more prominently due to:
+        // 1. Scanner optics magnify grain structure
+        // 2. Print/display gamma amplifies mid-tone grain
+        // 3. Human perception is more sensitive to grain than density variance
+        const VISUAL_GRAIN_BOOST: f32 = 25.0; // Empirical factor for visible grain
+
         // Fine Grain (Shadows/Mids): Heavily dampened by system blur
-        fine_model.alpha *= scale_factor * scale_factor * dampening;
+        fine_model.alpha *= scale_factor * scale_factor * dampening * VISUAL_GRAIN_BOOST;
         fine_model.sigma_read *= scale_factor * dampening.sqrt();
         fine_model.shadow_noise *= scale_factor * scale_factor * dampening;
 
@@ -371,7 +378,7 @@ impl PipelineStage for GrainStage {
         // Large clumps survive the blur better, so we use a gentler dampening
         // or just scale with resolution without the heavy Selwyn penalty
         let coarse_dampening = 1.0f32 / (1.0f32 + 0.1f32 * system_sigma);
-        coarse_model.alpha *= scale_factor * scale_factor * coarse_dampening;
+        coarse_model.alpha *= scale_factor * scale_factor * coarse_dampening * VISUAL_GRAIN_BOOST;
         coarse_model.sigma_read *= scale_factor * coarse_dampening.sqrt();
         // Coarse layer doesn't really have shot noise (that's fine scale), so zero it out
         coarse_model.shadow_noise = 0.0;
