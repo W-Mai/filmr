@@ -1,5 +1,5 @@
 use egui::{Context, RichText};
-use filmr::WhiteBalanceMode;
+use filmr::{FilmStyle, WhiteBalanceMode};
 
 use crate::ui::app::FilmrApp;
 
@@ -148,7 +148,39 @@ pub fn render_simple_controls(
 
     ui.add_space(15.0);
 
-    // 2. Basic Adjustments
+    // 2. Rendering Style
+    ui.label(RichText::new("🎨 Rendering Style").strong());
+    ui.add_space(5.0);
+
+    ui.group(|ui| {
+        ui.set_min_width(ui.available_width());
+
+        let prev_style = app.film_style;
+        ui.horizontal_wrapped(|ui| {
+            ui.selectable_value(&mut app.film_style, FilmStyle::Accurate, "Accurate");
+            ui.selectable_value(&mut app.film_style, FilmStyle::Artistic, "Artistic");
+            ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage");
+            ui.selectable_value(&mut app.film_style, FilmStyle::HighContrast, "High Contrast");
+            ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel");
+        });
+
+        if app.film_style != prev_style {
+            *changed = true;
+        }
+
+        let description = match app.film_style {
+            FilmStyle::Accurate => "Physical accuracy",
+            FilmStyle::Artistic => "Enhanced colors & grain",
+            FilmStyle::Vintage => "Aged film look",
+            FilmStyle::HighContrast => "Dramatic B&W",
+            FilmStyle::Pastel => "Soft, muted tones",
+        };
+        ui.small(description);
+    });
+
+    ui.add_space(15.0);
+
+    // 3. Basic Adjustments
     ui.label(RichText::new("🎨 Quick Adjust").strong());
     ui.add_space(5.0);
 
