@@ -59,7 +59,13 @@ pub fn render_professional_controls(
 
     ui.add_space(5.0);
 
-    // 4. Look Overrides
+    // 4. Rendering Style
+    if app.mode == AppMode::Develop {
+        render_rendering_style(app, ui, changed);
+        ui.add_space(5.0);
+    }
+
+    // 5. Look Overrides
     if app.mode == AppMode::Develop {
         render_look_overrides(app, ui, changed);
         ui.add_space(5.0);
@@ -70,12 +76,12 @@ pub fn render_professional_controls(
 
     ui.add_space(5.0);
 
-    // 5. Light Leaks
+    // 6. Light Leaks
     render_light_leaks(app, ui, changed);
 
     ui.add_space(5.0);
 
-    // 6. Technical
+    // 7. Technical
     render_technical(app, ui, changed);
 }
 
@@ -147,32 +153,6 @@ fn render_film_stock_section(
                 app.load_preset_values();
                 *changed = true;
             }
-
-            // Film Style Selector
-            ui.add_space(5.0);
-            ui.label("🎨 Rendering Style");
-            let prev_style = app.film_style;
-            ui.horizontal_wrapped(|ui| {
-                ui.selectable_value(&mut app.film_style, FilmStyle::Accurate, "Accurate");
-                ui.selectable_value(&mut app.film_style, FilmStyle::Artistic, "Artistic");
-                ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage");
-                ui.selectable_value(&mut app.film_style, FilmStyle::HighContrast, "High Contrast");
-                ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel");
-            });
-
-            if app.film_style != prev_style {
-                *changed = true;
-            }
-
-            // Style description
-            let description = match app.film_style {
-                FilmStyle::Accurate => "Physical accuracy based on datasheets",
-                FilmStyle::Artistic => "Enhanced colors, contrast, and grain",
-                FilmStyle::Vintage => "Aged film with faded colors",
-                FilmStyle::HighContrast => "Dramatic B&W look",
-                FilmStyle::Pastel => "Soft, muted tones",
-            };
-            ui.small(description);
         } else {
             // Studio Mode: Show only the temporary stock
             ui.group(|ui| {
@@ -258,6 +238,39 @@ fn render_halation(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
         {
             *changed = true;
         }
+    });
+}
+
+fn render_rendering_style(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
+    ui.group(|ui| {
+        ui.set_min_width(ui.available_width());
+        ui.label(RichText::new("🎨 Rendering Style").strong());
+
+        let prev_style = app.film_style;
+        ui.horizontal_wrapped(|ui| {
+            ui.selectable_value(&mut app.film_style, FilmStyle::Accurate, "Accurate");
+            ui.selectable_value(&mut app.film_style, FilmStyle::Artistic, "Artistic");
+            ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage");
+            ui.selectable_value(
+                &mut app.film_style,
+                FilmStyle::HighContrast,
+                "High Contrast",
+            );
+            ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel");
+        });
+
+        if app.film_style != prev_style {
+            *changed = true;
+        }
+
+        let description = match app.film_style {
+            FilmStyle::Accurate => "Physical accuracy based on datasheets",
+            FilmStyle::Artistic => "Enhanced colors, contrast, and grain",
+            FilmStyle::Vintage => "Aged film with faded colors",
+            FilmStyle::HighContrast => "Dramatic B&W look",
+            FilmStyle::Pastel => "Soft, muted tones",
+        };
+        ui.small(description);
     });
 }
 
