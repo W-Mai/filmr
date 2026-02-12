@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en" id="oranda" class="cupcake">
+  <head>
+    <title>filmr</title>
+    
+      <meta property="og:url" content="https://benign.host/" />
+    
+    
+      <link rel="icon" href="/favicon.ico" />
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+      <meta name="description" content="A high-fidelity, physics-based film simulation engine written in Rust." />
+      <meta property="og:description" content="A high-fidelity, physics-based film simulation engine written in Rust." />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="filmr" />
+    
+    
+    
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()" />
+    <link rel="stylesheet" href="/oranda-v0.6.1.css" />
+    
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-body">
+        
+          <div class="repo_banner">
+            <a href="https://github.com/W-Mai/filmr">
+              <div class="github-icon" aria-hidden="true"></div>
+              Check out our GitHub!
+            </a>
+          </div>
+        
+
+        <main>
+          <header>
+            
+            <h1 class="title">filmr</h1>
+            
+  <nav class="nav">
+    <ul>
+      <li><a href="/">Home</a></li>
+
+      
+
+      
+        <li><a href="/artifacts/">Install</a></li>
+      
+
+      
+        <li><a href="/book/">Docs</a></li>
+      
+
+      
+
+      
+        <li><a href="/changelog/">Changelog</a></li>
+      
+    </ul>
+  </nav>
+
+          </header>
+
+          
+
+    
+
+
+
+<div class="artifacts" data-tag="v0.6.8">
+  <div class="artifact-header target">
+    <h4>Install v0.6.8</h4>
+    
+      <div><small class="published-date">Published on Feb 12 2026 at 07:31 UTC</small></div>
+    
+
+    <ul class="arches">
+      
+        <li class="arch hidden" data-arch="aarch64-apple-darwin">
+          
+            <ul class="tabs">
+              
+                
+                
+                <li class="install-tab" data-id="9" data-triple="aarch64-apple-darwin">
+                  shell
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="0" data-triple="aarch64-apple-darwin">
+                  homebrew
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="1" data-triple="aarch64-apple-darwin">
+                  tarball
+
+                  
+                </li>
+              
+            </ul>
+          
+
+          <ul class="contents">
+            
+              
+              <li data-id="9" data-triple="aarch64-apple-darwin" class="install-content">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">curl</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">proto </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">=https</span><span style="color:#89ddff;">&#39; --</span><span style="color:#f78c6c;">tlsv1</span><span style="color:#82aaff;">.2</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">LsSf</span><span style="color:#82aaff;"> https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">sh</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="curl --proto '=https' --tlsv1.2 -LsSf https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh | sh">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+    
+    
+      
+    
+    <a class="button primary" href="/filmr_app-installer.sh.txt">Source</a>
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="0" data-triple="aarch64-apple-darwin" class="install-content hidden">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">brew install W-Mai/cellar/filmr_app</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="brew install W-Mai/cellar/filmr_app">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="1" data-triple="aarch64-apple-darwin" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-aarch64-apple-darwin.tar.xz">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-aarch64-apple-darwin.tar.xz</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+          </ul>
+        </li>
+      
+        <li class="arch hidden" data-arch="aarch64-unknown-linux-gnu">
+          
+            <ul class="tabs">
+              
+                
+                
+                <li class="install-tab" data-id="9" data-triple="aarch64-unknown-linux-gnu">
+                  shell
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="0" data-triple="aarch64-unknown-linux-gnu">
+                  homebrew
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="2" data-triple="aarch64-unknown-linux-gnu">
+                  tarball
+
+                  
+                </li>
+              
+            </ul>
+          
+
+          <ul class="contents">
+            
+              
+              <li data-id="9" data-triple="aarch64-unknown-linux-gnu" class="install-content">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">curl</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">proto </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">=https</span><span style="color:#89ddff;">&#39; --</span><span style="color:#f78c6c;">tlsv1</span><span style="color:#82aaff;">.2</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">LsSf</span><span style="color:#82aaff;"> https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">sh</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="curl --proto '=https' --tlsv1.2 -LsSf https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh | sh">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+    
+    
+      
+    
+    <a class="button primary" href="/filmr_app-installer.sh.txt">Source</a>
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="0" data-triple="aarch64-unknown-linux-gnu" class="install-content hidden">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">brew install W-Mai/cellar/filmr_app</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="brew install W-Mai/cellar/filmr_app">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="2" data-triple="aarch64-unknown-linux-gnu" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-aarch64-unknown-linux-gnu.tar.xz">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-aarch64-unknown-linux-gnu.tar.xz</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+          </ul>
+        </li>
+      
+        <li class="arch hidden" data-arch="x86_64-apple-darwin">
+          
+            <ul class="tabs">
+              
+                
+                
+                <li class="install-tab" data-id="9" data-triple="x86_64-apple-darwin">
+                  shell
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="0" data-triple="x86_64-apple-darwin">
+                  homebrew
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="3" data-triple="x86_64-apple-darwin">
+                  tarball
+
+                  
+                </li>
+              
+            </ul>
+          
+
+          <ul class="contents">
+            
+              
+              <li data-id="9" data-triple="x86_64-apple-darwin" class="install-content">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">curl</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">proto </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">=https</span><span style="color:#89ddff;">&#39; --</span><span style="color:#f78c6c;">tlsv1</span><span style="color:#82aaff;">.2</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">LsSf</span><span style="color:#82aaff;"> https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">sh</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="curl --proto '=https' --tlsv1.2 -LsSf https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh | sh">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+    
+    
+      
+    
+    <a class="button primary" href="/filmr_app-installer.sh.txt">Source</a>
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="0" data-triple="x86_64-apple-darwin" class="install-content hidden">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">brew install W-Mai/cellar/filmr_app</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="brew install W-Mai/cellar/filmr_app">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="3" data-triple="x86_64-apple-darwin" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-x86_64-apple-darwin.tar.xz">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-x86_64-apple-darwin.tar.xz</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+          </ul>
+        </li>
+      
+        <li class="arch hidden" data-arch="x86_64-pc-windows-msvc">
+          
+            <ul class="tabs">
+              
+                
+                
+                <li class="install-tab" data-id="8" data-triple="x86_64-pc-windows-msvc">
+                  powershell
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="5" data-triple="x86_64-pc-windows-msvc">
+                  msi
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="4" data-triple="x86_64-pc-windows-msvc">
+                  zip
+
+                  
+                </li>
+              
+            </ul>
+          
+
+          <ul class="contents">
+            
+              
+              <li data-id="8" data-triple="x86_64-pc-windows-msvc" class="install-content">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">irm https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.ps1 </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">iex</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="irm https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.ps1 | iex">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+    
+    
+      
+    
+    <a class="button primary" href="/filmr_app-installer.ps1.txt">Source</a>
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="5" data-triple="x86_64-pc-windows-msvc" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-x86_64-pc-windows-msvc.msi">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-x86_64-pc-windows-msvc.msi</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+              
+              <li data-id="4" data-triple="x86_64-pc-windows-msvc" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-x86_64-pc-windows-msvc.zip">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-x86_64-pc-windows-msvc.zip</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+          </ul>
+        </li>
+      
+        <li class="arch hidden" data-arch="x86_64-unknown-linux-gnu">
+          
+            <ul class="tabs">
+              
+                
+                
+                <li class="install-tab" data-id="9" data-triple="x86_64-unknown-linux-gnu">
+                  shell
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="0" data-triple="x86_64-unknown-linux-gnu">
+                  homebrew
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="6" data-triple="x86_64-unknown-linux-gnu">
+                  tarball
+
+                  
+                </li>
+              
+            </ul>
+          
+
+          <ul class="contents">
+            
+              
+              <li data-id="9" data-triple="x86_64-unknown-linux-gnu" class="install-content">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">curl</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">proto </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">=https</span><span style="color:#89ddff;">&#39; --</span><span style="color:#f78c6c;">tlsv1</span><span style="color:#82aaff;">.2</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">LsSf</span><span style="color:#82aaff;"> https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">sh</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="curl --proto '=https' --tlsv1.2 -LsSf https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh | sh">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+    
+    
+      
+    
+    <a class="button primary" href="/filmr_app-installer.sh.txt">Source</a>
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="0" data-triple="x86_64-unknown-linux-gnu" class="install-content hidden">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">brew install W-Mai/cellar/filmr_app</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="brew install W-Mai/cellar/filmr_app">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="6" data-triple="x86_64-unknown-linux-gnu" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-x86_64-unknown-linux-gnu.tar.xz">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-x86_64-unknown-linux-gnu.tar.xz</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+          </ul>
+        </li>
+      
+        <li class="arch hidden" data-arch="x86_64-unknown-linux-musl">
+          
+            <ul class="tabs">
+              
+                
+                
+                <li class="install-tab" data-id="9" data-triple="x86_64-unknown-linux-musl">
+                  shell
+
+                  
+                </li>
+              
+                
+                
+                <li class="install-tab" data-id="7" data-triple="x86_64-unknown-linux-musl">
+                  tarball
+
+                  
+                </li>
+              
+            </ul>
+          
+
+          <ul class="contents">
+            
+              
+              <li data-id="9" data-triple="x86_64-unknown-linux-musl" class="install-content">
+                
+                  
+                  <div class="install-code-wrapper">
+  <pre style="background-color:#263238;">
+<span style="color:#82aaff;">curl</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">proto </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">=https</span><span style="color:#89ddff;">&#39; --</span><span style="color:#f78c6c;">tlsv1</span><span style="color:#82aaff;">.2</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">LsSf</span><span style="color:#82aaff;"> https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">sh</span></pre>
+
+  <button class="button copy-clipboard-button primary" data-copy="curl --proto '=https' --tlsv1.2 -LsSf https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-installer.sh | sh">
+    <svg stroke='currentColor' fill='currentColor' stroke-width='0' viewBox='0 0 20 20' height='1em' width='1em' xmlns='http://www.w3.org/2000/svg'><path d='M8 2a1 1 0 000 2h2a1 1 0 100-2H8z'></path><path d='M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z'></path></svg>
+  </button>
+  
+  
+    
+    
+      
+    
+    <a class="button primary" href="/filmr_app-installer.sh.txt">Source</a>
+  
+</div>
+                
+
+                
+              </li>
+            
+              
+              <li data-id="7" data-triple="x86_64-unknown-linux-musl" class="install-content hidden">
+                
+
+                
+                  
+                  <div class="download-wrapper">
+                    <a href="https://github.com/W-Mai/filmr/releases/download/v0.6.8/filmr_app-x86_64-unknown-linux-musl.tar.xz">
+                      <button class="button primary">
+                        <span>Download</span>
+                        <span class="button-subtitle">filmr_app-x86_64-unknown-linux-musl.tar.xz</span>
+                      </button>
+                    </a>
+                  </div>
+                
+              </li>
+            
+          </ul>
+        </li>
+      
+    </ul>
+  </div>
+
+  
+    <div class="no-autodetect hidden">
+      <span class="no-autodetect-details">We weren't able to detect your OS.</span>
+    </div>
+    <noscript>
+      <a href="/artifacts/">View all installation options</a>
+    </noscript>
+  
+  <div class="mac-switch hidden">This project doesn't offer Apple Silicon downloads, but you can run Intel macOS binaries via Rosetta 2.</div>
+
+  
+  
+  <div class="bottom-options ">
+    <a href="/artifacts/" class="backup-download primary">View all installation options</a>
+    
+      <div class="arch-select hidden">
+        <select id="install-arch-select">
+          <option disabled="true" selected="true" value=""></option>
+          
+            <option value="aarch64-unknown-linux-gnu">Linux arm64</option>
+          
+            <option value="x86_64-unknown-linux-gnu">Linux x64</option>
+          
+            <option value="aarch64-apple-darwin">macOS Apple Silicon</option>
+          
+            <option value="x86_64-apple-darwin">macOS Intel</option>
+          
+            <option value="x86_64-unknown-linux-musl">musl Linux x64</option>
+          
+            <option value="x86_64-pc-windows-msvc">Windows x64</option>
+          
+        </select>
+      </div>
+    
+  </div>
+</div>
+
+<a href="/artifacts/" class="button mobile-download primary">View all installation options</a>
+
+
+    <h1>Filmr</h1>
+<p>
+  <img src="static/filmr.svg" alt="filmr logo" width="160">
+</p>
+<p>
+  <strong>FilmeR / Film Rust</strong>
+</p>
+<p>
+  <a href="https://crates.io/crates/filmr" rel="noopener noreferrer">
+    <img src="https://img.shields.io/crates/v/filmr?style=flat-square" alt="Crates.io version">
+  </a>
+  <a href="https://github.com/W-Mai/filmr/blob/main/LICENSE" rel="noopener noreferrer">
+    <img src="https://img.shields.io/crates/l/filmr?style=flat-square" alt="License">
+  </a>
+  <a href="https://crates.io/crates/filmr" rel="noopener noreferrer">
+    <img src="https://img.shields.io/crates/d/filmr?style=flat-square" alt="Downloads">
+  </a>
+</p>
+<p><strong>Filmr</strong> is a high-fidelity, physics-based film simulation engine written in Rust. Unlike simple LUT-based filters, Filmr simulates the physical properties of photographic film—from spectral sensitivity and grain structure to chemical development curves—to produce authentic, organic results.</p>
+<img src="static/snapshot_001.jpeg" alt="snapshot 001">
+<h2>📖 Table of Contents</h2>
+<ul>
+<li><a href="#-core-features" rel="noopener noreferrer">Core Features</a></li>
+<li><a href="#-quick-start" rel="noopener noreferrer">Quick Start</a></li>
+<li><a href="#-installation" rel="noopener noreferrer">Installation</a></li>
+<li><a href="#-supported-film-stocks" rel="noopener noreferrer">Supported Film Stocks</a></li>
+<li><a href="#-project-structure" rel="noopener noreferrer">Project Structure</a></li>
+<li><a href="#-license" rel="noopener noreferrer">License</a></li>
+</ul>
+<h2>🚀 Core Features</h2>
+<p>Filmr implements a comprehensive imaging pipeline that models the physical behavior of analog film:</p>
+<ul>
+<li><strong>🔬 Spectral Simulation</strong>: Accurate modeling of film spectral sensitivity (Panchromatic, Orthochromatic, Infrared) using physical wavelength data.</li>
+<li><strong>🌾 Physics-Based Grain</strong>: Spatially correlated grain synthesis based on RMS granularity and blur radius, simulating the organic texture of silver halide crystals.</li>
+<li><strong>📈 H-D Curves</strong>: Segmented characteristic curves (D-min, D-max, Gamma) for realistic tonal response and density formation.</li>
+<li><strong>✨ Halation &amp; Bloom</strong>: Physical light scattering simulation (Gaussian diffusion) to recreate the signature "glow" of bright highlights on film.</li>
+<li><strong>⏱️ Reciprocity Failure</strong>: Simulation of film speed loss during long exposures (Schwarzschild effect).</li>
+<li><strong>🎨 30+ Film Presets</strong>: Built-in profiles for legendary stocks like Kodak Portra, Tri-X, Fujifilm Velvia, and Kodachrome.</li>
+<li><strong>📊 Diagnostic Tools</strong>: Integrated quality verification and visualization tools for analyzing color science and signal metrics.</li>
+<li><strong>⚡ High Performance</strong>: Parallelized image processing using <code>rayon</code> for fast rendering.</li>
+</ul>
+<h2>⚡ Quick Start</h2>
+<h3>1. Run the GUI Demo</h3>
+<p>The interactive GUI allows you to drag-and-drop images and tweak simulation parameters in real-time.</p>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">cargo run</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">p</span><span style="color:#82aaff;"> filmr_app</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">bin</span><span style="color:#82aaff;"> filmr_ui</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">release
+</span></pre>
+
+<h3>2. Generate Diagnostic Charts</h3>
+<p>Visualize the color response, grain structure, and spectral characteristics of all supported films.</p>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">cargo run</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">example</span><span style="color:#82aaff;"> chart_diagnosis</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">release
+</span></pre>
+
+<p><em>Output will be saved to <code>diagnosis_output/contact_sheet.jpg</code>.</em></p>
+<h2>📦 Installation</h2>
+<h3>Install from Binary</h3>
+<h4>MacOS (Homebrew)</h4>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">brew install W-Mai/cellar/filmr_app
+</span></pre>
+
+<h4>Windows (PowerShell)</h4>
+<pre style="background-color:#263238;"><span style="color:#eeffff;">irm https://github.com/W-Mai/filmr/releases/latest/download/filmr_app-installer.ps1 | iex
+</span></pre>
+
+<h4>Linux / MacOS (Shell)</h4>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">curl</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">proto </span><span style="color:#89ddff;">'</span><span style="color:#c3e88d;">=https</span><span style="color:#89ddff;">' --</span><span style="color:#f78c6c;">tlsv1</span><span style="color:#82aaff;">.2</span><span style="color:#89ddff;"> -</span><span style="color:#f78c6c;">LsSf</span><span style="color:#82aaff;"> https://github.com/W-Mai/filmr/releases/latest/download/filmr_app-installer.sh </span><span style="color:#89ddff;">| </span><span style="color:#82aaff;">sh
+</span></pre>
+
+<h3>Build from Source</h3>
+<h4>Prerequisites</h4>
+<ul>
+<li><a href="https://www.rust-lang.org/tools/install" rel="noopener noreferrer">Rust Toolchain</a> (1.70 or later)</li>
+</ul>
+<h4>Steps</h4>
+<ol>
+<li>
+<p><strong>Clone the repository</strong></p>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">git clone https://github.com/w-mai/filmr.git
+</span><span style="color:#82aaff;">cd filmr
+</span></pre>
+
+</li>
+<li>
+<p><strong>Build the project</strong></p>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">cargo build</span><span style="color:#89ddff;"> --</span><span style="color:#f78c6c;">release
+</span></pre>
+
+</li>
+<li>
+<p><strong>Run tests</strong></p>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">cargo test
+</span></pre>
+
+</li>
+</ol>
+<h2>🎞️ Supported Film Stocks</h2>
+<p>Filmr includes over 30 calibrated film presets, categorized by type:</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fujifilm Slide (E-6)</strong></td>
+<td>Velvia 50/100, Provia 100F/400X, Astia 100F</td>
+</tr>
+<tr>
+<td><strong>Fujifilm Negative (C-41)</strong></td>
+<td>Pro 400H, Superia 200/800, Pro 160NS</td>
+</tr>
+<tr>
+<td><strong>Kodak Color Negative</strong></td>
+<td>Portra 160/400, Ektar 100, Gold 200</td>
+</tr>
+<tr>
+<td><strong>Kodak B&amp;W</strong></td>
+<td>Tri-X 400, T-Max 100/400/3200, Plus-X 125</td>
+</tr>
+<tr>
+<td><strong>Ilford B&amp;W</strong></td>
+<td>HP5+, FP4+, Delta 100/400/3200, Pan F+, SFX 200</td>
+</tr>
+<tr>
+<td><strong>Vintage / Discontinued</strong></td>
+<td>Kodachrome 25/64, Polaroid SX-70</td>
+</tr>
+</tbody>
+</table>
+<h2>📄 License</h2>
+<p>This project is open source and available under the <strong>MIT License</strong>.</p>
+
+
+
+        </main>
+      </div>
+
+      <footer>
+        
+          <a href="https://github.com/W-Mai/filmr"><div class="github-icon" aria-hidden="true"></div></a>
+        
+        <span>
+          filmr, MIT
+        </span>
+      </footer>
+    </div>
+
+    
+      <script async="true" src="https://www.googletagmanager.com/gtag/js?id=G-ZCH0DFY43H"></script>
+    
+    
+      window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date());gtag('config', 'G-ZCH0DFY43H');
+    
+
+    
+
+    <script src="/artifacts.js"></script>
+
+
+  </body>
+</html>

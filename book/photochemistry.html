@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js oranda-light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Photochemistry Core - Filmr Knowledge Base</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="oranda-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "oranda-light" : "oranda-light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('orandamdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('orandamdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('orandamdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('oranda-light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="photochemistry.html" class="active"><strong aria-hidden="true">2.</strong> Photochemistry Core</a></li><li class="chapter-item expanded "><a href="film_characteristics.html"><strong aria-hidden="true">3.</strong> Film Characteristics</a></li><li class="chapter-item expanded "><a href="reference_data.html"><strong aria-hidden="true">4.</strong> Reference Data</a></li><li class="chapter-item expanded "><a href="spectral_sensitivity.html"><strong aria-hidden="true">5.</strong> Spectral Sensitivity</a></li><li class="chapter-item expanded "><a href="validation.html"><strong aria-hidden="true">6.</strong> Validation Framework</a></li><li class="chapter-item expanded "><a href="metrics.html"><strong aria-hidden="true">7.</strong> Metrics & Diagnosis</a></li><li class="chapter-item expanded "><a href="dynamic_range.html"><strong aria-hidden="true">8.</strong> Dynamic Range & Highlights</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="oranda-light">Cupcake</button></li>
+
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Filmr Knowledge Base</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="photochemistry-core-quantum-scale"><a class="header" href="#photochemistry-core-quantum-scale">Photochemistry Core (Quantum Scale)</a></h1>
+<p>When photons strike a silver halide crystal (AgX), a photolytic reaction is triggered:</p>
+<h2 id="11-photoelectron-excitation"><a class="header" href="#11-photoelectron-excitation">1.1 Photoelectron Excitation</a></h2>
+<p>$$ \text{AgX} + h\nu \xrightarrow{k_{\text{photo}}} \text{Ag}^+ + \text{e}^- + \text{X}^0 $$</p>
+<p>Where:</p>
+<ul>
+<li>$h\nu$ is the photon energy ($\nu$ is frequency)</li>
+<li>$k_{\text{photo}}$ is the photochemical reaction rate constant, following the quantum efficiency model:
+$$ k_{\text{photo}} = \eta \cdot \sigma_{\text{abs}} \cdot \Phi $$
+<ul>
+<li>$\eta$: Quantum efficiency (≈0.6-0.9)</li>
+<li>$\sigma_{\text{abs}}$: Crystal absorption cross-section</li>
+<li>$\Phi$: Photon flux (photons/(cm²·s))</li>
+</ul>
+</li>
+</ul>
+<h2 id="12-latent-image-center-formation"><a class="header" href="#12-latent-image-center-formation">1.2 Latent Image Center Formation</a></h2>
+<p>Released electrons are trapped by silver ions, forming silver atom clusters:</p>
+<p>$$ \text{Ag}^+ + \text{e}^- \xrightarrow{k_{\text{trap}}} \text{Ag}^0 $$</p>
+<p><strong>Critical Condition</strong>: A <strong>stable latent image center</strong> is formed when a single crystal surface accumulates <strong>5-10 silver atoms</strong>:</p>
+<p>$$ n_{\text{Ag}} \geq n_{\text{critical}} \approx 5-10 $$</p>
+<p>This process can be modeled using a <strong>Poisson distribution</strong>:</p>
+<p>$$ P(n_{\text{Ag}} \geq n_{\text{crit}}) = 1 - \sum_{k=0}^{n_{\text{crit}}-1} \frac{\lambda^k e^{-\lambda}}{k!} $$</p>
+<p>Where $\lambda = \eta \cdot N_{\text{photons}}$ is the expected number of electrons.</p>
+<hr />
+<h1 id="exposure-and-density-mapping-macro-scale"><a class="header" href="#exposure-and-density-mapping-macro-scale">Exposure and Density Mapping (Macro Scale)</a></h1>
+<h2 id="21-exposure-definition"><a class="header" href="#21-exposure-definition">2.1 Exposure Definition</a></h2>
+<p>$$ E = I \cdot t $$</p>
+<ul>
+<li>$I$: Irradiance (lux)</li>
+<li>$t$: Exposure time (s)</li>
+<li>$E$: Exposure (lux·s)</li>
+</ul>
+<h2 id="22-optical-density"><a class="header" href="#22-optical-density">2.2 Optical Density</a></h2>
+<p>The ability of silver grains to block light after development is quantified by <strong>Optical Density</strong> $D$:</p>
+<p>$$ D = \log_{10}\left(\frac{I_0}{I_t}\right) = -\log_{10}(T) $$</p>
+<ul>
+<li>$I_0$: Incident light intensity</li>
+<li>$I_t$: Transmitted light intensity</li>
+<li>$T = I_t/I_0$: Transmittance</li>
+</ul>
+<hr />
+<h1 id="characteristic-curve-hurter-driffield-curve"><a class="header" href="#characteristic-curve-hurter-driffield-curve">Characteristic Curve (Hurter-Driffield Curve)</a></h1>
+<p>This is the <strong>core mathematical model</strong> of film imaging, describing the S-shaped relationship between $D$ and $\log_{10}E$:</p>
+<h2 id="31-piecewise-linear-model-engineering-simplification"><a class="header" href="#31-piecewise-linear-model-engineering-simplification">3.1 Piecewise Linear Model (Engineering Simplification)</a></h2>
+<p>$$
+D(\log E) = \begin{cases}
+D_{\text{min}} + \frac{\log E - \log E_{\text{toe}}}{\gamma_{\text{toe}}} &amp; \text{Toe (Underexposed)} \
+D_{\text{min}} + \gamma \cdot (\log E - \log E_0) &amp; \text{Linear Region (Normal Exposure)} \
+D_{\text{max}} - \frac{\log E_{\text{shoulder}} - \log E}{\gamma_{\text{shoulder}}} &amp; \text{Shoulder (Overexposed)}
+\end{cases}
+$$</p>
+<p><strong>Key Parameters</strong>:</p>
+<ul>
+<li>$\gamma$: Contrast coefficient (slope of the linear region)
+$$ \gamma = \frac{\Delta D}{\Delta \log E} = \frac{D_2 - D_1}{\log E_2 - \log E_1} $$</li>
+<li>Dynamic Range: $\text{DR} = \log_{10}(E_{\text{max}}/E_{\text{min}}) \approx 2.0$ (corresponding to 100:1 brightness ratio)</li>
+</ul>
+<h2 id="32-precise-error-function-model-scientific-grade"><a class="header" href="#32-precise-error-function-model-scientific-grade">3.2 Precise Error Function Model (Scientific Grade)</a></h2>
+<p>Analytical solution provided by Kodak technical documents:</p>
+<p>$$
+D(E) = \frac{D_0}{2}\left[1 + \text{erf}\left(X + \ln\frac{E - E_0}{E_g - E_0}\right)\right]
+$$</p>
+<p>Where the error function is:</p>
+<p>$$
+\text{erf}(y) = \frac{1}{\sqrt{\pi}} \int_{-\infty}^{y} e^{-z^2} dz
+$$</p>
+<p>Parameter meanings:</p>
+<ul>
+<li>$D_0$: Maximum saturation density</li>
+<li>$E_0$: Threshold exposure</li>
+<li>$E_g$: Sensitivity reference point</li>
+<li>$X$: Development condition correction term</li>
+</ul>
+<hr />
+<h1 id="development-kinetics-chemical-amplification"><a class="header" href="#development-kinetics-chemical-amplification">Development Kinetics (Chemical Amplification)</a></h1>
+<p>Development amplifies latent image centers by $10^6$-$10^8$ times. Its rate equation:</p>
+<h2 id="41-first-order-kinetics-model"><a class="header" href="#41-first-order-kinetics-model">4.1 First-Order Kinetics Model</a></h2>
+<p>$$
+\frac{d[\text{Ag}]}{dt} = k_{\text{dev}} \cdot [\text{Dev}] \cdot [\text{Ag}^+] \cdot N_{\text{latent}}
+$$</p>
+<ul>
+<li>$[\text{Dev}]$: Developer concentration</li>
+<li>$N_{\text{latent}}$: Number of latent image centers (proportional to exposure)</li>
+</ul>
+<h2 id="42-time-temperature-compensation-arrhenius-equation"><a class="header" href="#42-time-temperature-compensation-arrhenius-equation">4.2 Time-Temperature Compensation (Arrhenius Equation)</a></h2>
+<p>$$
+k_{\text{dev}} = A \cdot e^{-E_a/(RT)}
+$$</p>
+<ul>
+<li>$E_a$: Activation energy (≈50-70 kJ/mol)</li>
+<li>$R$: Gas constant</li>
+<li>$T$: Absolute temperature (K)</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="film_characteristics.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="film_characteristics.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" id="oranda" class="cupcake">
+  <head>
+    <title>filmr</title>
+    
+      <meta property="og:url" content="https://benign.host/" />
+    
+    
+      <link rel="icon" href="/favicon.ico" />
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+      <meta name="description" content="A high-fidelity, physics-based film simulation engine written in Rust." />
+      <meta property="og:description" content="A high-fidelity, physics-based film simulation engine written in Rust." />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="filmr" />
+    
+    
+    
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()" />
+    <link rel="stylesheet" href="/oranda-v0.6.1.css" />
+    
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-body">
+        
+          <div class="repo_banner">
+            <a href="https://github.com/W-Mai/filmr">
+              <div class="github-icon" aria-hidden="true"></div>
+              Check out our GitHub!
+            </a>
+          </div>
+        
+
+        <main>
+          <header>
+            
+            <h1 class="title">filmr</h1>
+            
+  <nav class="nav">
+    <ul>
+      <li><a href="/">Home</a></li>
+
+      
+
+      
+        <li><a href="/artifacts/">Install</a></li>
+      
+
+      
+        <li><a href="/book/">Docs</a></li>
+      
+
+      
+
+      
+        <li><a href="/changelog/">Changelog</a></li>
+      
+    </ul>
+  </nav>
+
+          </header>
+
+          
+  <div>
+    <h1>0.6.8 - 2026-02-12</h1>
+    <div class="releases-body">
+      
+      
+      <section class="release ">
+  
+  <div class="release-info">
+    <span class="flex items-center gap-2">
+      <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6'>
+    <path stroke-linecap='round' stroke-linejoin='round' d='M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z' />
+    <path stroke-linecap='round' stroke-linejoin='round' d='M6 6h.008v.008H6V6z' /></svg>
+      v0.6.8
+    </span>
+    <span class="flex items-center gap-2">
+      
+        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6'><path stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' /></svg>
+        Feb 12 2026 at 07:31 UTC
+      
+    </span>
+  </div>
+  <div class="release-body">
+    <h3>✨ Features</h3>
+<ul>
+<li><strong>Film</strong>: Add FilmStyle system for systematic rendering style modifiers (Accurate, Artistic, Vintage, HighContrast, Pastel).</li>
+<li><strong>Presets</strong>: Add artistic variants for popular films (Portra 400, Tri-X 400, Velvia 50, HP5 Plus 400).</li>
+<li><strong>UI</strong>: Add FilmStyle selector to both Simple and Professional modes with horizontal button layout.</li>
+<li><strong>UI</strong>: Trigger automatic reprocessing when switching between Simple and Professional modes.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Presets</strong>: Fix grain alpha values using correct formula <code>(RMS/1000)²</code> for all 51 films (was incorrectly <code>RMS/1000</code>).</li>
+<li><strong>Presets</strong>: Restore original curve parameters for Portra 400, Tri-X 400, HP5 Plus, and Velvia 50.</li>
+<li><strong>Grain</strong>: Add visual grain boost factor (25x) to compensate for display/perception differences - grain was physically correct but visually too weak.</li>
+<li><strong>UI</strong>: Load preset values on image load to fix initial grain intensity issue (first load showed extreme grain).</li>
+</ul>
+<h3>💄 Style</h3>
+<ul>
+<li><strong>UI</strong>: Move Rendering Style to separate section with consistent grouping.</li>
+<li><strong>UI</strong>: Change FilmStyle selector from dropdown to horizontal buttons for better UX.</li>
+<li><strong>UI</strong>: Force white balance Off in Simple mode during processing.</li>
+</ul>
+<h3>♻️ Refactor</h3>
+<ul>
+<li><strong>Film</strong>: Add helper methods to FilmStyle enum (<code>all()</code>, <code>name()</code>, <code>description()</code>, <code>short_description()</code>) for cleaner UI code.</li>
+</ul>
+<h3>🙈 Chore</h3>
+<ul>
+<li><strong>Git</strong>: Add .DS_Store to .gitignore.</li>
+</ul>
+<h3>📄 Documentation</h3>
+<ul>
+<li><strong>README</strong>: Update snapshot image.</li>
+</ul>
+
+  </div>
+</section>
+    </div>
+  </div>
+
+        </main>
+      </div>
+
+      <footer>
+        
+          <a href="https://github.com/W-Mai/filmr"><div class="github-icon" aria-hidden="true"></div></a>
+        
+        <span>
+          filmr, MIT
+        </span>
+      </footer>
+    </div>
+
+    
+      <script async="true" src="https://www.googletagmanager.com/gtag/js?id=G-ZCH0DFY43H"></script>
+    
+    
+      window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date());gtag('config', 'G-ZCH0DFY43H');
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js oranda-light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Dynamic Range &amp; Highlights - Filmr Knowledge Base</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="oranda-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "oranda-light" : "oranda-light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('orandamdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('orandamdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('orandamdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('oranda-light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="photochemistry.html"><strong aria-hidden="true">2.</strong> Photochemistry Core</a></li><li class="chapter-item expanded "><a href="film_characteristics.html"><strong aria-hidden="true">3.</strong> Film Characteristics</a></li><li class="chapter-item expanded "><a href="reference_data.html"><strong aria-hidden="true">4.</strong> Reference Data</a></li><li class="chapter-item expanded "><a href="spectral_sensitivity.html"><strong aria-hidden="true">5.</strong> Spectral Sensitivity</a></li><li class="chapter-item expanded "><a href="validation.html"><strong aria-hidden="true">6.</strong> Validation Framework</a></li><li class="chapter-item expanded "><a href="metrics.html"><strong aria-hidden="true">7.</strong> Metrics & Diagnosis</a></li><li class="chapter-item expanded "><a href="dynamic_range.html" class="active"><strong aria-hidden="true">8.</strong> Dynamic Range & Highlights</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="oranda-light">Cupcake</button></li>
+
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Filmr Knowledge Base</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="dynamic-range-and-highlight-roll-off"><a class="header" href="#dynamic-range-and-highlight-roll-off">Dynamic Range and Highlight Roll-off</a></h1>
+<p>A common observation in film simulation is that <strong>digital dynamic range numbers win, but film highlight behavior wins on &quot;character&quot;</strong>. This is not a &quot;resolution&quot; issue, but a <strong>dimensionality superiority of chemical response</strong>.</p>
+<hr />
+<h2 id="1-dynamic-range-the-definition-trap"><a class="header" href="#1-dynamic-range-the-definition-trap">1. Dynamic Range: The Definition Trap</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Metric</th><th>High-end CMOS (Sony A7R V)</th><th>Kodak Portra 400</th></tr></thead><tbody>
+<tr><td><strong>Engineering DR</strong></td><td>15.3 stops (Linear RAW)</td><td>13.2 stops (Density 2.8)</td></tr>
+<tr><td><strong>Effective DR</strong></td><td>13.5 stops (Noise ≤ 1 ADU)</td><td><strong>18+ stops (Printable Highlights)</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: CMOS hard clips at 14 bit (Full Well Capacity), whereas film dye continues to stack after $D_{\max}=2.8$—it just transitions from <strong>linear growth to logarithmic decay</strong>. Scanners might clip, but optical enlargers can retrieve this, giving film its &quot;highlight retention&quot; ability.</p>
+<hr />
+<h2 id="2-three-stages-of-chemical-highlight-roll-off"><a class="header" href="#2-three-stages-of-chemical-highlight-roll-off">2. Three Stages of Chemical Highlight Roll-off</a></h2>
+<h3 id="stage-1-linear-region-008-density"><a class="header" href="#stage-1-linear-region-008-density">Stage 1: Linear Region (0–0.8 Density)</a></h3>
+<p>Silver halide grains respond linearly according to Beer-Lambert law: $D = \gamma \cdot \log_{10}(H)$. This looks like standard LOG encoding.</p>
+<h3 id="stage-2-shoulder-softening-0818-density"><a class="header" href="#stage-2-shoulder-softening-0818-density">Stage 2: Shoulder Softening (0.8–1.8 Density)</a></h3>
+<p><strong>Chemical Mechanisms</strong>:</p>
+<ol>
+<li>Grain surface development centers saturate → Electron trapping efficiency $\eta$ drops, following <strong>Mott-Gurney Space Charge Limit</strong>: $J \propto V^2/d^3$</li>
+<li>Developer oxidation product (QDI) decomposes at high pH → Coupling rate $k_{\text{coupling}}$ decays</li>
+<li><strong>Interlayer Inhibition</strong>: High density in upper layers releases Bromide ions (Br⁻) to lower layers, inhibiting their development (ISO 4090 IIE effect)</li>
+</ol>
+<p>Mathematically:
+$$
+D(H) = \gamma \log_{10}(H) \cdot \left(1 - \frac{H}{H_{\text{sat}}}\right)^{\alpha}
+$$
+Where $\alpha \approx 0.65$ (Kodak Patent US4508812A). This is the <strong>core of highlight softening</strong>.</p>
+<h3 id="stage-3-toe-clipping-18-density"><a class="header" href="#stage-3-toe-clipping-18-density">Stage 3: Toe Clipping (&gt;1.8 Density)</a></h3>
+<p>Dye molecules stack to the <strong>Förster Resonance Energy Transfer</strong> distance (&lt; 2 nm), quenching energy → Density growth approaches $D_{\max}$ asymptotically.</p>
+<hr />
+<h2 id="3-why-digital-post-processing-falls-short"><a class="header" href="#3-why-digital-post-processing-falls-short">3. Why Digital Post-Processing Falls Short</a></h2>
+<h3 id="31-dimensionality-gap"><a class="header" href="#31-dimensionality-gap">3.1 Dimensionality Gap</a></h3>
+<p>CMOS highlights have only <strong>16384 discrete levels (14 bit)</strong>. Once clipped, data is gone.
+Film highlights still have <strong>31-dimensional spectral</strong> changes, just with slower density growth. Post-processing can only <strong>interpolate</strong>, not <strong>extrapolate</strong> real spectra.</p>
+<h3 id="32-irreversibility-of-non-linear-coupling"><a class="header" href="#32-irreversibility-of-non-linear-coupling">3.2 Irreversibility of Non-linear Coupling</a></h3>
+<p>Photoshop's &quot;Highlight Compression&quot; is $y = \log(x + \epsilon)$ or $y = x^{0.8}$, applied <strong>independently per channel</strong>.
+Film involves <strong>Yellow + Magenta + Cyan dye densities inhibiting each other</strong>. Mathematically, it's a <strong>ternary non-linear coupled system</strong>:</p>
+<p>$$
+\begin{cases}
+C_Y = f_Y(H_B, H_G, H_R) \
+C_M = f_M(H_G, H_R, H_Y) \
+C_C = f_C(H_R, H_Y, H_G)
+\end{cases}
+$$</p>
+<p>Standard tools don't model &quot;upper layer exposure poisoning lower layer&quot;.</p>
+<h3 id="33-noise-texture-differences"><a class="header" href="#33-noise-texture-differences">3.3 Noise Texture Differences</a></h3>
+<p>CMOS highlight noise is <strong>Poisson + Readout Noise</strong>. Film is <strong>Granularity following Wiener Spectrum</strong>: $G(f) = \frac{a}{f^2 + b}$, which <strong>decreases</strong> as density increases.
+Digital noise addition is just &quot;adding salt&quot;, lacking density-dependent grain size distribution.</p>
+<hr />
+<h2 id="4-hard-simulation-adding-chemical-constraints"><a class="header" href="#4-hard-simulation-adding-chemical-constraints">4. Hard Simulation: Adding &quot;Chemical Constraints&quot;</a></h2>
+<h3 id="41-shoulder-softening-model"><a class="header" href="#41-shoulder-softening-model">4.1 Shoulder Softening Model</a></h3>
+<p>Apply a <strong>space charge limit</strong> after Exposure → Density mapping:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn shoulder_softening(density: f32, shoulder_point: f32) -&gt; f32 {
+    if density &gt; shoulder_point {
+        let excess = density - shoulder_point;
+        density - excess * excess / (shoulder_point + excess)
+    } else {
+        density
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Where <code>shoulder_point = 0.8</code> (ISO 5800 standard point).</p>
+<h3 id="42-interlayer-inhibition-matrix"><a class="header" href="#42-interlayer-inhibition-matrix">4.2 Interlayer Inhibition Matrix</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Interlayer effect matrix from ISO 4090 measurements
+// Row i = Real Dye i / Theoretical Dye i
+let interlayer: nalgebra::Matrix3&lt;f32&gt; = nalgebra::Matrix3::new(
+    1.00, -0.08, -0.03, // Yellow inhibited by Magenta/Cyan
+    -0.05, 1.00, -0.07, // Magenta inhibited by Yellow/Cyan
+    -0.02, -0.06, 1.00, // Cyan inhibited by Yellow/Magenta
+);
+
+let dyes_real = interlayer * dyes_theoretical;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="43-dye-self-absorption-correction"><a class="header" href="#43-dye-self-absorption-correction">4.3 Dye Self-Absorption Correction</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Dye self-absorption causes spectral shift at high densities
+fn dye_self_absorb(c: f32, t: &amp;mut [f32]) {
+    // c: dye concentration, t: transmittance spectrum
+    for wl in 0..31 {
+        // Beer's law deviation of 1-3% when density &gt; 1.5
+        let correction = 1.0 + (c - 1.5) * 0.02;
+        t[wl] *= correction.clamp(0.97, 1.03);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="metrics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="metrics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
