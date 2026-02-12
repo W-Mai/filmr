@@ -152,27 +152,13 @@ fn render_film_stock_section(
             ui.add_space(5.0);
             ui.label("🎨 Rendering Style");
             let prev_style = app.film_style;
-            egui::ComboBox::from_id_salt("film_style")
-                .selected_text(format!("{:?}", app.film_style))
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut app.film_style,
-                        FilmStyle::Accurate,
-                        "Accurate (Physical)",
-                    );
-                    ui.selectable_value(
-                        &mut app.film_style,
-                        FilmStyle::Artistic,
-                        "Artistic (Enhanced)",
-                    );
-                    ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage (Faded)");
-                    ui.selectable_value(
-                        &mut app.film_style,
-                        FilmStyle::HighContrast,
-                        "High Contrast",
-                    );
-                    ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel (Soft)");
-                });
+            ui.horizontal_wrapped(|ui| {
+                ui.selectable_value(&mut app.film_style, FilmStyle::Accurate, "Accurate");
+                ui.selectable_value(&mut app.film_style, FilmStyle::Artistic, "Artistic");
+                ui.selectable_value(&mut app.film_style, FilmStyle::Vintage, "Vintage");
+                ui.selectable_value(&mut app.film_style, FilmStyle::HighContrast, "High Contrast");
+                ui.selectable_value(&mut app.film_style, FilmStyle::Pastel, "Pastel");
+            });
 
             if app.film_style != prev_style {
                 *changed = true;
