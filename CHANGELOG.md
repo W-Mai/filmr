@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.8] - 2026-02-12
+
+### ✨ Features
+
+- **Film**: Add FilmStyle system for systematic rendering style modifiers (Accurate, Artistic, Vintage, HighContrast, Pastel).
+- **Presets**: Add artistic variants for popular films (Portra 400, Tri-X 400, Velvia 50, HP5 Plus 400).
+- **UI**: Add FilmStyle selector to both Simple and Professional modes with horizontal button layout.
+- **UI**: Trigger automatic reprocessing when switching between Simple and Professional modes.
+
+### 🐛 Fixes
+
+- **Presets**: Fix grain alpha values using correct formula `(RMS/1000)²` for all 51 films (was incorrectly `RMS/1000`).
+- **Presets**: Restore original curve parameters for Portra 400, Tri-X 400, HP5 Plus, and Velvia 50.
+- **Grain**: Add visual grain boost factor (25x) to compensate for display/perception differences - grain was physically correct but visually too weak.
+- **UI**: Load preset values on image load to fix initial grain intensity issue (first load showed extreme grain).
+
+### 💄 Style
+
+- **UI**: Move Rendering Style to separate section with consistent grouping.
+- **UI**: Change FilmStyle selector from dropdown to horizontal buttons for better UX.
+- **UI**: Force white balance Off in Simple mode during processing.
+
+### ♻️ Refactor
+
+- **Film**: Add helper methods to FilmStyle enum (`all()`, `name()`, `description()`, `short_description()`) for cleaner UI code.
+
+### 🙈 Chore
+
+- **Git**: Add .DS_Store to .gitignore.
+
+### 📄 Documentation
+
+- **README**: Update snapshot image.
+
 ## [0.6.7] - 2026-02-11
 
 ### ♻️ Refactor
