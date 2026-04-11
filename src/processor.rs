@@ -289,7 +289,6 @@ impl PipelineStage for AccurateDevelopStage {
         let film = context.film;
         let config = context.config;
 
-        // Resolve layer stack: use film's custom stack or default
         let stack = film.layer_stack.clone().unwrap_or_else(|| {
             use crate::film::FilmType;
             match film.film_type {
@@ -301,7 +300,6 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // Reciprocity
         let reciprocity_factor = if config.exposure_time > 1.0 {
             1.0 + film.reciprocity.beta * config.exposure_time.log10().powi(2)
         } else {
@@ -309,29 +307,48 @@ impl PipelineStage for AccurateDevelopStage {
         };
         let t_eff = config.exposure_time / reciprocity_factor;
 
-        image.par_chunks_mut(3).for_each(|pixel| {
-            // 1. Reconstruct incident spectrum from linear RGB
-            let incident = camera.uplift(pixel[0], pixel[1], pixel[2]);
+        let width = image.width();
 
-            // 2. Scale by illuminant and exposure time
+        // Pass 1: per-pixel spectral propagation → RGB exposure
+        image.par_chunks_mut(3).for_each(|pixel| {
+            let incident = camera.uplift(pixel[0], pixel[1], pixel[2]);
             let mut scaled = [0.0f32; crate::spectral::BINS];
             for (i, s) in scaled.iter_mut().enumerate() {
                 *s = incident.power[i] * d65.power[i] * t_eff;
             }
-
-            // 3. Propagate through layer stack
             let exposure = spectral_engine::propagate(&stack, &scaled);
             let rgb = spectral_engine::integrate_exposure(&exposure);
+            pixel[0] = rgb[0];
+            pixel[1] = rgb[1];
+            pixel[2] = rgb[2];
+        });
 
-            // 4. Map to log-exposure → density via H-D curves
+        // Pass 2: scattering spatial diffusion (Gaussian blur per emulsion scatter)
+        // Total scatter sigma ≈ sum of (thickness * scattering) across emulsion layers,
+        // converted from µm to pixels assuming 35mm width.
+        let scatter_um: f32 = stack
+            .layers
+            .iter()
+            .map(|l| l.thickness_um * l.scattering)
+            .sum();
+        if scatter_um > 0.0 {
+            let pixels_per_um = width as f32 / 36_000.0; // 36mm = 36000µm
+            let sigma_px = scatter_um * pixels_per_um;
+            if sigma_px > 0.3 {
+                info!("Applying scattering diffusion blur (sigma: {:.2}px)", sigma_px);
+                crate::utils::apply_gaussian_blur(image, sigma_px);
+            }
+        }
+
+        // Pass 3: log-exposure → density via H-D curves
+        image.par_chunks_mut(3).for_each(|pixel| {
             let epsilon = 1e-6;
             let log_e = [
-                rgb[0].max(epsilon).log10(),
-                rgb[1].max(epsilon).log10(),
-                rgb[2].max(epsilon).log10(),
+                pixel[0].max(epsilon).log10(),
+                pixel[1].max(epsilon).log10(),
+                pixel[2].max(epsilon).log10(),
             ];
             let densities = film.map_log_exposure(log_e);
-
             pixel[0] = densities[0];
             pixel[1] = densities[1];
             pixel[2] = densities[2];
