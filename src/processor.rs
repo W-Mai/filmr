@@ -300,8 +300,9 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // Compute white-point normalization: ensure (1,1,1) input → balanced exposure.
-        // Without this, D65 SPD magnitude (~100) and CMF asymmetry cause color cast.
+        // White-point normalization + exposure_offset alignment.
+        // 1. Compute raw spectral response for white (1,1,1) → balanced channels
+        // 2. Scale so that 18% gray maps to the film's exposure_offset (H-D midpoint)
         let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
         let mut white_scaled = [0.0f32; crate::spectral::BINS];
         for (i, s) in white_scaled.iter_mut().enumerate() {
@@ -309,10 +310,16 @@ impl PipelineStage for AccurateDevelopStage {
         }
         let white_exp = spectral_engine::propagate(&stack, &white_scaled);
         let white_rgb = spectral_engine::integrate_exposure(&white_exp);
+
+        // Target: 18% gray input → exposure = exposure_offset per channel
+        let mid_gray = 0.18;
+        let target_r = film.r_curve.exposure_offset;
+        let target_g = film.g_curve.exposure_offset;
+        let target_b = film.b_curve.exposure_offset;
         let norm = [
-            if white_rgb[0] > 1e-10 { 1.0 / white_rgb[0] } else { 1.0 },
-            if white_rgb[1] > 1e-10 { 1.0 / white_rgb[1] } else { 1.0 },
-            if white_rgb[2] > 1e-10 { 1.0 / white_rgb[2] } else { 1.0 },
+            if white_rgb[0] > 1e-10 { target_r / (white_rgb[0] * mid_gray) } else { 1.0 },
+            if white_rgb[1] > 1e-10 { target_g / (white_rgb[1] * mid_gray) } else { 1.0 },
+            if white_rgb[2] > 1e-10 { target_b / (white_rgb[2] * mid_gray) } else { 1.0 },
         ];
 
         let reciprocity_factor = if config.exposure_time > 1.0 {

@@ -217,4 +217,50 @@ mod tests {
         // Exposure should be non-trivially positive (backward pass contributes)
         assert!(rgb[0] > 0.0);
     }
+
+    #[test]
+    fn test_accurate_white_balance_diag() {
+        let stack = FilmLayerStack::default_color_negative();
+        let camera = crate::spectral::CameraSensitivities::srgb();
+        let d65 = crate::spectral::Spectrum::new_d65();
+
+        // Simulate what AccurateDevelopStage does for white (1,1,1)
+        let white = camera.uplift(1.0, 1.0, 1.0);
+        let mut scaled = [0.0f32; BINS];
+        for (i, s) in scaled.iter_mut().enumerate() {
+            *s = white.power[i] * d65.power[i];
+        }
+        let exp = propagate(&stack, &scaled);
+        let rgb = integrate_exposure(&exp);
+        println!("White raw exposure: R={:.6}, G={:.6}, B={:.6}", rgb[0], rgb[1], rgb[2]);
+        println!("White R/G={:.4}, B/G={:.4}", rgb[0]/rgb[1], rgb[2]/rgb[1]);
+
+        // Gray (0.2, 0.2, 0.2)
+        let gray = camera.uplift(0.2, 0.2, 0.2);
+        let mut scaled_g = [0.0f32; BINS];
+        for (i, s) in scaled_g.iter_mut().enumerate() {
+            *s = gray.power[i] * d65.power[i];
+        }
+        let exp_g = propagate(&stack, &scaled_g);
+        let rgb_g = integrate_exposure(&exp_g);
+        println!("Gray raw exposure:  R={:.6}, G={:.6}, B={:.6}", rgb_g[0], rgb_g[1], rgb_g[2]);
+
+        // After normalization
+        let norm_r = rgb_g[0] / rgb[0];
+        let norm_g = rgb_g[1] / rgb[1];
+        let norm_b = rgb_g[2] / rgb[2];
+        println!("Gray normalized:    R={:.6}, G={:.6}, B={:.6}", norm_r, norm_g, norm_b);
+        println!("Normalized R/G={:.4}, B/G={:.4}", norm_r/norm_g, norm_b/norm_g);
+
+        // Red (1, 0, 0)
+        let red = camera.uplift(1.0, 0.0, 0.0);
+        let mut scaled_r = [0.0f32; BINS];
+        for (i, s) in scaled_r.iter_mut().enumerate() {
+            *s = red.power[i] * d65.power[i];
+        }
+        let exp_r = propagate(&stack, &scaled_r);
+        let rgb_r = integrate_exposure(&exp_r);
+        let nr = [rgb_r[0]/rgb[0], rgb_r[1]/rgb[1], rgb_r[2]/rgb[2]];
+        println!("Red normalized:     R={:.6}, G={:.6}, B={:.6}", nr[0], nr[1], nr[2]);
+    }
 }
