@@ -4,7 +4,7 @@ use super::workers::ProcessRequest;
 use super::FilmrApp;
 use crate::config::AppMode;
 use egui::Context;
-use filmr::{estimate_exposure_time, light_leak::LightLeakConfig, SimulationConfig};
+use filmr::{estimate_exposure_time, light_leak::LightLeakConfig, SimulationConfig, SimulationMode};
 use std::sync::Arc;
 
 impl FilmrApp {
@@ -42,7 +42,7 @@ impl FilmrApp {
             }
 
             let config = SimulationConfig {
-                simulation_mode: filmr::processor::SimulationMode::default(),
+                simulation_mode: SimulationMode::default(),
                 exposure_time: self.exposure_time,
                 enable_grain: true,
                 use_gpu: true,
@@ -77,7 +77,7 @@ impl FilmrApp {
         if let Some(img) = &self.original_image {
             let thumb_base = img.thumbnail(128, 128).to_rgb8();
             let thumb_config = SimulationConfig {
-                simulation_mode: filmr::processor::SimulationMode::default(),
+                simulation_mode: SimulationMode::default(),
                 exposure_time: 1.0,
                 enable_grain: false,
                 use_gpu: false,
@@ -134,7 +134,7 @@ impl FilmrApp {
             }
 
             let config = SimulationConfig {
-                simulation_mode: filmr::processor::SimulationMode::default(),
+                simulation_mode: SimulationMode::Accurate,
                 exposure_time: self.exposure_time,
                 enable_grain: true,
                 use_gpu: true,
