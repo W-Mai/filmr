@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Features
+
+- **Spectral**: Add CIE 1931 XYZ colour matching functions and D65 illuminant lookup tables (380–780nm, 5nm, 81 bins).
+- **Spectral**: Replace blackbody approximation for D65 with CIE standard data.
+- **Spectral**: Replace Gaussian camera sensitivities with CIE XYZ CMF × XYZ→sRGB matrix.
+- **Film Layer**: Add multi-layer film structure model (`FilmLayerStack` / `FilmLayer`) with refractive index, thickness, spectral absorption, and scattering coefficients.
+- **Spectral Engine**: Add full-spectrum propagation engine — per-wavelength per-layer light transport with Beer-Lambert absorption, Fresnel interface reflection, and forward+backward (halation) passes.
+- **Core**: Add `SimulationMode::Fast` / `Accurate` — Fast uses existing 3×3 matrix path, Accurate uses full-spectrum engine.
+- **Film**: Add `layer_stack: Option<FilmLayerStack>` to `FilmStock` for custom per-preset layer structures.
+
 ## [0.6.8] - 2026-02-12
 
 ### ✨ Features
