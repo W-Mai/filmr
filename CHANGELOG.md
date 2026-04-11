@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Spectral Engine**: Add full-spectrum propagation engine — per-wavelength per-layer light transport with Beer-Lambert absorption, Fresnel interface reflection, and forward+backward (halation) passes.
 - **Core**: Add `SimulationMode::Fast` / `Accurate` — Fast uses existing 3×3 matrix path, Accurate uses full-spectrum engine.
 - **Film**: Add `layer_stack: Option<FilmLayerStack>` to `FilmStock` for custom per-preset layer structures.
+- **UI**: Develop button triggers Accurate mode (full-spectrum); preview stays Fast (matrix).
+- **Spectral**: Add scattering spatial diffusion — Gaussian blur derived from physical layer scatter coefficients.
+- **Spectral**: Add interlayer interimage effect (DIR coupler developer inhibition matrix).
+- **Presets**: Calibrated layer stacks for Kodak Portra 400, Kodak Tri-X 400, Fujifilm Velvia 50.
 
 ## [0.6.8] - 2026-02-12
 
