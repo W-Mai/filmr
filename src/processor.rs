@@ -94,6 +94,21 @@ const SPECTRAL_NORM: f32 = 1.0;
 
 #[instrument(skip(input, film))]
 pub fn estimate_exposure_time(input: &RgbImage, film: &FilmStock) -> f32 {
+    estimate_exposure_time_for_mode(input, film, SimulationMode::Fast)
+}
+
+/// Estimate exposure time, accounting for simulation mode.
+/// In Accurate mode, normalization already handles auto-exposure,
+/// so this returns 1.0 (neutral EV).
+#[instrument(skip(input, film))]
+pub fn estimate_exposure_time_for_mode(
+    input: &RgbImage,
+    film: &FilmStock,
+    mode: SimulationMode,
+) -> f32 {
+    if mode == SimulationMode::Accurate {
+        return 1.0;
+    }
     debug!("Estimating exposure time...");
 
     let spectral_matrix = film.compute_spectral_matrix();
