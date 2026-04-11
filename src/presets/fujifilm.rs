@@ -3,8 +3,9 @@
 #![allow(non_snake_case)]
 
 use crate::film::{FilmStock, FilmType, ReciprocityFailure, SegmentedCurve};
+use crate::film_layer::*;
 use crate::grain::GrainModel;
-use crate::spectral::FilmSpectralParams;
+use crate::spectral::{FilmSpectralParams, BINS};
 
 /// Fujifilm Superia 400 (Consumer Color Negative)
 /// Source: Fujifilm Technical Data
@@ -414,7 +415,24 @@ pub fn VELVIA_50() -> FilmStock {
         halation_threshold: 0.92,
         halation_sigma: 0.008,
         halation_tint: [1.0, 0.4, 0.4],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            // Slide film: stronger interimage for vivid colour separation
+            inhibition: [
+                [0.00, -0.12, -0.06],
+                [-0.08, 0.00, -0.08],
+                [-0.06, -0.12, 0.00],
+            ],
+            layers: vec![
+                FilmLayer { name: "Overcoat".into(), kind: LayerKind::Overcoat, thickness_um: 0.8, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
+                FilmLayer { name: "Blue Emulsion".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Blue }, thickness_um: 3.5, refractive_index: 1.53, absorption: gaussian_absorption(450.0, 22.0, 0.16), scattering: 0.010 },
+                FilmLayer { name: "Yellow Filter".into(), kind: LayerKind::YellowFilter, thickness_um: 0.8, refractive_index: 1.52, absorption: gaussian_absorption(440.0, 30.0, 1.0), scattering: 0.0 },
+                FilmLayer { name: "Green Emulsion".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 3.0, refractive_index: 1.53, absorption: gaussian_absorption(545.0, 25.0, 0.14), scattering: 0.010 },
+                FilmLayer { name: "Interlayer".into(), kind: LayerKind::Interlayer, thickness_um: 0.5, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
+                FilmLayer { name: "Red Emulsion".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Red }, thickness_um: 3.0, refractive_index: 1.53, absorption: gaussian_absorption(635.0, 30.0, 0.13), scattering: 0.010 },
+                // Slide film: no traditional antihalation, just base
+                FilmLayer { name: "Base".into(), kind: LayerKind::Base, thickness_um: 97.0, refractive_index: 1.65, absorption: [0.002; BINS], scattering: 0.0 },
+            ],
+        }),
     }
 }
 

@@ -3,8 +3,9 @@
 #![allow(non_snake_case)]
 
 use crate::film::{FilmStock, FilmType, ReciprocityFailure, SegmentedCurve};
+use crate::film_layer::*;
 use crate::grain::GrainModel;
-use crate::spectral::FilmSpectralParams;
+use crate::spectral::{FilmSpectralParams, BINS};
 
 /// Kodak Portra 400 (Professional Color Negative)
 /// Kodak Portra 400 (Professional Color Negative)
@@ -63,7 +64,26 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.70, 0.50],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.10, -0.05],
+                [-0.07, 0.00, -0.07],
+                [-0.05, -0.10, 0.00],
+            ],
+            layers: vec![
+                FilmLayer { name: "Overcoat".into(), kind: LayerKind::Overcoat, thickness_um: 1.2, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
+                FilmLayer { name: "Blue Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Blue }, thickness_um: 4.0, refractive_index: 1.53, absorption: gaussian_absorption(450.0, 28.0, 0.14), scattering: 0.015 },
+                FilmLayer { name: "Blue Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Blue }, thickness_um: 3.0, refractive_index: 1.53, absorption: gaussian_absorption(450.0, 25.0, 0.18), scattering: 0.010 },
+                FilmLayer { name: "Yellow Filter".into(), kind: LayerKind::YellowFilter, thickness_um: 1.0, refractive_index: 1.52, absorption: gaussian_absorption(440.0, 35.0, 0.9), scattering: 0.0 },
+                FilmLayer { name: "Green Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 3.5, refractive_index: 1.53, absorption: gaussian_absorption(545.0, 32.0, 0.11), scattering: 0.015 },
+                FilmLayer { name: "Green Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 2.5, refractive_index: 1.53, absorption: gaussian_absorption(545.0, 28.0, 0.15), scattering: 0.010 },
+                FilmLayer { name: "Interlayer".into(), kind: LayerKind::Interlayer, thickness_um: 1.0, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
+                FilmLayer { name: "Red Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Red }, thickness_um: 3.5, refractive_index: 1.53, absorption: gaussian_absorption(640.0, 38.0, 0.10), scattering: 0.015 },
+                FilmLayer { name: "Red Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Red }, thickness_um: 2.5, refractive_index: 1.53, absorption: gaussian_absorption(640.0, 32.0, 0.14), scattering: 0.010 },
+                FilmLayer { name: "Anti-Halation".into(), kind: LayerKind::AntiHalation, thickness_um: 2.0, refractive_index: 1.50, absorption: gaussian_absorption(600.0, 120.0, 0.6), scattering: 0.0 },
+                FilmLayer { name: "Base".into(), kind: LayerKind::Base, thickness_um: 127.0, refractive_index: 1.65, absorption: [0.001; BINS], scattering: 0.0 },
+            ],
+        }),
     }
 }
 
@@ -275,7 +295,16 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         halation_threshold: 0.82,
         halation_sigma: 0.016,
         halation_tint: [0.85, 0.85, 0.85],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer { name: "Overcoat".into(), kind: LayerKind::Overcoat, thickness_um: 1.0, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
+                FilmLayer { name: "Panchromatic Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 5.0, refractive_index: 1.54, absorption: gaussian_absorption(540.0, 90.0, 0.09), scattering: 0.04 },
+                FilmLayer { name: "Panchromatic Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 4.0, refractive_index: 1.54, absorption: gaussian_absorption(540.0, 80.0, 0.12), scattering: 0.03 },
+                FilmLayer { name: "Anti-Halation".into(), kind: LayerKind::AntiHalation, thickness_um: 2.5, refractive_index: 1.50, absorption: gaussian_absorption(580.0, 110.0, 0.5), scattering: 0.0 },
+                FilmLayer { name: "Base".into(), kind: LayerKind::Base, thickness_um: 127.0, refractive_index: 1.65, absorption: [0.001; BINS], scattering: 0.0 },
+            ],
+        }),
     }
 }
 

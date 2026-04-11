@@ -55,7 +55,7 @@ pub struct FilmLayerStack {
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn gaussian_absorption(center_nm: f32, sigma_nm: f32, amplitude: f32) -> [f32; BINS] {
+pub fn gaussian_absorption(center_nm: f32, sigma_nm: f32, amplitude: f32) -> [f32; BINS] {
     let mut a = [0.0f32; BINS];
     for (i, v) in a.iter_mut().enumerate() {
         let lambda = 380.0 + i as f32 * 5.0;
