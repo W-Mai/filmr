@@ -300,6 +300,21 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
+        // Compute white-point normalization: ensure (1,1,1) input → balanced exposure.
+        // Without this, D65 SPD magnitude (~100) and CMF asymmetry cause color cast.
+        let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
+        let mut white_scaled = [0.0f32; crate::spectral::BINS];
+        for (i, s) in white_scaled.iter_mut().enumerate() {
+            *s = white_spectrum.power[i] * d65.power[i];
+        }
+        let white_exp = spectral_engine::propagate(&stack, &white_scaled);
+        let white_rgb = spectral_engine::integrate_exposure(&white_exp);
+        let norm = [
+            if white_rgb[0] > 1e-10 { 1.0 / white_rgb[0] } else { 1.0 },
+            if white_rgb[1] > 1e-10 { 1.0 / white_rgb[1] } else { 1.0 },
+            if white_rgb[2] > 1e-10 { 1.0 / white_rgb[2] } else { 1.0 },
+        ];
+
         let reciprocity_factor = if config.exposure_time > 1.0 {
             1.0 + film.reciprocity.beta * config.exposure_time.log10().powi(2)
         } else {
@@ -318,9 +333,10 @@ impl PipelineStage for AccurateDevelopStage {
             }
             let exposure = spectral_engine::propagate(&stack, &scaled);
             let rgb = spectral_engine::integrate_exposure(&exposure);
-            pixel[0] = rgb[0];
-            pixel[1] = rgb[1];
-            pixel[2] = rgb[2];
+            // Normalize so white input → unit exposure per channel
+            pixel[0] = rgb[0] * norm[0];
+            pixel[1] = rgb[1] * norm[1];
+            pixel[2] = rgb[2] * norm[2];
         });
 
         // Pass 2: scattering spatial diffusion (Gaussian blur per emulsion scatter)

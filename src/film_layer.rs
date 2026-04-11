@@ -78,7 +78,7 @@ const fn flat(v: f32) -> [f32; BINS] {
 }
 
 // ---------------------------------------------------------------------------
-// Default stacks
+// Default stacks + builder methods
 // ---------------------------------------------------------------------------
 
 impl FilmLayerStack {
@@ -210,5 +210,59 @@ impl FilmLayerStack {
                 },
             ],
         }
+    }
+
+    // --- Builder / chain methods ---
+
+    /// Override inhibition matrix.
+    pub fn with_inhibition(mut self, inhibition: [[f32; 3]; 3]) -> Self {
+        self.inhibition = inhibition;
+        self
+    }
+
+    /// Scale all emulsion scattering coefficients.
+    pub fn with_scatter_scale(mut self, factor: f32) -> Self {
+        for layer in &mut self.layers {
+            if matches!(layer.kind, LayerKind::Emulsion { .. }) {
+                layer.scattering *= factor;
+            }
+        }
+        self
+    }
+
+    /// Scale all emulsion thicknesses.
+    pub fn with_thickness_scale(mut self, factor: f32) -> Self {
+        for layer in &mut self.layers {
+            if matches!(layer.kind, LayerKind::Emulsion { .. }) {
+                layer.thickness_um *= factor;
+            }
+        }
+        self
+    }
+
+    /// Scale all emulsion absorption amplitudes.
+    pub fn with_absorption_scale(mut self, factor: f32) -> Self {
+        for layer in &mut self.layers {
+            if matches!(layer.kind, LayerKind::Emulsion { .. }) {
+                for v in &mut layer.absorption {
+                    *v *= factor;
+                }
+            }
+        }
+        self
+    }
+
+    /// Replace a specific layer by kind (first match).
+    pub fn with_layer(mut self, new_layer: FilmLayer) -> Self {
+        if let Some(l) = self.layers.iter_mut().find(|l| l.kind == new_layer.kind) {
+            *l = new_layer;
+        }
+        self
+    }
+
+    /// Remove anti-halation layer (e.g. for slide film derived from negative base).
+    pub fn without_antihalation(mut self) -> Self {
+        self.layers.retain(|l| l.kind != LayerKind::AntiHalation);
+        self
     }
 }
