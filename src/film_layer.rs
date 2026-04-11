@@ -44,6 +44,11 @@ pub enum EmulsionChannel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilmLayerStack {
     pub layers: Vec<FilmLayer>,
+    /// Interlayer interimage effect (developer inhibition).
+    /// `inhibition[i][j]` = how much density in channel j suppresses channel i.
+    /// Channels: 0=Red, 1=Green, 2=Blue.  Diagonal should be 0.
+    /// Typical values: 0.05–0.15 for colour negative.
+    pub inhibition: [[f32; 3]; 3],
 }
 
 // ---------------------------------------------------------------------------
@@ -80,6 +85,12 @@ impl FilmLayerStack {
     /// Generic colour-negative (Portra-like).
     pub fn default_color_negative() -> Self {
         Self {
+            inhibition: [
+                //        R      G      B     ← source of inhibition
+                [0.00, -0.08, -0.04], // → Red   (suppressed by G and B development)
+                [-0.06, 0.00, -0.06], // → Green (suppressed by R and B)
+                [-0.04, -0.08, 0.00], // → Blue  (suppressed by R and G)
+            ],
             layers: vec![
                 FilmLayer {
                     name: "Overcoat".into(),
@@ -161,6 +172,7 @@ impl FilmLayerStack {
     /// Generic B&W panchromatic negative.
     pub fn default_bw_negative() -> Self {
         Self {
+            inhibition: [[0.0; 3]; 3],
             layers: vec![
                 FilmLayer {
                     name: "Overcoat".into(),

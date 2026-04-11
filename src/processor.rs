@@ -340,7 +340,8 @@ impl PipelineStage for AccurateDevelopStage {
             }
         }
 
-        // Pass 3: log-exposure → density via H-D curves
+        // Pass 3: log-exposure → density via H-D curves + interlayer inhibition
+        let inhibition = stack.inhibition;
         image.par_chunks_mut(3).for_each(|pixel| {
             let epsilon = 1e-6;
             let log_e = [
@@ -348,10 +349,13 @@ impl PipelineStage for AccurateDevelopStage {
                 pixel[1].max(epsilon).log10(),
                 pixel[2].max(epsilon).log10(),
             ];
-            let densities = film.map_log_exposure(log_e);
-            pixel[0] = densities[0];
-            pixel[1] = densities[1];
-            pixel[2] = densities[2];
+            let d = film.map_log_exposure(log_e);
+
+            // Interlayer interimage effect: inhibition proportional to density
+            // D_i_final = D_i + sum_j(inhibition[i][j] * D_j)
+            pixel[0] = (d[0] + inhibition[0][0] * d[0] + inhibition[0][1] * d[1] + inhibition[0][2] * d[2]).max(0.0);
+            pixel[1] = (d[1] + inhibition[1][0] * d[0] + inhibition[1][1] * d[1] + inhibition[1][2] * d[2]).max(0.0);
+            pixel[2] = (d[2] + inhibition[2][0] * d[0] + inhibition[2][1] * d[1] + inhibition[2][2] * d[2]).max(0.0);
         });
     }
 }
