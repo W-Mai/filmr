@@ -231,6 +231,11 @@ pub struct FilmStock {
     /// Stock name (e.g., "Portra 400", "Velvia 50").
     #[serde(default)]
     pub name: String,
+
+    /// Optional custom layer stack for full-spectrum simulation.
+    /// When None, a default stack is used based on film_type.
+    #[serde(skip)]
+    pub layer_stack: Option<crate::film_layer::FilmLayerStack>,
 }
 
 impl FilmStock {
@@ -271,6 +276,7 @@ impl FilmStock {
             halation_tint,
             manufacturer,
             name,
+            layer_stack: None,
         }
     }
 

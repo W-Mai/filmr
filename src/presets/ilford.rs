@@ -58,6 +58,7 @@ pub fn HP5_PLUS_400() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [0.88, 0.88, 0.88],
+        layer_stack: None,
     }
 }
 
@@ -135,6 +136,7 @@ pub fn FP4_PLUS_125() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [0.92, 0.92, 0.92],
+        layer_stack: None,
     }
 }
 
@@ -190,6 +192,7 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [0.90, 0.90, 0.90],
+        layer_stack: None,
     }
 }
 
@@ -245,6 +248,7 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [0.94, 0.94, 0.94],
+        layer_stack: None,
     }
 }
 
@@ -300,6 +304,7 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.96, 0.96, 0.96],
+        layer_stack: None,
     }
 }
 
@@ -355,6 +360,7 @@ pub fn XP2_SUPER_400() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [0.92, 0.92, 0.92],
+        layer_stack: None,
     }
 }
 
@@ -410,6 +416,7 @@ pub fn SFX_200() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [0.90, 0.90, 0.90],
+        layer_stack: None,
     }
 }
 
@@ -465,6 +472,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
         halation_threshold: 0.87,
         halation_sigma: 0.013,
         halation_tint: [0.93, 0.93, 0.93],
+        layer_stack: None,
     }
 }
 

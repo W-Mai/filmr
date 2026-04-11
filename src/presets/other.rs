@@ -52,6 +52,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
         halation_threshold: 0.8,
         halation_sigma: 0.02,
         halation_tint: [1.0, 0.4, 0.2],
+        layer_stack: None,
     }
 }
 
@@ -111,6 +112,7 @@ pub fn CINESTILL_800T() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.65, 0.45],
+        layer_stack: None,
     }
 }
 
@@ -170,6 +172,7 @@ pub fn CINESTILL_50D() -> FilmStock {
         halation_threshold: 0.89,
         halation_sigma: 0.011,
         halation_tint: [1.0, 0.65, 0.45],
+        layer_stack: None,
     }
 }
 
@@ -229,6 +232,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
         halation_threshold: 0.87,
         halation_sigma: 0.013,
         halation_tint: [0.95, 0.95, 0.95],
+        layer_stack: None,
     }
 }
 
@@ -284,6 +288,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [0.8, 0.5, 1.0],
+        layer_stack: None,
     }
 }
 
@@ -343,6 +348,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.70, 0.50],
+        layer_stack: None,
     }
 }
 
@@ -402,6 +408,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [1.0, 0.70, 0.50],
+        layer_stack: None,
     }
 }
 
@@ -457,6 +464,7 @@ pub fn ORWO_UN54() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [0.89, 0.89, 0.89],
+        layer_stack: None,
     }
 }
 
@@ -512,6 +520,7 @@ pub fn ORWO_UN64() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [0.94, 0.94, 0.94],
+        layer_stack: None,
     }
 }
 

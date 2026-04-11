@@ -62,6 +62,7 @@ pub fn SUPERIA_400() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.65, 0.45],
+        layer_stack: None,
     }
 }
 
@@ -121,6 +122,7 @@ pub fn SUPERIA_200() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.65, 0.45],
+        layer_stack: None,
     }
 }
 
@@ -180,6 +182,7 @@ pub fn SUPERIA_100() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [1.0, 0.65, 0.45],
+        layer_stack: None,
     }
 }
 
@@ -235,6 +238,7 @@ pub fn NEOPAN_400() -> FilmStock {
         halation_threshold: 0.82,
         halation_sigma: 0.016,
         halation_tint: [0.85, 0.85, 0.85],
+        layer_stack: None,
     }
 }
 
@@ -290,6 +294,7 @@ pub fn NEOPAN_100() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [0.90, 0.90, 0.90],
+        layer_stack: None,
     }
 }
 
@@ -349,6 +354,7 @@ pub fn PROVIA_100F() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.95, 0.95, 0.95],
+        layer_stack: None,
     }
 }
 
@@ -408,6 +414,7 @@ pub fn VELVIA_50() -> FilmStock {
         halation_threshold: 0.92,
         halation_sigma: 0.008,
         halation_tint: [1.0, 0.4, 0.4],
+        layer_stack: None,
     }
 }
 
@@ -494,6 +501,7 @@ pub fn ASTIA_100F() -> FilmStock {
         halation_threshold: 0.91,
         halation_sigma: 0.009,
         halation_tint: [0.98, 0.98, 1.0],
+        layer_stack: None,
     }
 }
 

@@ -1,11 +1,14 @@
 use crate::film::FilmStock;
+use crate::film_layer::FilmLayerStack;
 use crate::light_leak::{LightLeakConfig, LightLeakStage};
 use crate::physics;
 use crate::pipeline::{
     create_linear_image, create_output_image, DevelopStage, GrainStage, HalationStage, MtfStage,
     PipelineContext, PipelineStage,
 };
+use crate::spectral_engine;
 use image::RgbImage;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, instrument};
 
@@ -17,10 +20,23 @@ use crate::gpu_pipelines::{
     read_gpu_buffer,
 };
 
+/// Simulation fidelity mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum SimulationMode {
+    /// 3×3 matrix approximation — fast, suitable for real-time preview.
+    #[default]
+    Fast,
+    /// Full-spectrum per-wavelength propagation through film layer stack.
+    Accurate,
+}
+
 /// Configuration for the simulation run.
 /// Controls all aspects of the physical simulation pipeline.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationConfig {
+    /// Simulation fidelity mode.
+    #[serde(default)]
+    pub simulation_mode: SimulationMode,
     /// Exposure time (t) in seconds.
     /// Used for Reciprocity Failure calculation (E = I * t).
     pub exposure_time: f32, // t in E = I * t
@@ -60,6 +76,7 @@ pub enum WhiteBalanceMode {
 impl Default for SimulationConfig {
     fn default() -> Self {
         Self {
+            simulation_mode: SimulationMode::default(),
             exposure_time: 1.0,
             enable_grain: true,
             use_gpu: false,                    // Default to CPU for stability
@@ -234,11 +251,18 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     };
 
     // 3. Other Stages
-    let stages: Vec<Box<dyn PipelineStage>> = vec![
-        Box::new(MtfStage),
-        Box::new(DevelopStage),
-        Box::new(GrainStage),
-    ];
+    let stages: Vec<Box<dyn PipelineStage>> = match config.simulation_mode {
+        SimulationMode::Fast => vec![
+            Box::new(MtfStage),
+            Box::new(DevelopStage),
+            Box::new(GrainStage),
+        ],
+        SimulationMode::Accurate => {
+            // Full-spectrum develop replaces DevelopStage
+            AccurateDevelopStage.process(&mut image_buffer, &context);
+            vec![Box::new(MtfStage), Box::new(GrainStage)]
+        }
+    };
 
     for stage in stages {
         stage.process(&mut image_buffer, &context);
@@ -246,6 +270,69 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
 
     // Output Conversion
     create_output_image(&image_buffer, &context)
+}
+
+/// # Accurate Develop Stage
+///
+/// Full-spectrum per-wavelength propagation through the film layer stack.
+/// Replaces DevelopStage in Accurate mode.
+struct AccurateDevelopStage;
+
+impl PipelineStage for AccurateDevelopStage {
+    #[instrument(skip(self, image, context))]
+    fn process(&self, image: &mut image::ImageBuffer<image::Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        info!("Developing film (Accurate: full-spectrum propagation)");
+        let film = context.film;
+        let config = context.config;
+
+        // Resolve layer stack: use film's custom stack or default
+        let stack = film.layer_stack.clone().unwrap_or_else(|| {
+            use crate::film::FilmType;
+            match film.film_type {
+                FilmType::BwNegative => FilmLayerStack::default_bw_negative(),
+                _ => FilmLayerStack::default_color_negative(),
+            }
+        });
+
+        let camera = crate::spectral::CameraSensitivities::srgb();
+        let d65 = crate::spectral::Spectrum::new_d65();
+
+        // Reciprocity
+        let reciprocity_factor = if config.exposure_time > 1.0 {
+            1.0 + film.reciprocity.beta * config.exposure_time.log10().powi(2)
+        } else {
+            1.0
+        };
+        let t_eff = config.exposure_time / reciprocity_factor;
+
+        image.par_chunks_mut(3).for_each(|pixel| {
+            // 1. Reconstruct incident spectrum from linear RGB
+            let incident = camera.uplift(pixel[0], pixel[1], pixel[2]);
+
+            // 2. Scale by illuminant and exposure time
+            let mut scaled = [0.0f32; crate::spectral::BINS];
+            for (i, s) in scaled.iter_mut().enumerate() {
+                *s = incident.power[i] * d65.power[i] * t_eff;
+            }
+
+            // 3. Propagate through layer stack
+            let exposure = spectral_engine::propagate(&stack, &scaled);
+            let rgb = spectral_engine::integrate_exposure(&exposure);
+
+            // 4. Map to log-exposure → density via H-D curves
+            let epsilon = 1e-6;
+            let log_e = [
+                rgb[0].max(epsilon).log10(),
+                rgb[1].max(epsilon).log10(),
+                rgb[2].max(epsilon).log10(),
+            ];
+            let densities = film.map_log_exposure(log_e);
+
+            pixel[0] = densities[0];
+            pixel[1] = densities[1];
+            pixel[2] = densities[2];
+        });
+    }
 }
 
 /// Helper function to execute CPU fallback stages

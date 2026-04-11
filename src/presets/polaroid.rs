@@ -62,6 +62,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
         halation_threshold: 0.80,
         halation_sigma: 0.018,
         halation_tint: [1.0, 0.75, 0.55],
+        layer_stack: None,
     }
 }
 
@@ -121,6 +122,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
         halation_threshold: 0.82,
         halation_sigma: 0.016,
         halation_tint: [1.0, 0.75, 0.55],
+        layer_stack: None,
     }
 }
 
@@ -180,6 +182,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
         halation_threshold: 0.78,
         halation_sigma: 0.020,
         halation_tint: [1.0, 0.75, 0.55],
+        layer_stack: None,
     }
 }
 
@@ -235,6 +238,7 @@ pub fn POLAROID_BW_667() -> FilmStock {
         halation_threshold: 0.77,
         halation_sigma: 0.020,
         halation_tint: [0.80, 0.80, 0.80],
+        layer_stack: None,
     }
 }
 
@@ -294,6 +298,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
         halation_threshold: 0.78,
         halation_sigma: 0.020,
         halation_tint: [1.0, 0.75, 0.55],
+        layer_stack: None,
     }
 }
 
@@ -353,6 +358,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.75, 0.55],
+        layer_stack: None,
     }
 }
 
@@ -408,6 +414,7 @@ pub fn POLAROID_55_BW() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [0.88, 0.88, 0.88],
+        layer_stack: None,
     }
 }
 

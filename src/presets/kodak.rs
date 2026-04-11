@@ -63,6 +63,7 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.70, 0.50],
+        layer_stack: None,
     }
 }
 
@@ -151,6 +152,7 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
         halation_threshold: 0.87,
         halation_sigma: 0.013,
         halation_tint: [1.0, 0.70, 0.50],
+        layer_stack: None,
     }
 }
 
@@ -210,6 +212,7 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.70, 0.50],
+        layer_stack: None,
     }
 }
 
@@ -272,6 +275,7 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         halation_threshold: 0.82,
         halation_sigma: 0.016,
         halation_tint: [0.85, 0.85, 0.85],
+        layer_stack: None,
     }
 }
 
@@ -354,6 +358,7 @@ pub fn KODAK_PLUS_X_125() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [0.92, 0.92, 0.92],
+        layer_stack: None,
     }
 }
 
@@ -413,6 +418,7 @@ pub fn KODAK_EKTACHROME_100() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.95, 0.95, 0.95],
+        layer_stack: None,
     }
 }
 
@@ -472,6 +478,7 @@ pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.95, 0.95, 0.95],
+        layer_stack: None,
     }
 }
 
@@ -531,6 +538,7 @@ pub fn KODAK_KODACHROME_64() -> FilmStock {
         halation_threshold: 0.92,
         halation_sigma: 0.008,
         halation_tint: [1.0, 0.35, 0.35],
+        layer_stack: None,
     }
 }
 
@@ -590,6 +598,7 @@ pub fn KODAK_GOLD_200() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.72, 0.52],
+        layer_stack: None,
     }
 }
 
@@ -649,6 +658,7 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [1.0, 0.72, 0.52],
+        layer_stack: None,
     }
 }
 
@@ -708,6 +718,7 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
         halation_threshold: 0.94,
         halation_sigma: 0.006,
         halation_tint: [1.0, 0.30, 0.30],
+        layer_stack: None,
     }
 }
 

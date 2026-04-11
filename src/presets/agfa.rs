@@ -62,6 +62,7 @@ pub fn VISTA_400() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.68, 0.48],
+        layer_stack: None,
     }
 }
 
@@ -121,6 +122,7 @@ pub fn VISTA_200() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.68, 0.48],
+        layer_stack: None,
     }
 }
 
@@ -180,6 +182,7 @@ pub fn VISTA_100() -> FilmStock {
         halation_threshold: 0.87,
         halation_sigma: 0.013,
         halation_tint: [1.0, 0.68, 0.48],
+        layer_stack: None,
     }
 }
 
@@ -235,6 +238,7 @@ pub fn APX_400() -> FilmStock {
         halation_threshold: 0.81,
         halation_sigma: 0.016,
         halation_tint: [0.86, 0.86, 0.86],
+        layer_stack: None,
     }
 }
 
@@ -290,6 +294,7 @@ pub fn APX_100() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [0.91, 0.91, 0.91],
+        layer_stack: None,
     }
 }
 
@@ -349,6 +354,7 @@ pub fn PRECISA_100() -> FilmStock {
         halation_threshold: 0.89,
         halation_sigma: 0.011,
         halation_tint: [0.96, 0.96, 0.96],
+        layer_stack: None,
     }
 }
 
@@ -404,6 +410,7 @@ pub fn SCALA_200() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [0.93, 0.93, 0.93],
+        layer_stack: None,
     }
 }
 
@@ -463,6 +470,7 @@ pub fn OPTIMA_200() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.68, 0.48],
+        layer_stack: None,
     }
 }
 
