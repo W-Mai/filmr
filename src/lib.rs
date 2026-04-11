@@ -13,6 +13,7 @@ pub mod pipeline;
 pub mod presets;
 pub mod processor;
 pub mod spectral;
+pub mod spectral_engine;
 pub mod utils;
 
 pub use film::{FilmStock, FilmStyle};
