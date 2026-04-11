@@ -340,6 +340,32 @@ impl CameraSensitivities {
                 (XYZ_TO_SRGB[2][0] * x + XYZ_TO_SRGB[2][1] * y + XYZ_TO_SRGB[2][2] * z).max(0.0);
         }
 
+        // Normalize under D65 so that uplift(1,1,1) produces equal-energy R/G/B.
+        // Without this, clamping negative lobes causes green to dominate.
+        let d65 = Spectrum::new_d65();
+        let r_energy = r.integrate_product(&d65);
+        let g_energy = g.integrate_product(&d65);
+        let b_energy = b.integrate_product(&d65);
+        let max_energy = r_energy.max(g_energy).max(b_energy);
+        if r_energy > 1e-10 {
+            let s = max_energy / r_energy;
+            for v in &mut r.power {
+                *v *= s;
+            }
+        }
+        if g_energy > 1e-10 {
+            let s = max_energy / g_energy;
+            for v in &mut g.power {
+                *v *= s;
+            }
+        }
+        if b_energy > 1e-10 {
+            let s = max_energy / b_energy;
+            for v in &mut b.power {
+                *v *= s;
+            }
+        }
+
         Self {
             r_curve: r,
             g_curve: g,

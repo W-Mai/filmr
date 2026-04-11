@@ -300,11 +300,11 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // White-point normalization + exposure scaling.
-        // Goal: map the scene dynamic range onto the H-D curve's useful range.
-        // - 18% gray → exposure_offset (H-D midpoint, sigmoid=0.5)
-        // - This means white (5.5× brighter than 18% gray) lands ~0.74 log above midpoint,
-        //   well into the shoulder but not clipped.
+        // White-point calibration.
+        // Propagate D65-illuminated white through the stack, then normalize
+        // so that white (1,1,1) → exposure = exposure_offset per channel.
+        // This places white at the H-D midpoint; 18% gray lands 0.74 log below
+        // (in the toe-to-linear transition), matching real film exposure.
         let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
         let mut white_scaled = [0.0f32; crate::spectral::BINS];
         for (i, s) in white_scaled.iter_mut().enumerate() {
@@ -313,51 +313,26 @@ impl PipelineStage for AccurateDevelopStage {
         let white_exp = spectral_engine::propagate(&stack, &white_scaled);
         let white_rgb = spectral_engine::integrate_exposure(&white_exp);
 
-        // Normalize: 18% gray → target exposure that produces mid-gray output.
-        // We solve for the exposure that yields ~0.4 net density (≈18% gray in positive mode).
-        // target_density ≈ d_min + 0.15 * range → low on the H-D curve for natural mid-gray.
-        let mid_gray = 0.18;
-        let target_density_fraction = 0.15; // fraction of H-D range for mid-gray
-        let avg_range = ((film.r_curve.d_max - film.r_curve.d_min)
-            + (film.g_curve.d_max - film.g_curve.d_min)
-            + (film.b_curve.d_max - film.b_curve.d_min))
-            / 3.0;
-
-        // Invert the logistic sigmoid to find the log-exposure that produces target density.
-        // sigmoid(target_density_fraction) → x → log_e = x + log_e0 → exposure
-        let avg_gamma = (film.r_curve.gamma + film.g_curve.gamma + film.b_curve.gamma) / 3.0;
-        let k = 4.0 * avg_gamma / avg_range;
-        let x = -(1.0f32 / target_density_fraction - 1.0).ln() / k;
-        // x = log_e - log_e0, so log_e = x + log_e0
-        let avg_log_e0 = (film.r_curve.exposure_offset.log10()
-            + film.g_curve.exposure_offset.log10()
-            + film.b_curve.exposure_offset.log10())
-            / 3.0;
-        let target_log_e = x + avg_log_e0;
-        let target_exposure = 10.0f32.powf(target_log_e);
-
         let norm = [
             if white_rgb[0] > 1e-10 {
-                target_exposure / (white_rgb[0] * mid_gray)
+                film.r_curve.exposure_offset / white_rgb[0]
             } else {
                 1.0
             },
             if white_rgb[1] > 1e-10 {
-                target_exposure / (white_rgb[1] * mid_gray)
+                film.g_curve.exposure_offset / white_rgb[1]
             } else {
                 1.0
             },
             if white_rgb[2] > 1e-10 {
-                target_exposure / (white_rgb[2] * mid_gray)
+                film.b_curve.exposure_offset / white_rgb[2]
             } else {
                 1.0
             },
         ];
 
-        let width = image.width();
-
-        // User exposure adjustment (exposure_time acts as EV multiplier on top of auto-normalization)
         let user_ev = config.exposure_time;
+        let width = image.width();
 
         // Pass 1: per-pixel spectral propagation → RGB exposure
         image.par_chunks_mut(3).for_each(|pixel| {
@@ -393,9 +368,7 @@ impl PipelineStage for AccurateDevelopStage {
             }
         }
 
-        // Pass 3: log-exposure → density via independent H-D curves + inhibition
-        // Note: skip film.map_log_exposure() which applies color_matrix —
-        // in Accurate mode, color coupling is handled by physical layer propagation + inhibition.
+        // Pass 3: log-exposure → density via H-D curves + color matrix + inhibition
         let inhibition = stack.inhibition;
         image.par_chunks_mut(3).for_each(|pixel| {
             let epsilon = 1e-6;
@@ -404,13 +377,7 @@ impl PipelineStage for AccurateDevelopStage {
                 pixel[1].max(epsilon).log10(),
                 pixel[2].max(epsilon).log10(),
             ];
-
-            // Independent H-D curves per channel (no color_matrix)
-            let d = [
-                film.r_curve.map_smooth(log_e[0]),
-                film.g_curve.map_smooth(log_e[1]),
-                film.b_curve.map_smooth(log_e[2]),
-            ];
+            let d = film.map_log_exposure(log_e);
 
             // Interlayer interimage effect: inhibition proportional to density
             // D_i_final = D_i + sum_j(inhibition[i][j] * D_j)
