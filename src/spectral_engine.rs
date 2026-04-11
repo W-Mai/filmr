@@ -224,43 +224,53 @@ mod tests {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // Simulate what AccurateDevelopStage does for white (1,1,1)
+        // White-point normalization (same as AccurateDevelopStage)
         let white = camera.uplift(1.0, 1.0, 1.0);
-        let mut scaled = [0.0f32; BINS];
-        for (i, s) in scaled.iter_mut().enumerate() {
+        let mut ws = [0.0f32; BINS];
+        for (i, s) in ws.iter_mut().enumerate() {
             *s = white.power[i] * d65.power[i];
         }
-        let exp = propagate(&stack, &scaled);
-        let rgb = integrate_exposure(&exp);
-        println!("White raw exposure: R={:.6}, G={:.6}, B={:.6}", rgb[0], rgb[1], rgb[2]);
-        println!("White R/G={:.4}, B/G={:.4}", rgb[0]/rgb[1], rgb[2]/rgb[1]);
+        let we = propagate(&stack, &ws);
+        let wrgb = integrate_exposure(&we);
+        println!(
+            "White raw: R={:.2}, G={:.2}, B={:.2}",
+            wrgb[0], wrgb[1], wrgb[2]
+        );
 
-        // Gray (0.2, 0.2, 0.2)
-        let gray = camera.uplift(0.2, 0.2, 0.2);
-        let mut scaled_g = [0.0f32; BINS];
-        for (i, s) in scaled_g.iter_mut().enumerate() {
-            *s = gray.power[i] * d65.power[i];
+        // Use STANDARD_DAYLIGHT offset (0.18) for norm
+        let offset = 0.18f32;
+        let mid_gray = 0.18f32;
+        let norm = [
+            offset / (wrgb[0] * mid_gray),
+            offset / (wrgb[1] * mid_gray),
+            offset / (wrgb[2] * mid_gray),
+        ];
+        println!("Norm: {:?}", norm);
+
+        // Test colors
+        for (label, r, g, b) in [
+            ("White", 1.0, 1.0, 1.0),
+            ("Gray18", 0.18, 0.18, 0.18),
+            ("Red", 0.73, 0.0, 0.0),
+            ("Gray50", 0.5, 0.5, 0.5),
+        ] {
+            let spec = camera.uplift(r, g, b);
+            let mut scaled = [0.0f32; BINS];
+            for (i, s) in scaled.iter_mut().enumerate() {
+                *s = spec.power[i] * d65.power[i];
+            }
+            let exp = propagate(&stack, &scaled);
+            let rgb = integrate_exposure(&exp);
+            let normed = [rgb[0] * norm[0], rgb[1] * norm[1], rgb[2] * norm[2]];
+            let log_e = [
+                normed[0].max(1e-6).log10(),
+                normed[1].max(1e-6).log10(),
+                normed[2].max(1e-6).log10(),
+            ];
+            println!(
+                "{:8}: exposure=[{:.4}, {:.4}, {:.4}] log_e=[{:.3}, {:.3}, {:.3}]",
+                label, normed[0], normed[1], normed[2], log_e[0], log_e[1], log_e[2]
+            );
         }
-        let exp_g = propagate(&stack, &scaled_g);
-        let rgb_g = integrate_exposure(&exp_g);
-        println!("Gray raw exposure:  R={:.6}, G={:.6}, B={:.6}", rgb_g[0], rgb_g[1], rgb_g[2]);
-
-        // After normalization
-        let norm_r = rgb_g[0] / rgb[0];
-        let norm_g = rgb_g[1] / rgb[1];
-        let norm_b = rgb_g[2] / rgb[2];
-        println!("Gray normalized:    R={:.6}, G={:.6}, B={:.6}", norm_r, norm_g, norm_b);
-        println!("Normalized R/G={:.4}, B/G={:.4}", norm_r/norm_g, norm_b/norm_g);
-
-        // Red (1, 0, 0)
-        let red = camera.uplift(1.0, 0.0, 0.0);
-        let mut scaled_r = [0.0f32; BINS];
-        for (i, s) in scaled_r.iter_mut().enumerate() {
-            *s = red.power[i] * d65.power[i];
-        }
-        let exp_r = propagate(&stack, &scaled_r);
-        let rgb_r = integrate_exposure(&exp_r);
-        let nr = [rgb_r[0]/rgb[0], rgb_r[1]/rgb[1], rgb_r[2]/rgb[2]];
-        println!("Red normalized:     R={:.6}, G={:.6}, B={:.6}", nr[0], nr[1], nr[2]);
     }
 }

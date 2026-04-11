@@ -300,9 +300,11 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // White-point normalization + exposure_offset alignment.
-        // 1. Compute raw spectral response for white (1,1,1) → balanced channels
-        // 2. Scale so that 18% gray maps to the film's exposure_offset (H-D midpoint)
+        // White-point normalization + exposure scaling.
+        // Goal: map the scene dynamic range onto the H-D curve's useful range.
+        // - 18% gray → exposure_offset (H-D midpoint, sigmoid=0.5)
+        // - This means white (5.5× brighter than 18% gray) lands ~0.74 log above midpoint,
+        //   well into the shoulder but not clipped.
         let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
         let mut white_scaled = [0.0f32; crate::spectral::BINS];
         for (i, s) in white_scaled.iter_mut().enumerate() {
@@ -311,39 +313,64 @@ impl PipelineStage for AccurateDevelopStage {
         let white_exp = spectral_engine::propagate(&stack, &white_scaled);
         let white_rgb = spectral_engine::integrate_exposure(&white_exp);
 
-        // Target: 18% gray input → exposure = exposure_offset per channel
+        // Normalize: 18% gray → target exposure that produces mid-gray output.
+        // We solve for the exposure that yields ~0.4 net density (≈18% gray in positive mode).
+        // target_density ≈ d_min + 0.15 * range → low on the H-D curve for natural mid-gray.
         let mid_gray = 0.18;
-        let target_r = film.r_curve.exposure_offset;
-        let target_g = film.g_curve.exposure_offset;
-        let target_b = film.b_curve.exposure_offset;
+        let target_density_fraction = 0.15; // fraction of H-D range for mid-gray
+        let avg_range = ((film.r_curve.d_max - film.r_curve.d_min)
+            + (film.g_curve.d_max - film.g_curve.d_min)
+            + (film.b_curve.d_max - film.b_curve.d_min))
+            / 3.0;
+
+        // Invert the logistic sigmoid to find the log-exposure that produces target density.
+        // sigmoid(target_density_fraction) → x → log_e = x + log_e0 → exposure
+        let avg_gamma = (film.r_curve.gamma + film.g_curve.gamma + film.b_curve.gamma) / 3.0;
+        let k = 4.0 * avg_gamma / avg_range;
+        let x = -(1.0f32 / target_density_fraction - 1.0).ln() / k;
+        // x = log_e - log_e0, so log_e = x + log_e0
+        let avg_log_e0 = (film.r_curve.exposure_offset.log10()
+            + film.g_curve.exposure_offset.log10()
+            + film.b_curve.exposure_offset.log10())
+            / 3.0;
+        let target_log_e = x + avg_log_e0;
+        let target_exposure = 10.0f32.powf(target_log_e);
+
         let norm = [
-            if white_rgb[0] > 1e-10 { target_r / (white_rgb[0] * mid_gray) } else { 1.0 },
-            if white_rgb[1] > 1e-10 { target_g / (white_rgb[1] * mid_gray) } else { 1.0 },
-            if white_rgb[2] > 1e-10 { target_b / (white_rgb[2] * mid_gray) } else { 1.0 },
+            if white_rgb[0] > 1e-10 {
+                target_exposure / (white_rgb[0] * mid_gray)
+            } else {
+                1.0
+            },
+            if white_rgb[1] > 1e-10 {
+                target_exposure / (white_rgb[1] * mid_gray)
+            } else {
+                1.0
+            },
+            if white_rgb[2] > 1e-10 {
+                target_exposure / (white_rgb[2] * mid_gray)
+            } else {
+                1.0
+            },
         ];
 
-        let reciprocity_factor = if config.exposure_time > 1.0 {
-            1.0 + film.reciprocity.beta * config.exposure_time.log10().powi(2)
-        } else {
-            1.0
-        };
-        let t_eff = config.exposure_time / reciprocity_factor;
-
         let width = image.width();
+
+        // User exposure adjustment (exposure_time acts as EV multiplier on top of auto-normalization)
+        let user_ev = config.exposure_time;
 
         // Pass 1: per-pixel spectral propagation → RGB exposure
         image.par_chunks_mut(3).for_each(|pixel| {
             let incident = camera.uplift(pixel[0], pixel[1], pixel[2]);
             let mut scaled = [0.0f32; crate::spectral::BINS];
             for (i, s) in scaled.iter_mut().enumerate() {
-                *s = incident.power[i] * d65.power[i] * t_eff;
+                *s = incident.power[i] * d65.power[i];
             }
             let exposure = spectral_engine::propagate(&stack, &scaled);
             let rgb = spectral_engine::integrate_exposure(&exposure);
-            // Normalize so white input → unit exposure per channel
-            pixel[0] = rgb[0] * norm[0];
-            pixel[1] = rgb[1] * norm[1];
-            pixel[2] = rgb[2] * norm[2];
+            pixel[0] = rgb[0] * norm[0] * user_ev;
+            pixel[1] = rgb[1] * norm[1] * user_ev;
+            pixel[2] = rgb[2] * norm[2] * user_ev;
         });
 
         // Pass 2: scattering spatial diffusion (Gaussian blur per emulsion scatter)
@@ -366,7 +393,9 @@ impl PipelineStage for AccurateDevelopStage {
             }
         }
 
-        // Pass 3: log-exposure → density via H-D curves + interlayer inhibition
+        // Pass 3: log-exposure → density via independent H-D curves + inhibition
+        // Note: skip film.map_log_exposure() which applies color_matrix —
+        // in Accurate mode, color coupling is handled by physical layer propagation + inhibition.
         let inhibition = stack.inhibition;
         image.par_chunks_mut(3).for_each(|pixel| {
             let epsilon = 1e-6;
@@ -375,7 +404,13 @@ impl PipelineStage for AccurateDevelopStage {
                 pixel[1].max(epsilon).log10(),
                 pixel[2].max(epsilon).log10(),
             ];
-            let d = film.map_log_exposure(log_e);
+
+            // Independent H-D curves per channel (no color_matrix)
+            let d = [
+                film.r_curve.map_smooth(log_e[0]),
+                film.g_curve.map_smooth(log_e[1]),
+                film.b_curve.map_smooth(log_e[2]),
+            ];
 
             // Interlayer interimage effect: inhibition proportional to density
             // D_i_final = D_i + sum_j(inhibition[i][j] * D_j)
