@@ -3,8 +3,9 @@
 #![allow(non_snake_case)]
 
 use crate::film::{FilmStock, FilmType, ReciprocityFailure, SegmentedCurve};
+use crate::film_layer::*;
 use crate::grain::GrainModel;
-use crate::spectral::FilmSpectralParams;
+use crate::spectral::{FilmSpectralParams, BINS};
 
 /// Ilford HP5 Plus 400 (Professional B&W)
 /// Source: Ilford 2021 Data Sheet
@@ -58,7 +59,45 @@ pub fn HP5_PLUS_400() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [0.88, 0.88, 0.88],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 9.0,
+                    refractive_index: 1.54,
+                    absorption: gaussian_absorption(540.0, 95.0, 0.08),
+                    scattering: 0.040,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -136,7 +175,45 @@ pub fn FP4_PLUS_125() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [0.92, 0.92, 0.92],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 85.0, 0.10),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -192,7 +269,45 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [0.90, 0.90, 0.90],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 90.0, 0.09),
+                    scattering: 0.020,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -248,7 +363,45 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [0.94, 0.94, 0.94],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 6.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 80.0, 0.11),
+                    scattering: 0.015,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -304,7 +457,45 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.96, 0.96, 0.96],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 5.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(540.0, 75.0, 0.13),
+                    scattering: 0.012,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -360,7 +551,45 @@ pub fn XP2_SUPER_400() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [0.92, 0.92, 0.92],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 90.0, 0.09),
+                    scattering: 0.030,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -416,7 +645,45 @@ pub fn SFX_200() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [0.90, 0.90, 0.90],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 100.0, 0.09),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -472,7 +739,45 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
         halation_threshold: 0.87,
         halation_sigma: 0.013,
         halation_tint: [0.93, 0.93, 0.93],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 6.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 60.0, 0.12),
+                    scattering: 0.020,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 

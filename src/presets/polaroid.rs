@@ -3,8 +3,9 @@
 #![allow(non_snake_case)]
 
 use crate::film::{FilmStock, FilmType, ReciprocityFailure, SegmentedCurve};
+use crate::film_layer::*;
 use crate::grain::GrainModel;
-use crate::spectral::FilmSpectralParams;
+use crate::spectral::{FilmSpectralParams, BINS};
 
 /// Polaroid 600 Color (Instant Color Film)
 /// Source: Polaroid Technical Data
@@ -62,7 +63,61 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
         halation_threshold: 0.80,
         halation_sigma: 0.018,
         halation_tint: [1.0, 0.75, 0.55],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.05, -0.03],
+                [-0.04, 0.00, -0.04],
+                [-0.03, -0.05, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(450.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(545.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(635.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -122,7 +177,61 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
         halation_threshold: 0.82,
         halation_sigma: 0.016,
         halation_tint: [1.0, 0.75, 0.55],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.05, -0.03],
+                [-0.04, 0.00, -0.04],
+                [-0.03, -0.05, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(450.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(545.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(635.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -182,7 +291,61 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
         halation_threshold: 0.78,
         halation_sigma: 0.020,
         halation_tint: [1.0, 0.75, 0.55],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.05, -0.03],
+                [-0.04, 0.00, -0.04],
+                [-0.03, -0.05, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(450.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(545.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(635.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -238,7 +401,37 @@ pub fn POLAROID_BW_667() -> FilmStock {
         halation_threshold: 0.77,
         halation_sigma: 0.020,
         halation_tint: [0.80, 0.80, 0.80],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(540.0, 90.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -298,7 +491,61 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
         halation_threshold: 0.78,
         halation_sigma: 0.020,
         halation_tint: [1.0, 0.75, 0.55],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.05, -0.03],
+                [-0.04, 0.00, -0.04],
+                [-0.03, -0.05, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(450.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(545.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(635.0, 35.0, 0.08),
+                    scattering: 0.035,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -358,7 +605,61 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
         halation_threshold: 0.84,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.75, 0.55],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.05, -0.03],
+                [-0.04, 0.00, -0.04],
+                [-0.03, -0.05, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 8.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(450.0, 35.0, 0.08),
+                    scattering: 0.030,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(545.0, 35.0, 0.08),
+                    scattering: 0.030,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(635.0, 35.0, 0.08),
+                    scattering: 0.030,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -414,7 +715,37 @@ pub fn POLAROID_55_BW() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [0.88, 0.88, 0.88],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.005,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 6.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(540.0, 80.0, 0.10),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 200.0,
+                    refractive_index: 1.60,
+                    absorption: [0.003; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 

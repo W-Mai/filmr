@@ -173,7 +173,10 @@ mod tests {
 
     #[test]
     fn test_propagate_no_layers() {
-        let stack = FilmLayerStack { layers: vec![], inhibition: [[0.0; 3]; 3] };
+        let stack = FilmLayerStack {
+            layers: vec![],
+            inhibition: [[0.0; 3]; 3],
+        };
         let incident = [1.0f32; BINS];
         let exp = propagate(&stack, &incident);
         // No layers → no exposure

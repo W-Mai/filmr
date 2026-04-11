@@ -71,17 +71,106 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
                 [-0.05, -0.10, 0.00],
             ],
             layers: vec![
-                FilmLayer { name: "Overcoat".into(), kind: LayerKind::Overcoat, thickness_um: 1.2, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
-                FilmLayer { name: "Blue Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Blue }, thickness_um: 4.0, refractive_index: 1.53, absorption: gaussian_absorption(450.0, 28.0, 0.14), scattering: 0.015 },
-                FilmLayer { name: "Blue Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Blue }, thickness_um: 3.0, refractive_index: 1.53, absorption: gaussian_absorption(450.0, 25.0, 0.18), scattering: 0.010 },
-                FilmLayer { name: "Yellow Filter".into(), kind: LayerKind::YellowFilter, thickness_um: 1.0, refractive_index: 1.52, absorption: gaussian_absorption(440.0, 35.0, 0.9), scattering: 0.0 },
-                FilmLayer { name: "Green Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 3.5, refractive_index: 1.53, absorption: gaussian_absorption(545.0, 32.0, 0.11), scattering: 0.015 },
-                FilmLayer { name: "Green Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 2.5, refractive_index: 1.53, absorption: gaussian_absorption(545.0, 28.0, 0.15), scattering: 0.010 },
-                FilmLayer { name: "Interlayer".into(), kind: LayerKind::Interlayer, thickness_um: 1.0, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
-                FilmLayer { name: "Red Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Red }, thickness_um: 3.5, refractive_index: 1.53, absorption: gaussian_absorption(640.0, 38.0, 0.10), scattering: 0.015 },
-                FilmLayer { name: "Red Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Red }, thickness_um: 2.5, refractive_index: 1.53, absorption: gaussian_absorption(640.0, 32.0, 0.14), scattering: 0.010 },
-                FilmLayer { name: "Anti-Halation".into(), kind: LayerKind::AntiHalation, thickness_um: 2.0, refractive_index: 1.50, absorption: gaussian_absorption(600.0, 120.0, 0.6), scattering: 0.0 },
-                FilmLayer { name: "Base".into(), kind: LayerKind::Base, thickness_um: 127.0, refractive_index: 1.65, absorption: [0.001; BINS], scattering: 0.0 },
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.2,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion (fast)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 4.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 28.0, 0.14),
+                    scattering: 0.015,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion (slow)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 3.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 25.0, 0.18),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.9),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion (fast)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 3.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 32.0, 0.11),
+                    scattering: 0.015,
+                },
+                FilmLayer {
+                    name: "Green Emulsion (slow)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 2.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 28.0, 0.15),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion (fast)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 3.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 38.0, 0.10),
+                    scattering: 0.015,
+                },
+                FilmLayer {
+                    name: "Red Emulsion (slow)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 2.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 32.0, 0.14),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.6),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
             ],
         }),
     }
@@ -172,7 +261,85 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
         halation_threshold: 0.87,
         halation_sigma: 0.013,
         halation_tint: [1.0, 0.70, 0.50],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.09, -0.05],
+                [-0.07, 0.00, -0.05],
+                [-0.07, -0.09, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 5.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 28.0, 0.13),
+                    scattering: 0.012,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.85),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 4.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 30.0, 0.11),
+                    scattering: 0.012,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 4.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 36.0, 0.10),
+                    scattering: 0.012,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.5),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -232,7 +399,85 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
         halation_threshold: 0.83,
         halation_sigma: 0.015,
         halation_tint: [1.0, 0.70, 0.50],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.08, -0.04],
+                [-0.06, 0.00, -0.04],
+                [-0.06, -0.08, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 32.0, 0.11),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.85),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 6.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 35.0, 0.09),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 6.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 40.0, 0.08),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.5),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -298,11 +543,50 @@ pub fn KODAK_TRI_X_400() -> FilmStock {
         layer_stack: Some(FilmLayerStack {
             inhibition: [[0.0; 3]; 3],
             layers: vec![
-                FilmLayer { name: "Overcoat".into(), kind: LayerKind::Overcoat, thickness_um: 1.0, refractive_index: 1.50, absorption: [0.0; BINS], scattering: 0.0 },
-                FilmLayer { name: "Panchromatic Emulsion (fast)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 5.0, refractive_index: 1.54, absorption: gaussian_absorption(540.0, 90.0, 0.09), scattering: 0.04 },
-                FilmLayer { name: "Panchromatic Emulsion (slow)".into(), kind: LayerKind::Emulsion { channel: EmulsionChannel::Green }, thickness_um: 4.0, refractive_index: 1.54, absorption: gaussian_absorption(540.0, 80.0, 0.12), scattering: 0.03 },
-                FilmLayer { name: "Anti-Halation".into(), kind: LayerKind::AntiHalation, thickness_um: 2.5, refractive_index: 1.50, absorption: gaussian_absorption(580.0, 110.0, 0.5), scattering: 0.0 },
-                FilmLayer { name: "Base".into(), kind: LayerKind::Base, thickness_um: 127.0, refractive_index: 1.65, absorption: [0.001; BINS], scattering: 0.0 },
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion (fast)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 5.0,
+                    refractive_index: 1.54,
+                    absorption: gaussian_absorption(540.0, 90.0, 0.09),
+                    scattering: 0.04,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion (slow)".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 4.0,
+                    refractive_index: 1.54,
+                    absorption: gaussian_absorption(540.0, 80.0, 0.12),
+                    scattering: 0.03,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.5,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.5),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
             ],
         }),
     }
@@ -387,7 +671,45 @@ pub fn KODAK_PLUS_X_125() -> FilmStock {
         halation_threshold: 0.85,
         halation_sigma: 0.014,
         halation_tint: [0.92, 0.92, 0.92],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [[0.0; 3]; 3],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Panchromatic Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 7.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(540.0, 85.0, 0.10),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(580.0, 110.0, 0.45),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -447,7 +769,77 @@ pub fn KODAK_EKTACHROME_100() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.95, 0.95, 0.95],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.12, -0.06],
+                [-0.10, 0.00, -0.06],
+                [-0.10, -0.12, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 0.8,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 3.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 24.0, 0.15),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 0.8,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 30.0, 1.0),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 3.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 26.0, 0.13),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 0.5,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 3.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(635.0, 30.0, 0.12),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 97.0,
+                    refractive_index: 1.65,
+                    absorption: [0.002; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -507,7 +899,77 @@ pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
         halation_threshold: 0.90,
         halation_sigma: 0.010,
         halation_tint: [0.95, 0.95, 0.95],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.14, -0.07],
+                [-0.12, 0.00, -0.07],
+                [-0.12, -0.14, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 0.8,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 3.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 22.0, 0.16),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 0.8,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 30.0, 1.0),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 3.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 24.0, 0.14),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 0.5,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 3.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(635.0, 28.0, 0.13),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 97.0,
+                    refractive_index: 1.65,
+                    absorption: [0.002; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -567,7 +1029,77 @@ pub fn KODAK_KODACHROME_64() -> FilmStock {
         halation_threshold: 0.92,
         halation_sigma: 0.008,
         halation_tint: [1.0, 0.35, 0.35],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.12, -0.06],
+                [-0.10, 0.00, -0.06],
+                [-0.10, -0.12, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 0.8,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 3.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 22.0, 0.17),
+                    scattering: 0.008,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 0.8,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 30.0, 1.0),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 2.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 24.0, 0.15),
+                    scattering: 0.008,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 0.5,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 2.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(635.0, 28.0, 0.14),
+                    scattering: 0.008,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 97.0,
+                    refractive_index: 1.65,
+                    absorption: [0.002; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -627,7 +1159,85 @@ pub fn KODAK_GOLD_200() -> FilmStock {
         halation_threshold: 0.86,
         halation_sigma: 0.014,
         halation_tint: [1.0, 0.72, 0.52],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.08, -0.04],
+                [-0.06, 0.00, -0.04],
+                [-0.06, -0.08, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 5.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 30.0, 0.13),
+                    scattering: 0.020,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.85),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 4.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 32.0, 0.11),
+                    scattering: 0.020,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 4.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 38.0, 0.10),
+                    scattering: 0.020,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.5),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -687,7 +1297,85 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
         halation_threshold: 0.88,
         halation_sigma: 0.012,
         halation_tint: [1.0, 0.72, 0.52],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.10, -0.06],
+                [-0.08, 0.00, -0.06],
+                [-0.08, -0.10, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 4.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 25.0, 0.15),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.85),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 4.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 28.0, 0.13),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 4.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 32.0, 0.12),
+                    scattering: 0.010,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.5),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 
@@ -747,7 +1435,77 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
         halation_threshold: 0.94,
         halation_sigma: 0.006,
         halation_tint: [1.0, 0.30, 0.30],
-        layer_stack: None,
+        layer_stack: Some(FilmLayerStack {
+            inhibition: [
+                [0.00, -0.12, -0.06],
+                [-0.10, 0.00, -0.06],
+                [-0.10, -0.12, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 0.8,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 2.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 20.0, 0.19),
+                    scattering: 0.006,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 0.8,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 30.0, 1.0),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 2.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 22.0, 0.17),
+                    scattering: 0.006,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 0.5,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 2.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(635.0, 26.0, 0.16),
+                    scattering: 0.006,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 97.0,
+                    refractive_index: 1.65,
+                    absorption: [0.002; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
     }
 }
 

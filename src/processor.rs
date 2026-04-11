@@ -335,7 +335,10 @@ impl PipelineStage for AccurateDevelopStage {
             let pixels_per_um = width as f32 / 36_000.0; // 36mm = 36000µm
             let sigma_px = scatter_um * pixels_per_um;
             if sigma_px > 0.3 {
-                info!("Applying scattering diffusion blur (sigma: {:.2}px)", sigma_px);
+                info!(
+                    "Applying scattering diffusion blur (sigma: {:.2}px)",
+                    sigma_px
+                );
                 crate::utils::apply_gaussian_blur(image, sigma_px);
             }
         }
@@ -353,9 +356,21 @@ impl PipelineStage for AccurateDevelopStage {
 
             // Interlayer interimage effect: inhibition proportional to density
             // D_i_final = D_i + sum_j(inhibition[i][j] * D_j)
-            pixel[0] = (d[0] + inhibition[0][0] * d[0] + inhibition[0][1] * d[1] + inhibition[0][2] * d[2]).max(0.0);
-            pixel[1] = (d[1] + inhibition[1][0] * d[0] + inhibition[1][1] * d[1] + inhibition[1][2] * d[2]).max(0.0);
-            pixel[2] = (d[2] + inhibition[2][0] * d[0] + inhibition[2][1] * d[1] + inhibition[2][2] * d[2]).max(0.0);
+            pixel[0] = (d[0]
+                + inhibition[0][0] * d[0]
+                + inhibition[0][1] * d[1]
+                + inhibition[0][2] * d[2])
+                .max(0.0);
+            pixel[1] = (d[1]
+                + inhibition[1][0] * d[0]
+                + inhibition[1][1] * d[1]
+                + inhibition[1][2] * d[2])
+                .max(0.0);
+            pixel[2] = (d[2]
+                + inhibition[2][0] * d[0]
+                + inhibition[2][1] * d[1]
+                + inhibition[2][2] * d[2])
+                .max(0.0);
         });
     }
 }
