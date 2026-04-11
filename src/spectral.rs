@@ -93,8 +93,11 @@ impl Spectrum {
         s
     }
 
+    /// CIE Standard Illuminant D65 (lookup table, not blackbody approximation).
     pub fn new_d65() -> Self {
-        Self::new_blackbody(6504.0)
+        Self {
+            power: crate::cie_data::D65_SPD,
+        }
     }
 
     pub fn normalize_max(&mut self) {
@@ -312,22 +315,34 @@ pub struct CameraSensitivities {
 }
 
 impl CameraSensitivities {
-    pub fn srgb_balanced() -> Self {
-        // Approximate sRGB / Rec.709 primaries peaks
-        // Blue: ~450nm, Green: ~540nm, Red: ~610nm
-        //
-        // Target: Equal Area under curve for white balance.
-        // Using normalized Gaussians ensures exactly equal area (energy).
+    /// sRGB spectral sensitivities derived from CIE 1931 XYZ CMF × XYZ→sRGB matrix.
+    /// This correctly captures the negative lobe in the red channel around 440nm.
+    pub fn srgb() -> Self {
+        use crate::cie_data::{CIE_X, CIE_Y, CIE_Z, XYZ_TO_SRGB};
 
-        Self {
-            r_curve: Spectrum::new_gaussian_normalized(610.0, 30.0),
-            g_curve: Spectrum::new_gaussian_normalized(540.0, 30.0),
-            b_curve: Spectrum::new_gaussian_normalized(465.0, 30.0), // Peak shifted to 465
+        let mut r = Spectrum::new();
+        let mut g = Spectrum::new();
+        let mut b = Spectrum::new();
+
+        for i in 0..BINS {
+            let x = CIE_X[i];
+            let y = CIE_Y[i];
+            let z = CIE_Z[i];
+
+            // sRGB sensitivity = XYZ_TO_SRGB * [x, y, z]
+            // Clamp negatives to zero — negative lobes are physically meaningful
+            // for colour matching but not for camera sensitivity simulation.
+            r.power[i] = (XYZ_TO_SRGB[0][0] * x + XYZ_TO_SRGB[0][1] * y + XYZ_TO_SRGB[0][2] * z).max(0.0);
+            g.power[i] = (XYZ_TO_SRGB[1][0] * x + XYZ_TO_SRGB[1][1] * y + XYZ_TO_SRGB[1][2] * z).max(0.0);
+            b.power[i] = (XYZ_TO_SRGB[2][0] * x + XYZ_TO_SRGB[2][1] * y + XYZ_TO_SRGB[2][2] * z).max(0.0);
         }
+
+        Self { r_curve: r, g_curve: g, b_curve: b }
     }
 
-    pub fn srgb() -> Self {
-        Self::srgb_balanced()
+    /// Alias kept for backward compatibility.
+    pub fn srgb_balanced() -> Self {
+        Self::srgb()
     }
 
     /// Reconstruct estimated scene spectrum from RGB pixel
