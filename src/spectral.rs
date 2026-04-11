@@ -332,12 +332,19 @@ impl CameraSensitivities {
             // sRGB sensitivity = XYZ_TO_SRGB * [x, y, z]
             // Clamp negatives to zero — negative lobes are physically meaningful
             // for colour matching but not for camera sensitivity simulation.
-            r.power[i] = (XYZ_TO_SRGB[0][0] * x + XYZ_TO_SRGB[0][1] * y + XYZ_TO_SRGB[0][2] * z).max(0.0);
-            g.power[i] = (XYZ_TO_SRGB[1][0] * x + XYZ_TO_SRGB[1][1] * y + XYZ_TO_SRGB[1][2] * z).max(0.0);
-            b.power[i] = (XYZ_TO_SRGB[2][0] * x + XYZ_TO_SRGB[2][1] * y + XYZ_TO_SRGB[2][2] * z).max(0.0);
+            r.power[i] =
+                (XYZ_TO_SRGB[0][0] * x + XYZ_TO_SRGB[0][1] * y + XYZ_TO_SRGB[0][2] * z).max(0.0);
+            g.power[i] =
+                (XYZ_TO_SRGB[1][0] * x + XYZ_TO_SRGB[1][1] * y + XYZ_TO_SRGB[1][2] * z).max(0.0);
+            b.power[i] =
+                (XYZ_TO_SRGB[2][0] * x + XYZ_TO_SRGB[2][1] * y + XYZ_TO_SRGB[2][2] * z).max(0.0);
         }
 
-        Self { r_curve: r, g_curve: g, b_curve: b }
+        Self {
+            r_curve: r,
+            g_curve: g,
+            b_curve: b,
+        }
     }
 
     /// Alias kept for backward compatibility.

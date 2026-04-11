@@ -196,7 +196,9 @@ mod tests {
         assert!(
             rgb[2] > rgb[0] && rgb[2] > rgb[1],
             "Blue layer (top) should capture most energy: R={:.2}, G={:.2}, B={:.2}",
-            rgb[0], rgb[1], rgb[2]
+            rgb[0],
+            rgb[1],
+            rgb[2]
         );
     }
 

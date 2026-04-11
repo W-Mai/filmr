@@ -42,6 +42,7 @@ impl FilmrApp {
             }
 
             let config = SimulationConfig {
+                simulation_mode: filmr::processor::SimulationMode::default(),
                 exposure_time: self.exposure_time,
                 enable_grain: true,
                 use_gpu: true,
@@ -76,6 +77,7 @@ impl FilmrApp {
         if let Some(img) = &self.original_image {
             let thumb_base = img.thumbnail(128, 128).to_rgb8();
             let thumb_config = SimulationConfig {
+                simulation_mode: filmr::processor::SimulationMode::default(),
                 exposure_time: 1.0,
                 enable_grain: false,
                 use_gpu: false,
@@ -132,6 +134,7 @@ impl FilmrApp {
             }
 
             let config = SimulationConfig {
+                simulation_mode: filmr::processor::SimulationMode::default(),
                 exposure_time: self.exposure_time,
                 enable_grain: true,
                 use_gpu: true,

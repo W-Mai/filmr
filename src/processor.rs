@@ -280,7 +280,11 @@ struct AccurateDevelopStage;
 
 impl PipelineStage for AccurateDevelopStage {
     #[instrument(skip(self, image, context))]
-    fn process(&self, image: &mut image::ImageBuffer<image::Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+    fn process(
+        &self,
+        image: &mut image::ImageBuffer<image::Rgb<f32>, Vec<f32>>,
+        context: &PipelineContext,
+    ) {
         info!("Developing film (Accurate: full-spectrum propagation)");
         let film = context.film;
         let config = context.config;
