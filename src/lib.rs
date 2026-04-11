@@ -1,4 +1,6 @@
+pub mod cie_data;
 pub mod film;
+pub mod film_layer;
 #[cfg(feature = "compute-gpu")]
 pub mod gpu;
 #[cfg(feature = "compute-gpu")]
