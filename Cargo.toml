@@ -15,6 +15,7 @@ homepage = "https://benign.host/"
 members = [
     ".",
     "apps/filmr",
+    "xtask",
 ]
 
 [dependencies]
