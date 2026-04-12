@@ -102,7 +102,7 @@ fn accurate_color_card_hue() {
         ("Yellow", 200, 200, 0, 0),  // R or G dominant, B lowest
     ];
 
-    for (name, r, g, b, dominant) in colors {
+    for (name, r, g, b, _dominant) in colors {
         let p = process_uniform(r, g, b);
         let channels = [p[0], p[1], p[2]];
         let max_ch = channels
@@ -197,7 +197,7 @@ fn accurate_midgray_output() {
 
     let avg = (p[0] as u16 + p[1] as u16 + p[2] as u16) / 3;
     assert!(
-        avg >= 20 && avg <= 220,
+        (20..=220).contains(&avg),
         "18% gray output out of range: avg={} (expected 20-220)",
         avg
     );

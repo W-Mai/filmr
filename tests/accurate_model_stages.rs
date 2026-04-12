@@ -2,7 +2,6 @@
 //!
 //! Tests each stage independently with known inputs and verifiable outputs.
 
-use filmr::cie_data::D65_SPD;
 use filmr::film::SegmentedCurve;
 use filmr::film_layer::*;
 use filmr::physics;
@@ -42,7 +41,7 @@ fn stage1_uplift_red_peaks_in_red() {
     let peak_nm = LAMBDA_START + peak_idx * LAMBDA_STEP;
     println!("Red uplift peak: {}nm", peak_nm);
     assert!(
-        peak_nm >= 580 && peak_nm <= 660,
+        (580..=660).contains(&peak_nm),
         "Red uplift peak should be 580-660nm, got {}nm",
         peak_nm
     );
@@ -62,7 +61,7 @@ fn stage1_uplift_green_peaks_in_green() {
     let peak_nm = LAMBDA_START + peak_idx * LAMBDA_STEP;
     println!("Green uplift peak: {}nm", peak_nm);
     assert!(
-        peak_nm >= 500 && peak_nm <= 570,
+        (500..=570).contains(&peak_nm),
         "Green uplift peak should be 500-570nm, got {}nm",
         peak_nm
     );
@@ -82,7 +81,7 @@ fn stage1_uplift_blue_peaks_in_blue() {
     let peak_nm = LAMBDA_START + peak_idx * LAMBDA_STEP;
     println!("Blue uplift peak: {}nm", peak_nm);
     assert!(
-        peak_nm >= 420 && peak_nm <= 480,
+        (420..=480).contains(&peak_nm),
         "Blue uplift peak should be 420-480nm, got {}nm",
         peak_nm
     );
@@ -124,7 +123,7 @@ fn stage2_d65_shape() {
     println!("D65 peak: {}nm, value: {:.1}", peak_nm, d65.power[peak_idx]);
     // D65 has a broad peak, should be in visible range
     assert!(
-        peak_nm >= 400 && peak_nm <= 600,
+        (400..=600).contains(&peak_nm),
         "D65 peak at {}nm unexpected",
         peak_nm
     );
@@ -423,7 +422,7 @@ fn stage10_density_to_output_monotonic() {
         let d = d_int as f32 * 0.1;
         let t = physics::density_to_transmission(d);
         assert!(
-            t >= 0.0 && t <= 1.0,
+            (0.0..=1.0).contains(&t),
             "Transmission out of range at D={}: T={}",
             d,
             t
@@ -496,13 +495,13 @@ fn full_chain_gray_trace() {
 
     // 18% gray should be 0.18 × offset
     let expected = offset * 0.18;
-    for ch in 0..3 {
-        let err = (normed[ch] - expected).abs() / expected;
+    for (ch, &val) in normed.iter().enumerate() {
+        let err = (val - expected).abs() / expected;
         assert!(
             err < 0.02,
             "ch={}: normed={:.4} expected={:.4} err={:.1}%",
             ch,
-            normed[ch],
+            val,
             expected,
             err * 100.0
         );
@@ -517,11 +516,11 @@ fn full_chain_gray_trace() {
 
     // Should be below the midpoint (log10(offset) = 0.636)
     let log_offset = offset.log10();
-    for ch in 0..3 {
+    for &val in log_e.iter() {
         assert!(
-            log_e[ch] < log_offset,
+            val < log_offset,
             "18% gray log_e should be below midpoint: {:.4} vs {:.4}",
-            log_e[ch],
+            val,
             log_offset
         );
     }

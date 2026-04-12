@@ -3,7 +3,6 @@
 //! These tests verify physical invariants that must hold regardless of
 //! layer stack configuration or preset parameters.
 
-use filmr::cie_data::D65_SPD;
 use filmr::film_layer::*;
 use filmr::spectral::{CameraSensitivities, Spectrum, BINS};
 use filmr::spectral_engine::{integrate_exposure, propagate};
@@ -273,10 +272,6 @@ fn prop_base_reflection_adds_exposure() {
 #[test]
 fn prop_inhibition_reduces_cross_channel() {
     use filmr::presets::kodak::KODAK_PORTRA_400;
-    use filmr::processor::{
-        process_image, OutputMode, SimulationConfig, SimulationMode, WhiteBalanceMode,
-    };
-    use image::{Rgb, RgbImage};
 
     let film = KODAK_PORTRA_400();
     let stack = film.layer_stack.as_ref().unwrap();
@@ -285,14 +280,12 @@ fn prop_inhibition_reduces_cross_channel() {
     let red = d65_color(1.0, 0.0, 0.0);
 
     // With inhibition (default)
-    let exp_with = propagate(stack, &red);
-    let rgb_with = integrate_exposure(&exp_with);
+    let _exp_with = propagate(stack, &red);
 
     // Without inhibition
     let mut no_inh = stack.clone();
     no_inh.inhibition = [[0.0; 3]; 3];
-    let exp_without = propagate(&no_inh, &red);
-    let rgb_without = integrate_exposure(&exp_without);
+    let _exp_without = propagate(&no_inh, &red);
 
     // Propagation itself doesn't apply inhibition — it's applied in the density stage.
     // So raw exposure should be the same. The test verifies the inhibition matrix exists
