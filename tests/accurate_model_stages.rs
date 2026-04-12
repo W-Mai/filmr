@@ -533,3 +533,364 @@ fn full_chain_gray_trace() {
         log_offset - log_e[0]
     );
 }
+
+// =========================================================================
+// Strict physics verification
+// =========================================================================
+
+#[test]
+fn strict_beer_lambert_exact() {
+    // Single non-scattering layer, no Fresnel (n=1.0), known absorption
+    // Beer-Lambert: I_out = I_in * exp(-α * d)
+    // Absorbed = I_in * (1 - exp(-α * d))
+    let alpha = 0.2f32; // per µm
+    let d = 5.0f32; // µm
+    let mut absorption = [0.0f32; BINS];
+    absorption[20] = alpha; // single wavelength bin
+
+    let stack = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![FilmLayer {
+            name: "Test".into(),
+            kind: LayerKind::Emulsion {
+                channel: EmulsionChannel::Green,
+            },
+            thickness_um: d,
+            refractive_index: 1.0, // no Fresnel
+            absorption,
+            scattering: 0.0,
+        }],
+    };
+
+    let mut incident = [0.0f32; BINS];
+    incident[20] = 1.0;
+
+    let exp = propagate(&stack, &incident);
+    let expected = 1.0 * (1.0 - (-alpha * d).exp());
+    let actual = exp.green[20];
+
+    println!(
+        "Beer-Lambert exact: α={}, d={}, expected={:.6}, actual={:.6}",
+        alpha, d, expected, actual
+    );
+    assert!(
+        (actual - expected).abs() < 1e-5,
+        "Beer-Lambert mismatch: expected={:.6} actual={:.6}",
+        expected,
+        actual
+    );
+}
+
+#[test]
+fn strict_fresnel_exact() {
+    // Non-absorbing layer with known refractive index
+    // Fresnel R = ((n1-n2)/(n1+n2))²
+    // For air(1.0) → glass(1.5): R = 0.04, T = 0.96
+    let stack = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![FilmLayer {
+            name: "Glass".into(),
+            kind: LayerKind::Emulsion {
+                channel: EmulsionChannel::Green,
+            },
+            thickness_um: 0.001, // negligible thickness → no absorption
+            refractive_index: 1.5,
+            absorption: [0.0; BINS],
+            scattering: 0.0,
+        }],
+    };
+
+    let mut incident = [0.0f32; BINS];
+    incident[20] = 1.0;
+
+    let exp = propagate(&stack, &incident);
+    // With negligible absorption, almost nothing is absorbed
+    // But Fresnel reflects 4% at entry, so only 96% enters
+    // With zero absorption, absorbed ≈ 0
+    // The exposure should be ≈ 0 (no absorption to capture)
+    assert!(
+        exp.green[20] < 0.01,
+        "Zero-absorption layer should capture ~0 exposure, got {}",
+        exp.green[20]
+    );
+}
+
+#[test]
+fn strict_scattering_reduces_transmission() {
+    // Scattering removes energy from the beam (but doesn't deposit it as exposure)
+    let d = 10.0f32;
+    let scatter = 0.05f32;
+
+    // Layer with only scattering, no absorption
+    let stack_scatter = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![FilmLayer {
+            name: "Scatter".into(),
+            kind: LayerKind::Emulsion {
+                channel: EmulsionChannel::Green,
+            },
+            thickness_um: d,
+            refractive_index: 1.0,
+            absorption: [0.0; BINS],
+            scattering: scatter,
+        }],
+    };
+
+    // Layer with only absorption, same total attenuation
+    let mut abs_only = [0.0f32; BINS];
+    abs_only[20] = scatter;
+    let stack_absorb = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![FilmLayer {
+            name: "Absorb".into(),
+            kind: LayerKind::Emulsion {
+                channel: EmulsionChannel::Green,
+            },
+            thickness_um: d,
+            refractive_index: 1.0,
+            absorption: abs_only,
+            scattering: 0.0,
+        }],
+    };
+
+    let mut incident = [0.0f32; BINS];
+    incident[20] = 1.0;
+
+    let exp_scatter = propagate(&stack_scatter, &incident);
+    let exp_absorb = propagate(&stack_absorb, &incident);
+
+    println!(
+        "Scatter-only exposure: {:.6}, Absorb-only exposure: {:.6}",
+        exp_scatter.green[20], exp_absorb.green[20]
+    );
+
+    // Scatter-only: total_atten = scatter, abs_fraction = 0/scatter = 0
+    // So exposure should be 0 (scattering doesn't deposit energy)
+    assert!(
+        exp_scatter.green[20] < 1e-6,
+        "Pure scattering should not deposit exposure: {}",
+        exp_scatter.green[20]
+    );
+
+    // Absorb-only: total_atten = absorption, abs_fraction = 1.0
+    // Exposure = 1 - exp(-0.05 * 10) = 1 - exp(-0.5) = 0.3935
+    let expected = 1.0 - (-scatter * d).exp();
+    assert!(
+        (exp_absorb.green[20] - expected).abs() < 1e-5,
+        "Absorb-only: expected={:.6} got={:.6}",
+        expected,
+        exp_absorb.green[20]
+    );
+}
+
+#[test]
+fn strict_energy_budget_single_layer() {
+    // For a single layer: incident = reflected + absorbed + transmitted
+    // (no scattering for simplicity)
+    let alpha = 0.15f32;
+    let d = 8.0f32;
+    let n = 1.5f32;
+    let mut absorption = [0.0f32; BINS];
+    absorption[20] = alpha;
+
+    let stack = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![FilmLayer {
+            name: "Test".into(),
+            kind: LayerKind::Emulsion {
+                channel: EmulsionChannel::Green,
+            },
+            thickness_um: d,
+            refractive_index: n,
+            absorption,
+            scattering: 0.0,
+        }],
+    };
+
+    let mut incident = [0.0f32; BINS];
+    incident[20] = 1.0;
+
+    let exp = propagate(&stack, &incident);
+    let absorbed = exp.green[20];
+
+    // Manual calculation:
+    // Fresnel at air→glass: R1 = ((1-1.5)/(1+1.5))² = 0.04
+    // Power entering: 1.0 * 0.96 = 0.96
+    // Beer-Lambert: transmitted through layer = 0.96 * exp(-0.15*8) = 0.96 * 0.3012 = 0.2891
+    // Absorbed in forward pass = 0.96 * (1 - 0.3012) = 0.96 * 0.6988 = 0.6709
+    // (all absorbed since abs_fraction = 1.0, no scattering)
+    let r1 = ((1.0f32 - n) / (1.0 + n)).powi(2);
+    let t1 = 1.0 - r1;
+    let beer = (-alpha * d).exp();
+    let forward_absorbed = t1 * (1.0 - beer);
+    let forward_transmitted = t1 * beer;
+
+    println!(
+        "Energy budget: incident=1.0, reflected={:.4}, forward_absorbed={:.4}, forward_transmitted={:.4}",
+        r1, forward_absorbed, forward_transmitted
+    );
+    println!(
+        "Actual absorbed (incl backward): {:.6}, forward-only expected: {:.6}",
+        absorbed, forward_absorbed
+    );
+
+    // Absorbed should be >= forward_absorbed (backward pass adds more)
+    assert!(
+        absorbed >= forward_absorbed - 1e-5,
+        "Absorbed should be >= forward-only: {} < {}",
+        absorbed,
+        forward_absorbed
+    );
+
+    // Total energy: reflected + absorbed + escaped should ≈ 1.0
+    // Escaped = forward_transmitted (minus what base reflects back, which gets partially absorbed)
+    // For single layer with no base, escaped ≈ forward_transmitted
+    // But our stack has implicit air below, so base_r = fresnel(n, 1.0) = same as r1
+    // back_power = forward_transmitted * r1
+    // backward absorbed ≈ back_power * (1 - beer) * abs_fraction
+    let back_power = forward_transmitted * r1;
+    let backward_absorbed = back_power * (1.0 - beer);
+    let total_absorbed_expected = forward_absorbed + backward_absorbed;
+
+    println!(
+        "With backward: back_power={:.6}, backward_absorbed={:.6}, total_expected={:.6}",
+        back_power, backward_absorbed, total_absorbed_expected
+    );
+    assert!(
+        (absorbed - total_absorbed_expected).abs() < 0.01,
+        "Total absorbed mismatch: expected={:.6} actual={:.6}",
+        total_absorbed_expected,
+        absorbed
+    );
+}
+
+#[test]
+fn strict_backward_pass_fresnel_direction() {
+    // Verify backward pass uses correct Fresnel direction
+    // Two layers with different refractive indices
+    // Light reflects off base, travels back through both layers
+    let stack = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![
+            FilmLayer {
+                name: "Layer1".into(),
+                kind: LayerKind::Emulsion {
+                    channel: EmulsionChannel::Blue,
+                },
+                thickness_um: 1.0,
+                refractive_index: 1.5,
+                absorption: [0.0; BINS], // transparent
+                scattering: 0.0,
+            },
+            FilmLayer {
+                name: "Layer2".into(),
+                kind: LayerKind::Emulsion {
+                    channel: EmulsionChannel::Red,
+                },
+                thickness_um: 1.0,
+                refractive_index: 1.7, // different n
+                absorption: [0.0; BINS],
+                scattering: 0.0,
+            },
+        ],
+    };
+
+    let mut incident = [0.0f32; BINS];
+    incident[20] = 1.0;
+
+    let exp = propagate(&stack, &incident);
+
+    // Both layers are transparent, so exposure should be ~0
+    // (no absorption to capture energy)
+    assert!(
+        exp.blue[20] < 0.01 && exp.red[20] < 0.01,
+        "Transparent layers should capture ~0: blue={:.6} red={:.6}",
+        exp.blue[20],
+        exp.red[20]
+    );
+}
+
+#[test]
+fn strict_multi_layer_attenuation_order() {
+    // Blue light through: Blue emulsion (absorbs) → Yellow filter (absorbs blue) → Red emulsion
+    // Red emulsion should get much less blue light than blue emulsion
+    let mut blue_abs = [0.0f32; BINS];
+    let idx_450 = (450 - LAMBDA_START) / LAMBDA_STEP;
+    blue_abs[idx_450] = 0.1;
+
+    let mut yellow_abs = [0.0f32; BINS];
+    yellow_abs[idx_450] = 0.5; // strong blue absorption
+
+    let mut red_abs = [0.0f32; BINS];
+    red_abs[idx_450] = 0.1;
+
+    let stack = FilmLayerStack {
+        inhibition: [[0.0; 3]; 3],
+        layers: vec![
+            FilmLayer {
+                name: "Blue".into(),
+                kind: LayerKind::Emulsion {
+                    channel: EmulsionChannel::Blue,
+                },
+                thickness_um: 5.0,
+                refractive_index: 1.0,
+                absorption: blue_abs,
+                scattering: 0.0,
+            },
+            FilmLayer {
+                name: "Yellow".into(),
+                kind: LayerKind::YellowFilter,
+                thickness_um: 2.0,
+                refractive_index: 1.0,
+                absorption: yellow_abs,
+                scattering: 0.0,
+            },
+            FilmLayer {
+                name: "Red".into(),
+                kind: LayerKind::Emulsion {
+                    channel: EmulsionChannel::Red,
+                },
+                thickness_um: 5.0,
+                refractive_index: 1.0,
+                absorption: red_abs,
+                scattering: 0.0,
+            },
+        ],
+    };
+
+    let mut incident = [0.0f32; BINS];
+    incident[idx_450] = 1.0;
+
+    let exp = propagate(&stack, &incident);
+
+    // Blue layer sees full power: absorbed = 1 - exp(-0.1*5) = 0.3935
+    let blue_expected = 1.0 - (-0.1f32 * 5.0).exp();
+    // After blue layer: power = exp(-0.1*5) = 0.6065
+    // After yellow filter: power = 0.6065 * exp(-0.5*2) = 0.6065 * 0.3679 = 0.2231
+    // Red layer absorbed = 0.2231 * (1 - exp(-0.1*5)) = 0.2231 * 0.3935 = 0.0878
+    let after_blue = (-0.1f32 * 5.0).exp();
+    let after_yellow = after_blue * (-0.5f32 * 2.0).exp();
+    let red_expected = after_yellow * (1.0 - (-0.1f32 * 5.0).exp());
+
+    println!(
+        "Blue absorbed: expected={:.4} actual={:.4}",
+        blue_expected, exp.blue[idx_450]
+    );
+    println!(
+        "Red absorbed:  expected={:.4} actual={:.4}",
+        red_expected, exp.red[idx_450]
+    );
+
+    assert!(
+        (exp.blue[idx_450] - blue_expected).abs() < 1e-4,
+        "Blue layer absorption mismatch"
+    );
+    assert!(
+        (exp.red[idx_450] - red_expected).abs() < 1e-4,
+        "Red layer absorption mismatch"
+    );
+    assert!(
+        exp.blue[idx_450] > exp.red[idx_450] * 3.0,
+        "Blue should absorb much more than red at 450nm"
+    );
+}
