@@ -315,38 +315,45 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // White-point calibration.
-        // Propagate D65-illuminated white through the stack, then normalize
-        // so that white (1,1,1) → exposure = exposure_offset per channel.
-        // This places white at the H-D midpoint; 18% gray lands 0.74 log below
-        // (in the toe-to-linear transition), matching real film exposure.
-        let white_spectrum = camera.uplift(1.0, 1.0, 1.0);
-        let mut white_scaled = [0.0f32; crate::spectral::BINS];
-        for (i, s) in white_scaled.iter_mut().enumerate() {
-            *s = white_spectrum.power[i] * d65.power[i];
+        // Exposure calibration: match Fast mode's exposure range.
+        // norm maps Accurate raw exposure → Fast-equivalent exposure (without t_eff).
+        // t_eff is applied separately in the pixel loop, same as Fast mode.
+        let gray_lin = 0.18f32;
+        let spectral_matrix = film.compute_spectral_matrix();
+        let fast_gray = [
+            gray_lin * (spectral_matrix[0][0] + spectral_matrix[0][1] + spectral_matrix[0][2]),
+            gray_lin * (spectral_matrix[1][0] + spectral_matrix[1][1] + spectral_matrix[1][2]),
+            gray_lin * (spectral_matrix[2][0] + spectral_matrix[2][1] + spectral_matrix[2][2]),
+        ];
+
+        let gray_spectrum = camera.uplift(gray_lin, gray_lin, gray_lin);
+        let mut gray_scaled = [0.0f32; crate::spectral::BINS];
+        for (i, s) in gray_scaled.iter_mut().enumerate() {
+            *s = gray_spectrum.power[i] * d65.power[i];
         }
-        let white_exp = spectral_engine::propagate(&stack, &white_scaled);
-        let white_rgb = spectral_engine::integrate_exposure(&white_exp);
+        let gray_exp = spectral_engine::propagate(&stack, &gray_scaled);
+        let acc_gray = spectral_engine::integrate_exposure(&gray_exp);
 
         let norm = [
-            if white_rgb[0] > 1e-10 {
-                film.r_curve.exposure_offset / white_rgb[0]
+            if acc_gray[0] > 1e-10 {
+                fast_gray[0] / acc_gray[0]
             } else {
                 1.0
             },
-            if white_rgb[1] > 1e-10 {
-                film.g_curve.exposure_offset / white_rgb[1]
+            if acc_gray[1] > 1e-10 {
+                fast_gray[1] / acc_gray[1]
             } else {
                 1.0
             },
-            if white_rgb[2] > 1e-10 {
-                film.b_curve.exposure_offset / white_rgb[2]
+            if acc_gray[2] > 1e-10 {
+                fast_gray[2] / acc_gray[2]
             } else {
                 1.0
             },
         ];
 
-        let user_ev = config.exposure_time;
+        // exposure_time applied separately (same role as in Fast mode)
+        let t_eff = config.exposure_time;
         let width = image.width();
 
         // Pass 1: per-pixel spectral propagation → RGB exposure
@@ -358,9 +365,9 @@ impl PipelineStage for AccurateDevelopStage {
             }
             let exposure = spectral_engine::propagate(&stack, &scaled);
             let rgb = spectral_engine::integrate_exposure(&exposure);
-            pixel[0] = rgb[0] * norm[0] * user_ev;
-            pixel[1] = rgb[1] * norm[1] * user_ev;
-            pixel[2] = rgb[2] * norm[2] * user_ev;
+            pixel[0] = rgb[0] * norm[0] * t_eff;
+            pixel[1] = rgb[1] * norm[1] * t_eff;
+            pixel[2] = rgb[2] * norm[2] * t_eff;
         });
 
         // Pass 2: scattering spatial diffusion (Gaussian blur per emulsion scatter)

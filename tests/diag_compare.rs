@@ -26,6 +26,8 @@ fn diag_fast_vs_accurate() {
     );
     eprintln!("{}", "-".repeat(75));
 
+    let mut max_gray_delta = 0.0f32;
+
     for (name, r, g, b) in &inputs {
         let img = RgbImage::from_fn(50, 50, |_, _| Rgb([*r, *g, *b]));
         let t = estimate_exposure_time(&img, &film);
@@ -43,7 +45,6 @@ fn diag_fast_vs_accurate() {
 
         let mut cfg_a = cfg_f.clone();
         cfg_a.simulation_mode = SimulationMode::Accurate;
-        cfg_a.exposure_time = 1.0;
         let out_a = process_image(&img, &film, &cfg_a);
         let pa = out_a.get_pixel(25, 25);
 
@@ -62,5 +63,16 @@ fn diag_fast_vs_accurate() {
             pa[2],
             luma_a - luma_f
         );
+
+        if *r == *g && *g == *b {
+            max_gray_delta = max_gray_delta.max((luma_a - luma_f).abs());
+        }
     }
+
+    // Gray inputs should have similar luma between modes (within 40 levels)
+    assert!(
+        max_gray_delta < 40.0,
+        "Fast/Accurate gray luma delta too large: {:.0}",
+        max_gray_delta
+    );
 }

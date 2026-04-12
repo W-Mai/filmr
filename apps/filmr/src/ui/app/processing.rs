@@ -137,11 +137,7 @@ impl FilmrApp {
 
             let config = SimulationConfig {
                 simulation_mode: SimulationMode::Accurate,
-                // Accurate mode normalization handles auto-exposure internally.
-                // Convert absolute exposure_time to relative EV by dividing out
-                // the Fast-mode baseline, so user slider adjustments still work.
-                exposure_time: self.exposure_time
-                    / estimate_exposure_time(&img.to_rgb8(), &film).max(1e-6),
+                exposure_time: self.exposure_time,
                 enable_grain: true,
                 use_gpu: true,
                 output_mode: self.output_mode,
