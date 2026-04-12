@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
     use filmr::presets::other::STANDARD_DAYLIGHT;
-    use filmr::processor::{process_image, OutputMode, SimulationConfig, WhiteBalanceMode};
+    use filmr::processor::{
+        process_image, OutputMode, SimulationConfig, SimulationMode, WhiteBalanceMode,
+    };
     use filmr::spectral::{
         CameraSensitivities, FilmSensitivities, FilmSpectralParams, Spectrum, BINS, LAMBDA_START,
         LAMBDA_STEP,
@@ -98,7 +100,8 @@ mod tests {
         film.halation_strength = 0.0;
 
         let config = SimulationConfig {
-            exposure_time: 1.0, // Standard exposure
+            simulation_mode: SimulationMode::Fast, // This test modifies spectral_params (Fast-mode only)
+            exposure_time: 1.0,
             enable_grain: false,
             output_mode: OutputMode::Positive,
             white_balance_mode: WhiteBalanceMode::Off, // Must be Off to see true color response

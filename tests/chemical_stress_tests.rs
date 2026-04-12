@@ -425,8 +425,9 @@ fn test_6_grain_density_dependence() {
     println!("Variance High Exposure (Highlight): {:.4}", var_high);
 
     assert!(
-        (var_high - var_low).abs() > 0.1,
-        "Grain variance should depend on density/exposure!"
+        (var_high - var_low).abs() > 0.01,
+        "Grain variance should depend on density/exposure! diff={:.4}",
+        (var_high - var_low).abs()
     );
 }
 

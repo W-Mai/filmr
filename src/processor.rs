@@ -23,10 +23,10 @@ use crate::gpu_pipelines::{
 /// Simulation fidelity mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum SimulationMode {
-    /// 3×3 matrix approximation — fast, suitable for real-time preview.
-    #[default]
+    /// 3×3 matrix approximation — fast, kept for compatibility.
     Fast,
     /// Full-spectrum per-wavelength propagation through film layer stack.
+    #[default]
     Accurate,
 }
 
