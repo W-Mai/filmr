@@ -43,7 +43,7 @@ fn diag_fast_vs_accurate() {
 
         let mut cfg_a = cfg_f.clone();
         cfg_a.simulation_mode = SimulationMode::Accurate;
-        cfg_a.exposure_time = 1.0; // Accurate mode: normalization handles auto-exposure
+        cfg_a.exposure_time = 1.0;
         let out_a = process_image(&img, &film, &cfg_a);
         let pa = out_a.get_pixel(25, 25);
 

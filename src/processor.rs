@@ -383,6 +383,51 @@ impl PipelineStage for AccurateDevelopStage {
             }
         }
 
+        // Pass 2.5: White balance + warmth (same logic as Fast mode DevelopStage)
+        let wb_gains = match config.white_balance_mode {
+            crate::processor::WhiteBalanceMode::Auto => {
+                let step = (width * image.height() / 1000).max(1);
+                let mut sum_r = 0.0f32;
+                let mut sum_g = 0.0f32;
+                let mut sum_b = 0.0f32;
+                let mut count = 0.0f32;
+                for (i, pixel) in image.chunks(3).enumerate() {
+                    if (i as u32).is_multiple_of(step) {
+                        sum_r += pixel[0];
+                        sum_g += pixel[1];
+                        sum_b += pixel[2];
+                        count += 1.0;
+                    }
+                }
+                if count > 0.0 {
+                    let avg_r = sum_r / count;
+                    let avg_g = sum_g / count;
+                    let avg_b = sum_b / count;
+                    let lum = (avg_r + avg_g + avg_b) / 3.0;
+                    let eps = 1e-9;
+                    let s = config.white_balance_strength.clamp(0.0, 1.0);
+                    let warmth = config.warmth.clamp(-1.0, 1.0);
+                    [
+                        (1.0 + (lum / avg_r.max(eps) - 1.0) * s) * (1.0 + warmth * 0.1),
+                        1.0 + (lum / avg_g.max(eps) - 1.0) * s,
+                        (1.0 + (lum / avg_b.max(eps) - 1.0) * s) * (1.0 - warmth * 0.1),
+                    ]
+                } else {
+                    [1.0, 1.0, 1.0]
+                }
+            }
+            _ => {
+                let warmth = config.warmth.clamp(-1.0, 1.0);
+                [1.0 + warmth * 0.1, 1.0, 1.0 - warmth * 0.1]
+            }
+        };
+
+        image.par_chunks_mut(3).for_each(|pixel| {
+            pixel[0] *= wb_gains[0];
+            pixel[1] *= wb_gains[1];
+            pixel[2] *= wb_gains[2];
+        });
+
         // Pass 3: log-exposure → density via H-D curves + color matrix + inhibition
         let inhibition = stack.inhibition;
         image.par_chunks_mut(3).for_each(|pixel| {
