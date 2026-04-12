@@ -32,6 +32,164 @@ fn fresnel_r(n1: f32, n2: f32) -> f32 {
     r * r
 }
 
+/// Precomputed per-layer, per-bin coefficients for fast propagation.
+pub struct LayerCoeffs {
+    /// Fresnel transmission at entry interface.
+    t_interface: f32,
+    /// Per-bin transmission: exp(-(absorption[i] + scattering) * thickness)
+    transmission: [f32; BINS],
+    /// Per-bin absorption deposit factor: t_interface_cumulative * (1 - transmission[i]) * abs_fraction[i]
+    /// Only nonzero for emulsion layers.
+    deposit: [f32; BINS],
+    /// Which channel this layer deposits to (None for non-emulsion).
+    channel: Option<EmulsionChannel>,
+}
+
+/// Precompute layer coefficients for a given stack. Call once, reuse for all pixels.
+pub fn precompute(stack: &FilmLayerStack) -> (Vec<LayerCoeffs>, Vec<LayerCoeffs>) {
+    let layers = &stack.layers;
+
+    // Forward pass coefficients
+    let mut forward = Vec::with_capacity(layers.len());
+    let mut prev_n = 1.0f32;
+    for layer in layers.iter() {
+        let r = fresnel_r(prev_n, layer.refractive_index);
+        let t_interface = 1.0 - r;
+        let d = layer.thickness_um;
+
+        let mut transmission = [0.0f32; BINS];
+        let mut deposit = [0.0f32; BINS];
+        let channel = if let LayerKind::Emulsion { channel } = layer.kind {
+            Some(channel)
+        } else {
+            None
+        };
+
+        for i in 0..BINS {
+            let total_atten = layer.absorption[i] + layer.scattering;
+            let exp_val = (-total_atten * d).exp();
+            transmission[i] = exp_val;
+            if channel.is_some() && exp_val < 1.0 && total_atten > 0.0 {
+                let abs_fraction = layer.absorption[i] / total_atten;
+                deposit[i] = (1.0 - exp_val) * abs_fraction;
+            }
+        }
+
+        forward.push(LayerCoeffs {
+            t_interface,
+            transmission,
+            deposit,
+            channel,
+        });
+        prev_n = layer.refractive_index;
+    }
+
+    // Backward pass coefficients (reverse order, different Fresnel directions)
+    let mut backward = Vec::with_capacity(layers.len());
+    let base_n = layers.last().map(|l| l.refractive_index).unwrap_or(1.0);
+    prev_n = base_n;
+    for layer in layers.iter().rev() {
+        let r = fresnel_r(prev_n, layer.refractive_index);
+        let t_interface = 1.0 - r;
+        let d = layer.thickness_um;
+
+        let mut transmission = [0.0f32; BINS];
+        let mut deposit = [0.0f32; BINS];
+        let channel = if let LayerKind::Emulsion { channel } = layer.kind {
+            Some(channel)
+        } else {
+            None
+        };
+
+        for i in 0..BINS {
+            let total_atten = layer.absorption[i] + layer.scattering;
+            let exp_val = (-total_atten * d).exp();
+            transmission[i] = exp_val;
+            if channel.is_some() && exp_val < 1.0 && total_atten > 0.0 {
+                let abs_fraction = layer.absorption[i] / total_atten;
+                deposit[i] = (1.0 - exp_val) * abs_fraction;
+            }
+        }
+
+        backward.push(LayerCoeffs {
+            t_interface,
+            transmission,
+            deposit,
+            channel,
+        });
+        prev_n = layer.refractive_index;
+    }
+
+    (forward, backward)
+}
+
+/// Fast propagation using precomputed coefficients.
+pub fn propagate_fast(
+    forward: &[LayerCoeffs],
+    backward: &[LayerCoeffs],
+    base_r: f32,
+    incident: &[f32; BINS],
+) -> LayerExposure {
+    let mut exposure = LayerExposure::default();
+    let mut power = *incident;
+
+    // Forward pass
+    for lc in forward {
+        // Fresnel
+        let t = lc.t_interface;
+        for p in power.iter_mut() {
+            *p *= t;
+        }
+
+        // Record absorption before attenuation (power_in = power now, before *= transmission)
+        if let Some(ch) = lc.channel {
+            let target = match ch {
+                EmulsionChannel::Red => &mut exposure.red,
+                EmulsionChannel::Green => &mut exposure.green,
+                EmulsionChannel::Blue => &mut exposure.blue,
+            };
+            for i in 0..BINS {
+                target[i] += power[i] * lc.deposit[i];
+            }
+        }
+
+        // Attenuate
+        for (i, p) in power.iter_mut().enumerate() {
+            *p *= lc.transmission[i];
+        }
+    }
+
+    // Backward pass
+    let mut back_power = [0.0f32; BINS];
+    for (i, bp) in back_power.iter_mut().enumerate() {
+        *bp = power[i] * base_r;
+    }
+
+    for lc in backward {
+        let t = lc.t_interface;
+        for p in back_power.iter_mut() {
+            *p *= t;
+        }
+
+        if let Some(ch) = lc.channel {
+            let target = match ch {
+                EmulsionChannel::Red => &mut exposure.red,
+                EmulsionChannel::Green => &mut exposure.green,
+                EmulsionChannel::Blue => &mut exposure.blue,
+            };
+            for i in 0..BINS {
+                target[i] += back_power[i] * lc.deposit[i];
+            }
+        }
+
+        for (i, p) in back_power.iter_mut().enumerate() {
+            *p *= lc.transmission[i];
+        }
+    }
+
+    exposure
+}
+
 /// Propagate a spectral power distribution through a `FilmLayerStack`.
 ///
 /// `incident` is the per-wavelength irradiance arriving at the film surface (81 bins).

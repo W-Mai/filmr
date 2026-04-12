@@ -356,14 +356,46 @@ impl PipelineStage for AccurateDevelopStage {
         let t_eff = config.exposure_time;
         let width = image.width();
 
+        // Precompute layer coefficients (once per frame, not per pixel)
+        let (fwd_coeffs, bwd_coeffs) = spectral_engine::precompute(&stack);
+        let base_n = stack
+            .layers
+            .last()
+            .map(|l| l.refractive_index)
+            .unwrap_or(1.0);
+        let base_r = ((base_n - 1.0) / (base_n + 1.0)).powi(2);
+
+        // Precompute uplift × D65 matrix: 3 input channels → 81 spectral bins
+        let uplift_d65 = {
+            let r_spec = camera.uplift(1.0, 0.0, 0.0);
+            let g_spec = camera.uplift(0.0, 1.0, 0.0);
+            let b_spec = camera.uplift(0.0, 0.0, 1.0);
+            let mut m = [[0.0f32; crate::spectral::BINS]; 3];
+            for (i, ((r, g), b)) in r_spec
+                .power
+                .iter()
+                .zip(g_spec.power.iter())
+                .zip(b_spec.power.iter())
+                .enumerate()
+            {
+                let d = d65.power[i];
+                m[0][i] = r * d;
+                m[1][i] = g * d;
+                m[2][i] = b * d;
+            }
+            m
+        };
+
         // Pass 1: per-pixel spectral propagation → RGB exposure
         image.par_chunks_mut(3).for_each(|pixel| {
-            let incident = camera.uplift(pixel[0], pixel[1], pixel[2]);
+            // Inline uplift × D65 (3 multiplies + 2 adds per bin instead of full uplift)
             let mut scaled = [0.0f32; crate::spectral::BINS];
+            let (r, g, b) = (pixel[0], pixel[1], pixel[2]);
             for (i, s) in scaled.iter_mut().enumerate() {
-                *s = incident.power[i] * d65.power[i];
+                *s = r * uplift_d65[0][i] + g * uplift_d65[1][i] + b * uplift_d65[2][i];
             }
-            let exposure = spectral_engine::propagate(&stack, &scaled);
+            let exposure =
+                spectral_engine::propagate_fast(&fwd_coeffs, &bwd_coeffs, base_r, &scaled);
             let rgb = spectral_engine::integrate_exposure(&exposure);
             pixel[0] = rgb[0] * norm[0] * t_eff;
             pixel[1] = rgb[1] * norm[1] * t_eff;
