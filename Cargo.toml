@@ -53,3 +53,7 @@ harness = false
 
 [features]
 compute-gpu = ["dep:wgpu", "dep:pollster"]
+
+[[bench]]
+name = "mode_benchmark"
+harness = false
