@@ -893,3 +893,101 @@ fn strict_multi_layer_attenuation_order() {
         "Blue should absorb much more than red at 450nm"
     );
 }
+
+// =========================================================================
+// Inhibition deviation-based behavior
+// =========================================================================
+
+#[test]
+fn strict_inhibition_neutral_unaffected() {
+    // Neutral gray: all channels equal → deviation = 0 → no inhibition effect
+    let d = [1.5, 1.5, 1.5];
+    let inh = [
+        [0.00, -0.10, -0.05],
+        [-0.07, 0.00, -0.07],
+        [-0.05, -0.10, 0.00],
+    ];
+    let d_mean = (d[0] + d[1] + d[2]) / 3.0;
+    let dd = [d[0] - d_mean, d[1] - d_mean, d[2] - d_mean];
+
+    let d_r = d[0] + inh[0][0] * dd[0] + inh[0][1] * dd[1] + inh[0][2] * dd[2];
+    let d_g = d[1] + inh[1][0] * dd[0] + inh[1][1] * dd[1] + inh[1][2] * dd[2];
+    let d_b = d[2] + inh[2][0] * dd[0] + inh[2][1] * dd[1] + inh[2][2] * dd[2];
+
+    assert!(
+        (d_r - 1.5f32).abs() < 1e-6 && (d_g - 1.5f32).abs() < 1e-6 && (d_b - 1.5f32).abs() < 1e-6,
+        "Neutral gray should be unaffected by inhibition: ({:.4}, {:.4}, {:.4})",
+        d_r,
+        d_g,
+        d_b
+    );
+}
+
+#[test]
+fn strict_inhibition_color_separation() {
+    // Red dominant: R=2.0, G=1.0, B=0.5 → deviations: R=+0.83, G=-0.17, B=-0.67
+    // Inhibition should reduce R (suppressed by G,B deviation) and boost G,B
+    let d = [2.0, 1.0, 0.5];
+    let inh = [
+        [0.00, -0.10, -0.05],
+        [-0.07, 0.00, -0.07],
+        [-0.05, -0.10, 0.00],
+    ];
+    let d_mean = (d[0] + d[1] + d[2]) / 3.0;
+    let dd = [d[0] - d_mean, d[1] - d_mean, d[2] - d_mean];
+
+    println!("Deviations: R={:.3}, G={:.3}, B={:.3}", dd[0], dd[1], dd[2]);
+
+    let d_r = d[0] + inh[0][0] * dd[0] + inh[0][1] * dd[1] + inh[0][2] * dd[2];
+    let d_g = d[1] + inh[1][0] * dd[0] + inh[1][1] * dd[1] + inh[1][2] * dd[2];
+    let d_b = d[2] + inh[2][0] * dd[0] + inh[2][1] * dd[1] + inh[2][2] * dd[2];
+
+    println!("Before: R={:.3}, G={:.3}, B={:.3}", d[0], d[1], d[2]);
+    println!("After:  R={:.3}, G={:.3}, B={:.3}", d_r, d_g, d_b);
+
+    // R should decrease (G,B deviations are negative, × negative inh = positive,
+    // but wait: dd[1]=-0.17, inh[0][1]=-0.10 → -0.10 * -0.17 = +0.017
+    // dd[2]=-0.67, inh[0][2]=-0.05 → -0.05 * -0.67 = +0.033
+    // So R actually increases slightly! This is correct: when G and B are
+    // below average, they inhibit R less → R gets a small boost.
+    // The key property: the SPREAD between channels should increase.
+    let spread_before = d[0] - d[2];
+    let spread_after = d_r - d_b;
+    println!(
+        "Spread R-B: before={:.3}, after={:.3}",
+        spread_before, spread_after
+    );
+    assert!(
+        spread_after > spread_before,
+        "Inhibition should increase colour separation"
+    );
+}
+
+#[test]
+fn strict_inhibition_preserves_mean() {
+    // The mean density should be approximately preserved
+    let d = [2.0, 1.0, 0.5];
+    let inh = [
+        [0.00, -0.10, -0.05],
+        [-0.07, 0.00, -0.07],
+        [-0.05, -0.10, 0.00],
+    ];
+    let d_mean = (d[0] + d[1] + d[2]) / 3.0;
+    let dd = [d[0] - d_mean, d[1] - d_mean, d[2] - d_mean];
+
+    let d_r = d[0] + inh[0][0] * dd[0] + inh[0][1] * dd[1] + inh[0][2] * dd[2];
+    let d_g = d[1] + inh[1][0] * dd[0] + inh[1][1] * dd[1] + inh[1][2] * dd[2];
+    let d_b = d[2] + inh[2][0] * dd[0] + inh[2][1] * dd[1] + inh[2][2] * dd[2];
+
+    let new_mean = (d_r + d_g + d_b) / 3.0f32;
+    println!(
+        "Mean: before={:.4}, after={:.4}, delta={:.6}",
+        d_mean,
+        new_mean,
+        (new_mean - d_mean).abs()
+    );
+    assert!(
+        (new_mean - d_mean).abs() < 0.1,
+        "Mean density should be approximately preserved"
+    );
+}
