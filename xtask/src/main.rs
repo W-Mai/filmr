@@ -23,6 +23,10 @@ fn run() -> Result {
     if cmd == "release" {
         return cmd_release();
     }
+    if cmd == "analyze" {
+        let path = args.get(1).map(|s| s.as_str()).unwrap_or("");
+        return cmd_analyze(path);
+    }
 
     match cmd {
         "ci" => cmd_ci(),
@@ -30,7 +34,9 @@ fn run() -> Result {
         "test" => cmd_test(),
         "lint" => cmd_lint(),
         _ => {
-            eprintln!("usage: cargo xtask <ci|build|test|lint|bump <major|minor|patch>|publish [--dry-run]|release>");
+            eprintln!(
+                "usage: cargo xtask <ci|build|test|lint|bump|publish|release|analyze <image>>"
+            );
             std::process::exit(1);
         }
     }
@@ -379,4 +385,236 @@ fn is_semver(s: &str) -> bool {
         && parts
             .iter()
             .all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit()))
+}
+
+// ── Analyze ──────────────────────────────────────────────
+
+fn cmd_analyze(path: &str) -> Result {
+    if path.is_empty() {
+        return Err("usage: cargo xtask analyze <image_path>".into());
+    }
+
+    let img = image::open(path)
+        .map_err(|e| format!("cannot open {path}: {e}"))?
+        .to_rgb8();
+    let (w, h) = (img.width() as usize, img.height() as usize);
+    let n = w * h;
+
+    let pixels: Vec<[f32; 3]> = img
+        .pixels()
+        .map(|p| [p[0] as f32, p[1] as f32, p[2] as f32])
+        .collect();
+
+    let luma: Vec<f32> = pixels
+        .iter()
+        .map(|p| 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2])
+        .collect();
+
+    let sat: Vec<f32> = pixels
+        .iter()
+        .map(|p| {
+            let mx = p[0].max(p[1]).max(p[2]);
+            let mn = p[0].min(p[1]).min(p[2]);
+            mx - mn
+        })
+        .collect();
+
+    println!("Film Stock Analyzer");
+    println!("Image: {path}");
+    println!("Size: {w}×{h}\n");
+
+    // ── Tonality ──
+    println!("═══ Tonality ═══");
+    let mut sorted_luma = luma.clone();
+    sorted_luma.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let pct = |p: usize| sorted_luma[n * p / 100];
+    println!(
+        "  p1={:.0} p5={:.0} p25={:.0} p50={:.0} p75={:.0} p95={:.0} p99={:.0}",
+        pct(1),
+        pct(5),
+        pct(25),
+        pct(50),
+        pct(75),
+        pct(95),
+        pct(99)
+    );
+    println!("  Dynamic range (p1-p99): {:.0}", pct(99) - pct(1));
+    println!("  Contrast (p75-p25): {:.0}", pct(75) - pct(25));
+
+    // ── Color Cast ──
+    println!("\n═══ Color Cast (neutral pixels, sat<30) ═══");
+    let zones: &[(&str, f32, f32)] = &[
+        ("Shadows", 0.0, 60.0),
+        ("Midtones", 60.0, 120.0),
+        ("Highlights", 120.0, 180.0),
+        ("Specular", 180.0, 255.0),
+    ];
+
+    println!(
+        "  {:12} {:>6} {:>6} {:>6} | {:>5} {:>5} {:>8}",
+        "Zone", "R", "G", "B", "R-G", "R-B", "Bias"
+    );
+    println!("  {}", "-".repeat(55));
+
+    for &(name, lo, hi) in zones {
+        let mut sr = 0.0f32;
+        let mut sg = 0.0f32;
+        let mut sb = 0.0f32;
+        let mut cnt = 0u32;
+        for i in 0..n {
+            if sat[i] < 30.0 && luma[i] >= lo && luma[i] < hi {
+                sr += pixels[i][0];
+                sg += pixels[i][1];
+                sb += pixels[i][2];
+                cnt += 1;
+            }
+        }
+        if cnt < 50 {
+            continue;
+        }
+        let (r, g, b) = (sr / cnt as f32, sg / cnt as f32, sb / cnt as f32);
+        let (rg, rb) = (r - g, r - b);
+        let bias = if rg > 2.0 && rb > 2.0 {
+            "RED"
+        } else if rg < -2.0 && rb < -2.0 {
+            "BLUE"
+        } else if rg > 2.0 && rb < -2.0 {
+            "GREEN"
+        } else if rg < -2.0 && rb > 2.0 {
+            "MAGENTA"
+        } else {
+            "neutral"
+        };
+        println!(
+            "  {:12} {:6.1} {:6.1} {:6.1} | {:+5.1} {:+5.1} {:>8}",
+            name, r, g, b, rg, rb, bias
+        );
+    }
+
+    // ── Saturation ──
+    println!("\n═══ Saturation ═══");
+    let sat_mean: f32 = sat.iter().sum::<f32>() / n as f32;
+    let mut sorted_sat = sat.clone();
+    sorted_sat.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    println!(
+        "  mean={:.1} p50={:.0} p90={:.0} p99={:.0}",
+        sat_mean,
+        sorted_sat[n / 2],
+        sorted_sat[n * 90 / 100],
+        sorted_sat[n * 99 / 100]
+    );
+
+    // ── Grain ──
+    println!("\n═══ Grain (high-pass σ, 7px kernel) ═══");
+
+    // Simple box-filter high-pass per row for grain estimation
+    let grain_std = |mask: &[bool]| -> (f32, f32, f32) {
+        // Compute noise as pixel - local_mean using a simple sliding window
+        let mut sum_r2 = 0.0f64;
+        let mut sum_g2 = 0.0f64;
+        let mut sum_b2 = 0.0f64;
+        let mut cnt = 0u64;
+        let radius = 3i32;
+
+        for y in 0..h {
+            for x in 0..w {
+                let idx = y * w + x;
+                if !mask[idx] {
+                    continue;
+                }
+                let mut lr = 0.0f32;
+                let mut lg = 0.0f32;
+                let mut lb = 0.0f32;
+                let mut lc = 0u32;
+                for dy in -radius..=radius {
+                    for dx in -radius..=radius {
+                        let nx = x as i32 + dx;
+                        let ny = y as i32 + dy;
+                        if nx >= 0 && nx < w as i32 && ny >= 0 && ny < h as i32 {
+                            let ni = ny as usize * w + nx as usize;
+                            lr += pixels[ni][0];
+                            lg += pixels[ni][1];
+                            lb += pixels[ni][2];
+                            lc += 1;
+                        }
+                    }
+                }
+                let nr = pixels[idx][0] - lr / lc as f32;
+                let ng = pixels[idx][1] - lg / lc as f32;
+                let nb = pixels[idx][2] - lb / lc as f32;
+                sum_r2 += (nr * nr) as f64;
+                sum_g2 += (ng * ng) as f64;
+                sum_b2 += (nb * nb) as f64;
+                cnt += 1;
+            }
+        }
+        if cnt == 0 {
+            return (0.0, 0.0, 0.0);
+        }
+        (
+            (sum_r2 / cnt as f64).sqrt() as f32,
+            (sum_g2 / cnt as f64).sqrt() as f32,
+            (sum_b2 / cnt as f64).sqrt() as f32,
+        )
+    };
+
+    println!(
+        "  {:12} {:>8} {:>6} {:>6} {:>6}",
+        "Zone", "Grain σ", "R σ", "G σ", "B σ"
+    );
+    println!("  {}", "-".repeat(45));
+
+    for &(name, lo, hi) in zones {
+        let mask: Vec<bool> = (0..n).map(|i| luma[i] >= lo && luma[i] < hi).collect();
+        let count = mask.iter().filter(|&&m| m).count();
+        if count < 500 {
+            continue;
+        }
+        let (sr, sg, sb) = grain_std(&mask);
+        let avg = (sr + sg + sb) / 3.0;
+        println!("  {:12} {:8.2} {:6.2} {:6.2} {:6.2}", name, avg, sr, sg, sb);
+    }
+
+    // ── Channel correlation ──
+    println!("\n═══ Channel Correlation (midtones) ═══");
+    let mid_pixels: Vec<[f32; 3]> = (0..n)
+        .filter(|&i| luma[i] >= 80.0 && luma[i] < 180.0)
+        .take(10000)
+        .map(|i| pixels[i])
+        .collect();
+
+    if mid_pixels.len() > 100 {
+        let corr = |a: &[f32], b: &[f32]| -> f32 {
+            let n = a.len() as f32;
+            let ma: f32 = a.iter().sum::<f32>() / n;
+            let mb: f32 = b.iter().sum::<f32>() / n;
+            let mut cov = 0.0f32;
+            let mut va = 0.0f32;
+            let mut vb = 0.0f32;
+            for i in 0..a.len() {
+                let da = a[i] - ma;
+                let db = b[i] - mb;
+                cov += da * db;
+                va += da * da;
+                vb += db * db;
+            }
+            cov / (va.sqrt() * vb.sqrt()).max(1e-10)
+        };
+
+        let mr: Vec<f32> = mid_pixels.iter().map(|p| p[0]).collect();
+        let mg: Vec<f32> = mid_pixels.iter().map(|p| p[1]).collect();
+        let mb: Vec<f32> = mid_pixels.iter().map(|p| p[2]).collect();
+        let rg = corr(&mr, &mg);
+        let rb = corr(&mr, &mb);
+        let gb = corr(&mg, &mb);
+        println!(
+            "  R-G={:.3}  R-B={:.3}  G-B={:.3}  avg={:.3}",
+            rg,
+            rb,
+            gb,
+            (rg + rb + gb) / 3.0
+        );
+    }
+
+    Ok(())
 }
