@@ -316,176 +316,87 @@ impl PipelineStage for GrainStage {
         let film = context.film;
         let width = image.width();
         let height = image.height();
+        let gm = &film.grain_model;
 
-        // Scale grain parameters based on resolution
-        // Reference: 2048px width (approx 2K scan)
-        const REFERENCE_WIDTH: f32 = 2048.0;
-        let scale_factor = width as f32 / REFERENCE_WIDTH;
+        // Physical grain size in pixels (blur_radius in mm-equivalent units)
+        let pixels_per_mm = width as f32 / 36.0;
+        let grain_sigma = gm.blur_radius * 0.05 * pixels_per_mm; // 0.5 → 25µm → ~1-2px
+        let grain_sigma = grain_sigma.max(0.8); // minimum 0.8px for visible structure
 
-        // Calculate System PSF sigma (Optical Resolution Limit)
-        // System Resolution (lp/mm) -> Sigma (pixels)
-        // 1 cycle = 2 pixels (Nyquist), but Gaussian sigma ~ 0.5 / freq
-        let pixels_per_mm = width as f32 / 36.0f32; // Assuming 35mm width
-
-        // Model the full optical chain: Film + Lens + Scanner
-        // If we only use film.resolution, we assume perfect lens/scanner, which yields too sharp grain.
-        // Assume a "Standard System" limit of ~40 lp/mm (Typical flatbed scanner or kit lens)
-        // This avoids the "Digital Noise" look (too sharp) and the "Blurry Mess" look (too soft)
-        let system_limit_lp_mm = 40.0f32;
-        let effective_lp_mm = (1.0f32 / film.resolution_lp_mm.powi(2)
-            + 1.0f32 / system_limit_lp_mm.powi(2))
-        .sqrt()
-        .recip();
-
-        let system_sigma = (0.5f32 / effective_lp_mm) * pixels_per_mm;
-
-        // Effective Blur = Intrinsic Grain Blur (scaled) + System Optical Blur
-        // Convolving two Gaussians: sigma_total = sqrt(sigma1^2 + sigma2^2)
-        let intrinsic_blur = film.grain_model.blur_radius * scale_factor;
-        let effective_blur = (intrinsic_blur.powi(2) + system_sigma.powi(2)).sqrt();
-
-        // Highlight coarseness scales the "coarse" grain layer
-        // Coarse layer is also subject to system blur
-        // Coarse clumps are physically ~2.5x the size of individual crystals
-        let intrinsic_coarse_blur = intrinsic_blur * 5.0f32;
-        let coarse_blur = (intrinsic_coarse_blur.powi(2) + system_sigma.powi(2)).sqrt();
-
-        // Scale noise amplitude to maintain perceived granularity density
-        // Var = alpha * D^1.5 + sigma^2
-        // We want std_dev to scale linearly with resolution scale (to counter averaging)
-        // So Variance scales with square of resolution scale
-        let mut fine_model = film.grain_model;
-        let mut coarse_model = film.grain_model;
-
-        // Selwyn's Law Compensation / Contrast Reduction
-        // Standard dampening to account for averaging
-        // Dampening factor adjusted to 0.25 * sigma for a balanced look
-        let dampening = 1.0f32 / (1.0f32 + 0.35f32 * system_sigma);
-
-        // Visual compensation factor: grain is physically correct but visually too weak
-        // Real film scans show grain more prominently due to:
-        // 1. Scanner optics magnify grain structure
-        // 2. Print/display gamma amplifies mid-tone grain
-        // 3. Human perception is more sensitive to grain than density variance
-        const VISUAL_GRAIN_BOOST: f32 = 25.0; // Empirical factor for visible grain
-
-        // Fine Grain (Shadows/Mids): Heavily dampened by system blur
-        fine_model.alpha *= scale_factor * scale_factor * dampening * VISUAL_GRAIN_BOOST;
-        fine_model.sigma_read *= scale_factor * dampening.sqrt();
-        fine_model.shadow_noise *= scale_factor * scale_factor * dampening;
-
-        // Coarse Grain (Highlights): Less dampened to retain structure
-        // Large clumps survive the blur better, so we use a gentler dampening
-        // or just scale with resolution without the heavy Selwyn penalty
-        let coarse_dampening = 1.0f32 / (1.0f32 + 0.1f32 * system_sigma);
-        coarse_model.alpha *= scale_factor * scale_factor * coarse_dampening * VISUAL_GRAIN_BOOST;
-        coarse_model.sigma_read *= scale_factor * coarse_dampening.sqrt();
-        // Coarse layer doesn't really have shot noise (that's fine scale), so zero it out
-        coarse_model.shadow_noise = 0.0;
-
-        let mut grain_noise: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
-        let mut coarse_noise: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
-
-        // Function to generate noise pixel
-        let generate_pixel_noise = |d: [f32; 3],
-                                    model: &crate::grain::GrainModel,
-                                    rng: &mut rand::rngs::ThreadRng|
-         -> [f32; 3] {
-            if model.monochrome {
-                let noise = model.sample_noise(d[1], rng);
-                [noise, noise, noise]
-            } else {
-                let d_lum = 0.2126 * d[0] + 0.7152 * d[1] + 0.0722 * d[2];
-                let n_shared = model.sample_noise(d_lum, rng);
-                let n_r = model.sample_noise(d[0], rng);
-                let n_g = model.sample_noise(d[1], rng);
-                let n_b = model.sample_noise(d[2], rng);
-                let corr = model.color_correlation;
-                [
-                    corr * n_shared + (1.0 - corr) * n_r,
-                    corr * n_shared + (1.0 - corr) * n_g,
-                    corr * n_shared + (1.0 - corr) * n_b,
-                ]
-            }
+        // Generate 3 independent noise textures (one per emulsion layer)
+        // + 1 shared luminance texture for channel correlation
+        let gen_texture = || -> Vec<f32> {
+            let mut tex = vec![0.0f32; (width * height) as usize];
+            tex.par_chunks_mut(1).for_each(|p| {
+                let mut rng = rand::thread_rng();
+                p[0] = rand_distr::Distribution::sample(
+                    &rand_distr::Normal::new(0.0f32, 1.0f32).unwrap(),
+                    &mut rng,
+                );
+            });
+            tex
         };
 
-        // 1. Generate Fine Noise (Base + Shot Noise)
-        grain_noise
-            .par_chunks_mut(3)
-            .enumerate()
-            .for_each(|(i, pixel)| {
-                let x = (i as u32) % width;
-                let y = (i as u32) / width;
-                let densities = image.get_pixel(x, y).0;
-                let mut rng = rand::thread_rng();
-                let noise = generate_pixel_noise(densities, &fine_model, &mut rng);
-                pixel[0] = noise[0];
-                pixel[1] = noise[1];
-                pixel[2] = noise[2];
+        let mut tex_shared = gen_texture();
+        let mut tex_r = gen_texture();
+        let mut tex_g = gen_texture();
+        let mut tex_b = gen_texture();
+
+        // Blur all textures to create spatial grain structure
+        // Reuse existing Gaussian blur on temporary ImageBuffers
+        let blur_texture = |tex: &mut Vec<f32>, sigma: f32| {
+            if sigma < 0.5 {
+                return;
+            }
+            // Wrap as single-channel image (abuse Rgb with same value)
+            let mut img: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
+            img.chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+                pixel[0] = tex[i];
+                pixel[1] = tex[i];
+                pixel[2] = tex[i];
             });
-
-        // 2. Generate Coarse Noise (Clumps)
-        // Only if highlight coarseness > 0
-        if film.grain_model.highlight_coarseness > 0.0 {
-            coarse_noise
-                .par_chunks_mut(3)
-                .enumerate()
-                .for_each(|(i, pixel)| {
-                    let x = (i as u32) % width;
-                    let y = (i as u32) / width;
-                    let densities = image.get_pixel(x, y).0;
-                    let mut rng = rand::thread_rng();
-                    let noise = generate_pixel_noise(densities, &coarse_model, &mut rng);
-                    pixel[0] = noise[0];
-                    pixel[1] = noise[1];
-                    pixel[2] = noise[2];
-                });
-        }
-
-        // Blur passes
-        if effective_blur > 0.0 {
-            utils::apply_gaussian_blur(&mut grain_noise, effective_blur);
-        }
-        if film.grain_model.highlight_coarseness > 0.0 && coarse_blur > 0.0 {
-            utils::apply_gaussian_blur(&mut coarse_noise, coarse_blur);
-        }
-
-        // Mix
-        image
-            .pixels_mut()
-            .zip(grain_noise.pixels())
-            .zip(coarse_noise.pixels())
-            .for_each(|((d, n_fine), n_coarse)| {
-                // Calculate blend factor based on density
-                // High density -> More clumps
-                // We use Green channel as Luma proxy
-                let luma_d = d[1];
-
-                // Sigmoid Mixing Function for Sharp Transition
-                // "Big Family" (Clumps) only shows up at high density
-                // Center at D=1.0, Slope=4.0
-                let sigmoid = |x: f32, center: f32, slope: f32| -> f32 {
-                    1.0 / (1.0 + (-slope * (x - center)).exp())
-                };
-
-                // Clump Intensity:
-                // Base factor from presets
-                // Multiplied by Sigmoid(D)
-                // Dmax is typically ~2.5-3.0. We want clumps to start appearing around D=0.8 and max out at D=1.5+
-                let clump_mix = sigmoid(luma_d, 1.2, 5.0) * film.grain_model.highlight_coarseness;
-
-                // Shoulder Compression (D-Log E)
-                // If D is extremely high (> 2.5), contrast might drop (User's exception)
-                // But for now we stick to the main physics: High D = Visible Clumps
-
-                let final_noise_r = n_fine[0] + n_coarse[0] * clump_mix;
-                let final_noise_g = n_fine[1] + n_coarse[1] * clump_mix;
-                let final_noise_b = n_fine[2] + n_coarse[2] * clump_mix;
-
-                d[0] = (d[0] + final_noise_r).max(0.0);
-                d[1] = (d[1] + final_noise_g).max(0.0);
-                d[2] = (d[2] + final_noise_b).max(0.0);
+            utils::apply_gaussian_blur(&mut img, sigma);
+            img.chunks(3).enumerate().for_each(|(i, pixel)| {
+                tex[i] = pixel[0];
             });
+        };
+
+        blur_texture(&mut tex_shared, grain_sigma);
+        blur_texture(&mut tex_r, grain_sigma);
+        blur_texture(&mut tex_g, grain_sigma);
+        blur_texture(&mut tex_b, grain_sigma);
+
+        // Apply grain: multiplicative modulation of density
+        // D_final = D × (1 + strength × texture)
+        // strength scales with √D (Selwyn) and preset alpha
+        let corr = gm.color_correlation;
+        let alpha = gm.alpha;
+        let boost = 25.0f32; // visual compensation
+
+        let mono = gm.monochrome;
+
+        image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+            let shared = tex_shared[i];
+            let (nr, ng, nb) = if mono {
+                (shared, shared, shared)
+            } else {
+                (
+                    corr * shared + (1.0 - corr) * tex_r[i],
+                    corr * shared + (1.0 - corr) * tex_g[i],
+                    corr * shared + (1.0 - corr) * tex_b[i],
+                )
+            };
+
+            // Grain strength proportional to √D (Selwyn)
+            let str_r = (alpha * pixel[0].max(0.0).sqrt() * boost).sqrt();
+            let str_g = (alpha * pixel[1].max(0.0).sqrt() * boost).sqrt();
+            let str_b = (alpha * pixel[2].max(0.0).sqrt() * boost).sqrt();
+
+            // Multiplicative: density modulated by grain texture
+            pixel[0] = (pixel[0] * (1.0 + str_r * nr)).max(0.0);
+            pixel[1] = (pixel[1] * (1.0 + str_g * ng)).max(0.0);
+            pixel[2] = (pixel[2] * (1.0 + str_b * nb)).max(0.0);
+        });
     }
 }
 
