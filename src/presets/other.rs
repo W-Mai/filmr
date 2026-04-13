@@ -1147,10 +1147,148 @@ pub fn ORWO_UN64() -> FilmStock {
     }
 }
 
+/// Ricoh GR Street Night — high-contrast, deep blacks, warm highlights.
+/// Inspired by Ricoh GR III's "Positive Film" mode in night street photography.
+/// Characteristics: punchy S-curve, clean shadows, warm lamp glow, visible grain.
+pub fn RICOH_GR_STREET() -> FilmStock {
+    FilmStock {
+        manufacturer: "Ricoh".to_string(),
+        name: "GR Street Night".to_string(),
+        film_type: FilmType::ColorNegative,
+        iso: 800.0,
+        // High gamma for punchy contrast, low d_min for deep blacks
+        r_curve: SegmentedCurve {
+            d_min: 0.05,
+            d_max: 3.2,
+            gamma: 2.2,
+            exposure_offset: 4.0,
+            shoulder_point: 0.75,
+        },
+        g_curve: SegmentedCurve {
+            d_min: 0.04,
+            d_max: 3.3,
+            gamma: 2.2,
+            exposure_offset: 4.0,
+            shoulder_point: 0.75,
+        },
+        b_curve: SegmentedCurve {
+            d_min: 0.04,
+            d_max: 3.3,
+            gamma: 2.1, // slightly less blue contrast → warmer shadows
+            exposure_offset: 4.0,
+            shoulder_point: 0.75,
+        },
+        // Warm bias: R slightly boosted, B slightly suppressed
+        color_matrix: [
+            [1.08, -0.05, -0.03],
+            [-0.03, 1.05, -0.02],
+            [-0.05, -0.03, 1.03],
+        ],
+        spectral_params: FilmSpectralParams::new_color_negative_standard(),
+        grain_model: GrainModel {
+            alpha: 0.0008,
+            sigma_read: 0.012,
+            monochrome: false,
+            blur_radius: 0.6,
+            roughness: 0.55,
+            color_correlation: 0.85, // mostly luminance grain
+            shadow_noise: 0.002,
+            highlight_coarseness: 0.08,
+        },
+        resolution_lp_mm: 90.0,
+        reciprocity: ReciprocityFailure { beta: 0.03 },
+        halation_strength: 0.12,
+        halation_threshold: 0.88,
+        halation_sigma: 0.012,
+        halation_tint: [1.0, 0.6, 0.3], // warm orange halation
+        layer_stack: Some(FilmLayerStack {
+            // Strong inhibition for punchy color separation
+            inhibition: [
+                [0.00, -0.12, -0.06],
+                [-0.08, 0.00, -0.08],
+                [-0.06, -0.12, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 5.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 28.0, 0.14),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.9),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 5.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 30.0, 0.12),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 5.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 35.0, 0.11),
+                    scattering: 0.025,
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.55),
+                    scattering: 0.0,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 127.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                },
+            ],
+        }),
+    }
+}
+
 /// Get all other manufacturer film stocks
 pub fn get_stocks() -> Vec<FilmStock> {
     vec![
         STANDARD_DAYLIGHT(),
+        RICOH_GR_STREET(),
         CINESTILL_800T(),
         CINESTILL_50D(),
         LOMOGRAPHY_COLOR_CHROME(),
