@@ -79,6 +79,34 @@ fn add_absorption(a: &[f32; BINS], b: &[f32; BINS]) -> [f32; BINS] {
     out
 }
 
+// ---------------------------------------------------------------------------
+// Dye spectral absorption curves (normalized to peak = 1.0)
+// ---------------------------------------------------------------------------
+
+/// Yellow dye: absorbs blue light. Formed in the blue-sensitive layer.
+pub fn dye_yellow() -> [f32; BINS] {
+    // Main absorption peak ~440nm
+    gaussian_absorption(440.0, 30.0, 1.0)
+}
+
+/// Magenta dye: absorbs green light. Formed in the green-sensitive layer.
+/// Has a secondary absorption bump in the blue (~430nm).
+pub fn dye_magenta() -> [f32; BINS] {
+    add_absorption(
+        &gaussian_absorption(550.0, 40.0, 1.0),
+        &gaussian_absorption(430.0, 20.0, 0.3),
+    )
+}
+
+/// Cyan dye: absorbs red light. Formed in the red-sensitive layer.
+/// Has a secondary absorption bump in the blue (~430nm).
+pub fn dye_cyan() -> [f32; BINS] {
+    add_absorption(
+        &gaussian_absorption(650.0, 50.0, 1.0),
+        &gaussian_absorption(430.0, 25.0, 0.2),
+    )
+}
+
 const fn flat(v: f32) -> [f32; BINS] {
     [v; BINS]
 }
@@ -116,7 +144,7 @@ impl FilmLayerStack {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.02,
-                    dye_spectrum: None,
+                    dye_spectrum: Some(dye_yellow()),
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -136,7 +164,7 @@ impl FilmLayerStack {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(550.0, 35.0, 0.10),
                     scattering: 0.02,
-                    dye_spectrum: None,
+                    dye_spectrum: Some(dye_magenta()),
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -159,7 +187,7 @@ impl FilmLayerStack {
                         &gaussian_absorption(440.0, 25.0, 0.02),
                     ),
                     scattering: 0.02,
-                    dye_spectrum: None,
+                    dye_spectrum: Some(dye_cyan()),
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
