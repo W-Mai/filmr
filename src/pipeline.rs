@@ -571,6 +571,57 @@ pub fn create_output_image(
         }
     };
 
+    // Extract dye spectra from layer_stack (if available) for spectral output path
+    let dye_spectra = film.layer_stack.as_ref().and_then(|stack| {
+        use crate::film_layer::{EmulsionChannel, LayerKind};
+        let mut yellow = None;
+        let mut magenta = None;
+        let mut cyan = None;
+        for layer in &stack.layers {
+            if let LayerKind::Emulsion { channel } = layer.kind {
+                if let Some(ref dye) = layer.dye_spectrum {
+                    match channel {
+                        EmulsionChannel::Blue => yellow = Some(*dye),
+                        EmulsionChannel::Green => magenta = Some(*dye),
+                        EmulsionChannel::Red => cyan = Some(*dye),
+                    }
+                }
+            }
+        }
+        match (yellow, magenta, cyan) {
+            (Some(y), Some(m), Some(c)) => Some((y, m, c)),
+            _ => None,
+        }
+    });
+
+    // Precompute D65 × CIE XYZ for spectral output (if dye spectra available)
+    let spectral_output = dye_spectra.map(|(y_dye, m_dye, c_dye)| {
+        use crate::cie_data::{CIE_X, CIE_Y, CIE_Z, D65_SPD, XYZ_TO_SRGB};
+        use crate::spectral::{BINS, LAMBDA_STEP};
+        // Precompute D65 × CMF
+        let mut d65_x = [0.0f32; BINS];
+        let mut d65_y = [0.0f32; BINS];
+        let mut d65_z = [0.0f32; BINS];
+        for i in 0..BINS {
+            d65_x[i] = D65_SPD[i] * CIE_X[i] * LAMBDA_STEP as f32;
+            d65_y[i] = D65_SPD[i] * CIE_Y[i] * LAMBDA_STEP as f32;
+            d65_z[i] = D65_SPD[i] * CIE_Z[i] * LAMBDA_STEP as f32;
+        }
+        // White point normalization: Y of D65 should = 1.0
+        let y_sum: f32 = d65_y.iter().sum();
+        let y_norm = if y_sum > 0.0 { 1.0 / y_sum } else { 1.0 };
+        (
+            y_dye,
+            m_dye,
+            c_dye,
+            d65_x,
+            d65_y,
+            d65_z,
+            y_norm,
+            XYZ_TO_SRGB,
+        )
+    });
+
     let mut pixels: Vec<u8> = vec![0; (width * height * 3) as usize];
 
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
@@ -578,7 +629,43 @@ pub fn create_output_image(
         let y = (i as u32) / width;
         let d = image.get_pixel(x, y).0;
 
-        let (mut r_lin, mut g_lin, mut b_lin) = map_densities(d);
+        let (mut r_lin, mut g_lin, mut b_lin) = if let Some(ref sp) = spectral_output {
+            // Full-spectrum dye output path
+            let (y_dye, m_dye, c_dye, d65_x, d65_y, d65_z, y_norm, xyz_to_srgb) = sp;
+            let net = [
+                (d[0] - film.r_curve.d_min).max(0.0), // cyan density (from red layer)
+                (d[1] - film.g_curve.d_min).max(0.0), // magenta density (from green layer)
+                (d[2] - film.b_curve.d_min).max(0.0), // yellow density (from blue layer)
+            ];
+
+            // Per-wavelength: T(λ) = 10^(-Dc×cyan(λ)) × 10^(-Dm×magenta(λ)) × 10^(-Dy×yellow(λ))
+            let mut xyz = [0.0f32; 3];
+            for i in 0..crate::spectral::BINS {
+                let od = net[0] * c_dye[i] + net[1] * m_dye[i] + net[2] * y_dye[i];
+                let t = 10.0f32.powf(-od);
+                xyz[0] += t * d65_x[i];
+                xyz[1] += t * d65_y[i];
+                xyz[2] += t * d65_z[i];
+            }
+            xyz[0] *= y_norm;
+            xyz[1] *= y_norm;
+            xyz[2] *= y_norm;
+
+            // XYZ → linear sRGB
+            let r = xyz_to_srgb[0][0] * xyz[0]
+                + xyz_to_srgb[0][1] * xyz[1]
+                + xyz_to_srgb[0][2] * xyz[2];
+            let g = xyz_to_srgb[1][0] * xyz[0]
+                + xyz_to_srgb[1][1] * xyz[1]
+                + xyz_to_srgb[1][2] * xyz[2];
+            let b = xyz_to_srgb[2][0] * xyz[0]
+                + xyz_to_srgb[2][1] * xyz[1]
+                + xyz_to_srgb[2][2] * xyz[2];
+            (r, g, b)
+        } else {
+            // Legacy per-channel output path
+            map_densities(d)
+        };
 
         // Apply Saturation
         if config.saturation != 1.0 {
