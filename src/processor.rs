@@ -315,10 +315,8 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // Exposure calibration: match Fast mode's exposure level + channel balance.
-        // 1. Compute Fast mode's gray exposure (spectral_matrix × 0.18)
-        // 2. Use the AVERAGE as target (balanced channels)
-        // 3. Normalize Accurate raw to this target per-channel
+        // Exposure calibration: match Fast mode's per-channel exposure exactly.
+        // This ensures identical output when WB=Off (Simple mode).
         let gray_lin = 0.18f32;
         let spectral_matrix = film.compute_spectral_matrix();
         let fast_gray = [
@@ -326,7 +324,6 @@ impl PipelineStage for AccurateDevelopStage {
             gray_lin * (spectral_matrix[1][0] + spectral_matrix[1][1] + spectral_matrix[1][2]),
             gray_lin * (spectral_matrix[2][0] + spectral_matrix[2][1] + spectral_matrix[2][2]),
         ];
-        let fast_avg = (fast_gray[0] + fast_gray[1] + fast_gray[2]) / 3.0;
 
         let gray_spectrum = camera.uplift(gray_lin, gray_lin, gray_lin);
         let mut gray_scaled = [0.0f32; crate::spectral::BINS];
@@ -336,20 +333,19 @@ impl PipelineStage for AccurateDevelopStage {
         let gray_exp = spectral_engine::propagate(&stack, &gray_scaled);
         let acc_gray = spectral_engine::integrate_exposure(&gray_exp);
 
-        // Per-channel norm: maps Accurate raw → balanced exposure at Fast level
         let norm = [
             if acc_gray[0] > 1e-10 {
-                fast_avg / acc_gray[0]
+                fast_gray[0] / acc_gray[0]
             } else {
                 1.0
             },
             if acc_gray[1] > 1e-10 {
-                fast_avg / acc_gray[1]
+                fast_gray[1] / acc_gray[1]
             } else {
                 1.0
             },
             if acc_gray[2] > 1e-10 {
-                fast_avg / acc_gray[2]
+                fast_gray[2] / acc_gray[2]
             } else {
                 1.0
             },
