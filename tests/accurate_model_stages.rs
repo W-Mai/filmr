@@ -1002,3 +1002,117 @@ fn strict_inhibition_preserves_mean() {
         "Mean density should be approximately preserved"
     );
 }
+
+// =========================================================================
+// Stage 5: Spectral dye output path
+// =========================================================================
+
+#[test]
+fn stage5_dye_output_white_is_white() {
+    // Zero density on all layers → full transmission → white output
+    use filmr::cie_data::{CIE_X, CIE_Y, CIE_Z, D65_SPD, XYZ_TO_SRGB};
+    use filmr::film_layer::{dye_cyan, dye_magenta, dye_yellow};
+
+    let _y_dye = dye_yellow();
+    let _m_dye = dye_magenta();
+    let _c_dye = dye_cyan();
+
+    let mut xyz = [0.0f32; 3];
+    let mut y_sum = 0.0f32;
+    for i in 0..BINS {
+        let t = 1.0f32; // zero density → full transmission
+        xyz[0] += t * D65_SPD[i] * CIE_X[i] * 5.0;
+        xyz[1] += t * D65_SPD[i] * CIE_Y[i] * 5.0;
+        xyz[2] += t * D65_SPD[i] * CIE_Z[i] * 5.0;
+        y_sum += D65_SPD[i] * CIE_Y[i] * 5.0;
+    }
+    let yn = 1.0 / y_sum;
+    xyz[0] *= yn;
+    xyz[1] *= yn;
+    xyz[2] *= yn;
+
+    let r = XYZ_TO_SRGB[0][0] * xyz[0] + XYZ_TO_SRGB[0][1] * xyz[1] + XYZ_TO_SRGB[0][2] * xyz[2];
+    let g = XYZ_TO_SRGB[1][0] * xyz[0] + XYZ_TO_SRGB[1][1] * xyz[1] + XYZ_TO_SRGB[1][2] * xyz[2];
+    let b = XYZ_TO_SRGB[2][0] * xyz[0] + XYZ_TO_SRGB[2][1] * xyz[1] + XYZ_TO_SRGB[2][2] * xyz[2];
+
+    println!(
+        "Zero density → XYZ=({:.3},{:.3},{:.3}) RGB=({:.3},{:.3},{:.3})",
+        xyz[0], xyz[1], xyz[2], r, g, b
+    );
+    assert!((r - 1.0).abs() < 0.05, "R should be ~1.0, got {}", r);
+    assert!((g - 1.0).abs() < 0.05, "G should be ~1.0, got {}", g);
+    assert!((b - 1.0).abs() < 0.05, "B should be ~1.0, got {}", b);
+}
+
+#[test]
+fn stage5_dye_output_high_density_is_dark() {
+    use filmr::cie_data::{CIE_X, CIE_Y, CIE_Z, D65_SPD};
+    use filmr::film_layer::{dye_cyan, dye_magenta, dye_yellow};
+
+    let y_dye = dye_yellow();
+    let m_dye = dye_magenta();
+    let c_dye = dye_cyan();
+
+    // High density on all channels → very low transmission → dark
+    let dc = 2.5f32;
+    let dm = 2.5f32;
+    let dy = 2.5f32;
+
+    let mut xyz = [0.0f32; 3];
+    let mut y_sum = 0.0f32;
+    for i in 0..BINS {
+        let od = dc * c_dye[i] + dm * m_dye[i] + dy * y_dye[i];
+        let t = 10.0f32.powf(-od);
+        xyz[0] += t * D65_SPD[i] * CIE_X[i] * 5.0;
+        xyz[1] += t * D65_SPD[i] * CIE_Y[i] * 5.0;
+        xyz[2] += t * D65_SPD[i] * CIE_Z[i] * 5.0;
+        y_sum += D65_SPD[i] * CIE_Y[i] * 5.0;
+    }
+    let yn = 1.0 / y_sum;
+    xyz[1] *= yn;
+
+    println!("High density → Y={:.4}", xyz[1]);
+    assert!(
+        xyz[1] < 0.05,
+        "High density should be very dark, Y={}",
+        xyz[1]
+    );
+}
+
+#[test]
+fn stage5_dye_cyan_absorbs_red() {
+    use filmr::cie_data::{CIE_X, CIE_Y, CIE_Z, D65_SPD, XYZ_TO_SRGB};
+    use filmr::film_layer::dye_cyan;
+
+    let c_dye = dye_cyan();
+
+    // Only cyan dye at density 1.0 → absorbs red, passes blue+green
+    let dc = 1.0f32;
+    let mut xyz = [0.0f32; 3];
+    let mut y_sum = 0.0f32;
+    for i in 0..BINS {
+        let t = 10.0f32.powf(-dc * c_dye[i]);
+        xyz[0] += t * D65_SPD[i] * CIE_X[i] * 5.0;
+        xyz[1] += t * D65_SPD[i] * CIE_Y[i] * 5.0;
+        xyz[2] += t * D65_SPD[i] * CIE_Z[i] * 5.0;
+        y_sum += D65_SPD[i] * CIE_Y[i] * 5.0;
+    }
+    let yn = 1.0 / y_sum;
+    xyz[0] *= yn;
+    xyz[1] *= yn;
+    xyz[2] *= yn;
+
+    let r = XYZ_TO_SRGB[0][0] * xyz[0] + XYZ_TO_SRGB[0][1] * xyz[1] + XYZ_TO_SRGB[0][2] * xyz[2];
+    let g = XYZ_TO_SRGB[1][0] * xyz[0] + XYZ_TO_SRGB[1][1] * xyz[1] + XYZ_TO_SRGB[1][2] * xyz[2];
+    let b = XYZ_TO_SRGB[2][0] * xyz[0] + XYZ_TO_SRGB[2][1] * xyz[1] + XYZ_TO_SRGB[2][2] * xyz[2];
+
+    println!("Cyan dye D=1.0 → RGB=({:.3},{:.3},{:.3})", r, g, b);
+    // Cyan = blue + green, so R should be lowest
+    assert!(
+        r < g && r < b,
+        "Cyan dye should suppress red: R={:.3} G={:.3} B={:.3}",
+        r,
+        g,
+        b
+    );
+}
