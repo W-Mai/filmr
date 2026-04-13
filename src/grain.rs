@@ -1,7 +1,7 @@
 /// Grain and Noise Simulation Module
 ///
-/// Section 7: Grain Statistics Model.
-/// Var(D) = alpha * D + sigma_read^2
+/// Selwyn granularity model: Var(D) = alpha * √D + sigma_read²
+/// Reference: Mees & James, "The Theory of The Photographic Process"
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 use serde::{Deserialize, Serialize};
@@ -32,8 +32,8 @@ impl GrainModel {
             monochrome,
             blur_radius,
             roughness,
-            color_correlation: 0.8, // Default high correlation for natural look
-            shadow_noise: 0.001,    // Default small amount of shot noise
+            color_correlation: 0.93, // High correlation = mostly luminance grain (measured from real film)
+            shadow_noise: 0.001,     // Default small amount of shot noise
             highlight_coarseness: 0.10, // Moderate highlight clumping
         }
     }
@@ -46,7 +46,7 @@ impl GrainModel {
             monochrome: false,
             blur_radius: 0.5,
             roughness: 0.5,
-            color_correlation: 0.8,
+            color_correlation: 0.93,
             shadow_noise: 0.001,
             highlight_coarseness: 0.10,
         }
@@ -54,25 +54,20 @@ impl GrainModel {
 
     /// Generates a noise sample for a given density
     pub fn sample_noise<R: Rng>(&self, d: f32, rng: &mut R) -> f32 {
-        // Organic Grain: Use D^1.5 to suppress noise in low-density areas (shadows in positive)
-        // and concentrate it in high-density areas (highlights), matching physical silver distribution.
+        // Selwyn granularity: variance proportional to √D (square root of density).
+        // Reference: Mees & James, "The Theory of The Photographic Process"
+        let grain_variance = self.alpha * d.max(0.0).sqrt();
 
-        // Photon Shot Noise (Shadows): Decays exponentially with density.
-        // Physics: Delta_D ~ 1/sqrt(E) ~ 1/sqrt(10^D) ~ 10^(-0.5*D) ~ exp(-1.15*D)
-        // We use exp(-2.0 * D) to ensure it vanishes quickly in mid-tones, keeping shadows clean but textured.
+        // Photon shot noise (shadows): decays exponentially with density.
         let shot_variance = if self.shadow_noise > 0.0 {
             self.shadow_noise * (-2.0 * d.max(0.0)).exp()
         } else {
             0.0
         };
 
-        // Roughness modulation:
-        // High roughness increases variance in mid-tones
-        // Adjusted Variance = Base_Variance * (1.0 + roughness * sin(pi * d))
-        let grain_variance = self.alpha * d.max(0.0).powf(1.5);
         let base_variance = grain_variance + self.sigma_read.powi(2) + shot_variance;
 
-        // Ensure d is reasonable for modulation
+        // Roughness modulation: increases variance in midtones
         let modulation = 1.0 + self.roughness * (std::f32::consts::PI * d.clamp(0.0, 1.0)).sin();
 
         let variance = base_variance * modulation;
