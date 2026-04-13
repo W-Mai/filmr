@@ -67,6 +67,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -77,6 +78,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.020,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -85,6 +87,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -95,6 +98,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 32.0, 0.10),
                     scattering: 0.020,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -103,6 +107,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -113,6 +118,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.09),
                     scattering: 0.020,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -121,6 +127,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -129,6 +136,7 @@ pub fn STANDARD_DAYLIGHT() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -205,6 +213,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -215,6 +224,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -223,6 +233,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -233,6 +244,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 32.0, 0.10),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -241,6 +253,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -251,6 +264,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.09),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -259,6 +273,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -267,6 +282,7 @@ pub fn CINESTILL_800T() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -343,6 +359,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -353,6 +370,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.15),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -361,6 +379,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -371,6 +390,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 32.0, 0.13),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -379,6 +399,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -389,6 +410,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.12),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -397,6 +419,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -405,6 +428,7 @@ pub fn CINESTILL_50D() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -481,6 +505,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -491,6 +516,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -499,6 +525,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -509,6 +536,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 32.0, 0.10),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -517,6 +545,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -527,6 +556,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.09),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -535,6 +565,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -543,6 +574,7 @@ pub fn LOMOGRAPHY_COLOR_CHROME() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -615,6 +647,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -625,6 +658,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 35.0, 0.12),
                     scattering: 0.028,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -633,6 +667,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -643,6 +678,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 38.0, 0.10),
                     scattering: 0.028,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -651,6 +687,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -661,6 +698,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 45.0, 0.09),
                     scattering: 0.028,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -669,6 +707,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -677,6 +716,7 @@ pub fn LOMOGRAPHY_LOMOCHROME_PURPLE() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -753,6 +793,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -763,6 +804,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -771,6 +813,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -781,6 +824,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 32.0, 0.10),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -789,6 +833,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -799,6 +844,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.09),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -807,6 +853,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -815,6 +862,7 @@ pub fn FERRANIA_SOLARIS_400() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -891,6 +939,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -901,6 +950,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -909,6 +959,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -919,6 +970,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 32.0, 0.10),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -927,6 +979,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -937,6 +990,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.09),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -945,6 +999,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -953,6 +1008,7 @@ pub fn FERRANIA_SOLARIS_100() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -1021,6 +1077,7 @@ pub fn ORWO_UN54() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -1031,6 +1088,7 @@ pub fn ORWO_UN54() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 85.0, 0.10),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -1039,6 +1097,7 @@ pub fn ORWO_UN54() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -1047,6 +1106,7 @@ pub fn ORWO_UN54() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -1115,6 +1175,7 @@ pub fn ORWO_UN64() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -1125,6 +1186,7 @@ pub fn ORWO_UN64() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 82.0, 0.11),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -1133,6 +1195,7 @@ pub fn ORWO_UN64() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -1141,6 +1204,7 @@ pub fn ORWO_UN64() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -1216,6 +1280,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -1226,6 +1291,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 28.0, 0.14),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -1234,6 +1300,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.9),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -1244,6 +1311,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 30.0, 0.12),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -1252,6 +1320,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -1262,6 +1331,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 35.0, 0.11),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -1270,6 +1340,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.55),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -1278,6 +1349,7 @@ pub fn RICOH_GR_STREET() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),

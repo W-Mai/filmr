@@ -69,6 +69,7 @@ pub fn HP5_PLUS_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -79,6 +80,7 @@ pub fn HP5_PLUS_400() -> FilmStock {
                     refractive_index: 1.54,
                     absorption: gaussian_absorption(540.0, 95.0, 0.08),
                     scattering: 0.040,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -87,6 +89,7 @@ pub fn HP5_PLUS_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -95,6 +98,7 @@ pub fn HP5_PLUS_400() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -185,6 +189,7 @@ pub fn FP4_PLUS_125() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -195,6 +200,7 @@ pub fn FP4_PLUS_125() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 85.0, 0.10),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -203,6 +209,7 @@ pub fn FP4_PLUS_125() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -211,6 +218,7 @@ pub fn FP4_PLUS_125() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -279,6 +287,7 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -289,6 +298,7 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 90.0, 0.09),
                     scattering: 0.020,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -297,6 +307,7 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -305,6 +316,7 @@ pub fn DELTA_400_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -373,6 +385,7 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -383,6 +396,7 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 80.0, 0.11),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -391,6 +405,7 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -399,6 +414,7 @@ pub fn DELTA_100_PROFESSIONAL() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -467,6 +483,7 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -477,6 +494,7 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(540.0, 75.0, 0.13),
                     scattering: 0.012,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -485,6 +503,7 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -493,6 +512,7 @@ pub fn PAN_F_PLUS_50() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -561,6 +581,7 @@ pub fn XP2_SUPER_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -571,6 +592,7 @@ pub fn XP2_SUPER_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 90.0, 0.09),
                     scattering: 0.030,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -579,6 +601,7 @@ pub fn XP2_SUPER_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -587,6 +610,7 @@ pub fn XP2_SUPER_400() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -655,6 +679,7 @@ pub fn SFX_200() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -665,6 +690,7 @@ pub fn SFX_200() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 100.0, 0.09),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -673,6 +699,7 @@ pub fn SFX_200() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -681,6 +708,7 @@ pub fn SFX_200() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -749,6 +777,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -759,6 +788,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 60.0, 0.12),
                     scattering: 0.020,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -767,6 +797,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -775,6 +806,7 @@ pub fn ORTHO_PLUS_80() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),

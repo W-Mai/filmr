@@ -158,6 +158,7 @@ fn stage3_single_absorbing_layer() {
             refractive_index: 1.5,
             absorption,
             scattering: 0.0,
+            dye_spectrum: None,
         }],
     };
 
@@ -558,6 +559,7 @@ fn strict_beer_lambert_exact() {
             refractive_index: 1.0, // no Fresnel
             absorption,
             scattering: 0.0,
+            dye_spectrum: None,
         }],
     };
 
@@ -596,6 +598,7 @@ fn strict_fresnel_exact() {
             refractive_index: 1.5,
             absorption: [0.0; BINS],
             scattering: 0.0,
+            dye_spectrum: None,
         }],
     };
 
@@ -632,6 +635,7 @@ fn strict_scattering_reduces_transmission() {
             refractive_index: 1.0,
             absorption: [0.0; BINS],
             scattering: scatter,
+            dye_spectrum: None,
         }],
     };
 
@@ -649,6 +653,7 @@ fn strict_scattering_reduces_transmission() {
             refractive_index: 1.0,
             absorption: abs_only,
             scattering: 0.0,
+            dye_spectrum: None,
         }],
     };
 
@@ -703,6 +708,7 @@ fn strict_energy_budget_single_layer() {
             refractive_index: n,
             absorption,
             scattering: 0.0,
+            dye_spectrum: None,
         }],
     };
 
@@ -780,6 +786,7 @@ fn strict_backward_pass_fresnel_direction() {
                 refractive_index: 1.5,
                 absorption: [0.0; BINS], // transparent
                 scattering: 0.0,
+                dye_spectrum: None,
             },
             FilmLayer {
                 name: "Layer2".into(),
@@ -790,6 +797,7 @@ fn strict_backward_pass_fresnel_direction() {
                 refractive_index: 1.7, // different n
                 absorption: [0.0; BINS],
                 scattering: 0.0,
+                dye_spectrum: None,
             },
         ],
     };
@@ -835,6 +843,7 @@ fn strict_multi_layer_attenuation_order() {
                 refractive_index: 1.0,
                 absorption: blue_abs,
                 scattering: 0.0,
+                dye_spectrum: None,
             },
             FilmLayer {
                 name: "Yellow".into(),
@@ -843,6 +852,7 @@ fn strict_multi_layer_attenuation_order() {
                 refractive_index: 1.0,
                 absorption: yellow_abs,
                 scattering: 0.0,
+                dye_spectrum: None,
             },
             FilmLayer {
                 name: "Red".into(),
@@ -853,6 +863,7 @@ fn strict_multi_layer_attenuation_order() {
                 refractive_index: 1.0,
                 absorption: red_abs,
                 scattering: 0.0,
+                dye_spectrum: None,
             },
         ],
     };

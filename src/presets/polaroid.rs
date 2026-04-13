@@ -77,6 +77,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -87,6 +88,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(450.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -97,6 +99,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(545.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -107,6 +110,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(635.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -115,6 +119,7 @@ pub fn POLAROID_600_COLOR() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -191,6 +196,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -201,6 +207,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(450.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -211,6 +218,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(545.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -221,6 +229,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(635.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -229,6 +238,7 @@ pub fn POLAROID_SX70_COLOR() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -305,6 +315,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -315,6 +326,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(450.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -325,6 +337,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(545.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -335,6 +348,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(635.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -343,6 +357,7 @@ pub fn POLAROID_I_TYPE_COLOR() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -411,6 +426,7 @@ pub fn POLAROID_BW_667() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -421,6 +437,7 @@ pub fn POLAROID_BW_667() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(540.0, 90.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -429,6 +446,7 @@ pub fn POLAROID_BW_667() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -505,6 +523,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -515,6 +534,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(450.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -525,6 +545,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(545.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -535,6 +556,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(635.0, 35.0, 0.08),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -543,6 +565,7 @@ pub fn POLAROID_SPECTRA_COLOR() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -619,6 +642,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -629,6 +653,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(450.0, 35.0, 0.08),
                     scattering: 0.030,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -639,6 +664,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(545.0, 35.0, 0.08),
                     scattering: 0.030,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -649,6 +675,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(635.0, 35.0, 0.08),
                     scattering: 0.030,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -657,6 +684,7 @@ pub fn POLAROID_100_COLOR() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -725,6 +753,7 @@ pub fn POLAROID_55_BW() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.005,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -735,6 +764,7 @@ pub fn POLAROID_55_BW() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(540.0, 80.0, 0.10),
                     scattering: 0.025,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -743,6 +773,7 @@ pub fn POLAROID_55_BW() -> FilmStock {
                     refractive_index: 1.60,
                     absorption: [0.003; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),

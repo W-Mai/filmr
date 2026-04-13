@@ -77,6 +77,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -87,6 +88,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -95,6 +97,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -105,6 +108,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 33.0, 0.10),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -113,6 +117,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -123,6 +128,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 38.0, 0.09),
                     scattering: 0.022,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -131,6 +137,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -139,6 +146,7 @@ pub fn SUPERIA_400() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -215,6 +223,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -225,6 +234,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 28.0, 0.13),
                     scattering: 0.018,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -233,6 +243,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -243,6 +254,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 30.0, 0.11),
                     scattering: 0.018,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -251,6 +263,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -261,6 +274,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 36.0, 0.10),
                     scattering: 0.018,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -269,6 +283,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -277,6 +292,7 @@ pub fn SUPERIA_200() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -353,6 +369,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -363,6 +380,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 26.0, 0.14),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -371,6 +389,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.85),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -381,6 +400,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 28.0, 0.12),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -389,6 +409,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -399,6 +420,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(640.0, 34.0, 0.11),
                     scattering: 0.015,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -407,6 +429,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -415,6 +438,7 @@ pub fn SUPERIA_100() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -483,6 +507,7 @@ pub fn NEOPAN_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -493,6 +518,7 @@ pub fn NEOPAN_400() -> FilmStock {
                     refractive_index: 1.54,
                     absorption: gaussian_absorption(540.0, 90.0, 0.09),
                     scattering: 0.035,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -501,6 +527,7 @@ pub fn NEOPAN_400() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -509,6 +536,7 @@ pub fn NEOPAN_400() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -577,6 +605,7 @@ pub fn NEOPAN_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -587,6 +616,7 @@ pub fn NEOPAN_100() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 80.0, 0.11),
                     scattering: 0.020,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -595,6 +625,7 @@ pub fn NEOPAN_100() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 110.0, 0.45),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -603,6 +634,7 @@ pub fn NEOPAN_100() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.001; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -679,6 +711,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -689,6 +722,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 24.0, 0.15),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -697,6 +731,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 30.0, 1.0),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -707,6 +742,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 27.0, 0.13),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -715,6 +751,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -725,6 +762,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(635.0, 30.0, 0.12),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -733,6 +771,7 @@ pub fn PROVIA_100F() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.002; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -810,6 +849,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -820,6 +860,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 22.0, 0.16),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -828,6 +869,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 30.0, 1.0),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -838,6 +880,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 25.0, 0.14),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -846,6 +889,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -856,6 +900,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(635.0, 30.0, 0.13),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 // Slide film: no traditional antihalation, just base
                 FilmLayer {
@@ -865,6 +910,7 @@ pub fn VELVIA_50() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.002; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),
@@ -968,6 +1014,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -978,6 +1025,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 26.0, 0.14),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -986,6 +1034,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 30.0, 1.0),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -996,6 +1045,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(545.0, 28.0, 0.12),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -1004,6 +1054,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.50,
                     absorption: [0.0; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -1014,6 +1065,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(635.0, 32.0, 0.11),
                     scattering: 0.010,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -1022,6 +1074,7 @@ pub fn ASTIA_100F() -> FilmStock {
                     refractive_index: 1.65,
                     absorption: [0.002; BINS],
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }),

@@ -21,6 +21,12 @@ pub struct FilmLayer {
     pub absorption: [f32; BINS],
     /// Scattering coefficient per µm (Mie/Rayleigh in emulsion).
     pub scattering: f32,
+    /// Dye spectral absorption curve (normalized, 81 bins).
+    /// For emulsion layers: the dye formed during development (Yellow/Magenta/Cyan).
+    /// Density D at wavelength λ: D(λ) = density_scalar × dye_spectrum[λ].
+    /// None = use simple per-channel density (legacy behavior).
+    #[serde(skip)]
+    pub dye_spectrum: Option<[f32; BINS]>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -99,6 +105,7 @@ impl FilmLayerStack {
                     refractive_index: 1.50,
                     absorption: flat(0.0),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Blue Emulsion".into(),
@@ -109,6 +116,7 @@ impl FilmLayerStack {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(450.0, 30.0, 0.12),
                     scattering: 0.02,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Yellow Filter".into(),
@@ -117,6 +125,7 @@ impl FilmLayerStack {
                     refractive_index: 1.52,
                     absorption: gaussian_absorption(440.0, 35.0, 0.8),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Green Emulsion".into(),
@@ -127,6 +136,7 @@ impl FilmLayerStack {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(550.0, 35.0, 0.10),
                     scattering: 0.02,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Interlayer".into(),
@@ -135,6 +145,7 @@ impl FilmLayerStack {
                     refractive_index: 1.50,
                     absorption: flat(0.0),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Red Emulsion".into(),
@@ -148,6 +159,7 @@ impl FilmLayerStack {
                         &gaussian_absorption(440.0, 25.0, 0.02),
                     ),
                     scattering: 0.02,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -156,6 +168,7 @@ impl FilmLayerStack {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(600.0, 120.0, 0.5),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -164,6 +177,7 @@ impl FilmLayerStack {
                     refractive_index: 1.65,
                     absorption: flat(0.001),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }
@@ -181,6 +195,7 @@ impl FilmLayerStack {
                     refractive_index: 1.50,
                     absorption: flat(0.0),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Panchromatic Emulsion".into(),
@@ -191,6 +206,7 @@ impl FilmLayerStack {
                     refractive_index: 1.53,
                     absorption: gaussian_absorption(540.0, 100.0, 0.08),
                     scattering: 0.03,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Anti-Halation".into(),
@@ -199,6 +215,7 @@ impl FilmLayerStack {
                     refractive_index: 1.50,
                     absorption: gaussian_absorption(580.0, 120.0, 0.4),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
                 FilmLayer {
                     name: "Base".into(),
@@ -207,6 +224,7 @@ impl FilmLayerStack {
                     refractive_index: 1.65,
                     absorption: flat(0.001),
                     scattering: 0.0,
+                    dye_spectrum: None,
                 },
             ],
         }
