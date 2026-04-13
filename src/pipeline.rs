@@ -652,15 +652,23 @@ pub fn create_output_image(
             xyz[2] *= y_norm;
 
             // XYZ → linear sRGB
-            let r = xyz_to_srgb[0][0] * xyz[0]
+            let mut r = xyz_to_srgb[0][0] * xyz[0]
                 + xyz_to_srgb[0][1] * xyz[1]
                 + xyz_to_srgb[0][2] * xyz[2];
-            let g = xyz_to_srgb[1][0] * xyz[0]
+            let mut g = xyz_to_srgb[1][0] * xyz[0]
                 + xyz_to_srgb[1][1] * xyz[1]
                 + xyz_to_srgb[1][2] * xyz[2];
-            let b = xyz_to_srgb[2][0] * xyz[0]
+            let mut b = xyz_to_srgb[2][0] * xyz[0]
                 + xyz_to_srgb[2][1] * xyz[1]
                 + xyz_to_srgb[2][2] * xyz[2];
+
+            // Negative film: invert (high density = bright in print)
+            if film.film_type == FilmType::ColorNegative || film.film_type == FilmType::BwNegative {
+                r = 1.0 - r;
+                g = 1.0 - g;
+                b = 1.0 - b;
+            }
+
             (r, g, b)
         } else {
             // Legacy per-channel output path

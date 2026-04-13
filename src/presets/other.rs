@@ -1356,11 +1356,158 @@ pub fn RICOH_GR_STREET() -> FilmStock {
     }
 }
 
+/// Lucky Color 200 (乐凯) — Chinese color negative with warm red rendering.
+/// Known for: distinct red tones, coarse grain, muted saturation, blue shadows.
+/// Reference: zontiga.com, analog.cafe, thecwo.com reviews.
+pub fn LUCKY_COLOR_200() -> FilmStock {
+    FilmStock {
+        manufacturer: "Lucky".to_string(),
+        name: "Color 200".to_string(),
+        film_type: FilmType::ColorNegative,
+        iso: 200.0,
+        // R channel slightly higher gamma → warm midtones/highlights
+        r_curve: SegmentedCurve {
+            d_min: 0.14,
+            d_max: 2.6,
+            gamma: 1.75,
+            exposure_offset: 3.5,
+            shoulder_point: 0.8,
+        },
+        g_curve: SegmentedCurve {
+            d_min: 0.12,
+            d_max: 2.7,
+            gamma: 1.7,
+            exposure_offset: 3.5,
+            shoulder_point: 0.8,
+        },
+        // B channel lower gamma → blue shadows fall off faster
+        b_curve: SegmentedCurve {
+            d_min: 0.13,
+            d_max: 2.5,
+            gamma: 1.6,
+            exposure_offset: 3.5,
+            shoulder_point: 0.8,
+        },
+        // Warm bias: R boosted, B suppressed
+        color_matrix: [
+            [1.06, -0.03, -0.03],
+            [-0.02, 1.03, -0.01],
+            [-0.04, -0.02, 1.01],
+        ],
+        spectral_params: FilmSpectralParams::new_color_negative_standard(),
+        grain_model: GrainModel {
+            alpha: 0.0006, // coarse grain
+            sigma_read: 0.012,
+            monochrome: false,
+            blur_radius: 0.7, // larger grain clumps
+            roughness: 0.5,
+            color_correlation: 0.93,
+            shadow_noise: 0.001,
+            highlight_coarseness: 0.08,
+        },
+        resolution_lp_mm: 80.0, // lower resolution than Japanese films
+        reciprocity: ReciprocityFailure { beta: 0.06 },
+        halation_strength: 0.10,
+        halation_threshold: 0.85,
+        halation_sigma: 0.015,
+        halation_tint: [1.0, 0.5, 0.3],
+        layer_stack: Some(FilmLayerStack {
+            // Moderate inhibition
+            inhibition: [
+                [0.00, -0.07, -0.04],
+                [-0.05, 0.00, -0.05],
+                [-0.04, -0.07, 0.00],
+            ],
+            layers: vec![
+                FilmLayer {
+                    name: "Overcoat".into(),
+                    kind: LayerKind::Overcoat,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                    dye_spectrum: None,
+                },
+                FilmLayer {
+                    name: "Blue Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Blue,
+                    },
+                    thickness_um: 6.0,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(450.0, 32.0, 0.11),
+                    scattering: 0.030,
+                    dye_spectrum: Some(dye_yellow()),
+                },
+                FilmLayer {
+                    name: "Yellow Filter".into(),
+                    kind: LayerKind::YellowFilter,
+                    thickness_um: 1.0,
+                    refractive_index: 1.52,
+                    absorption: gaussian_absorption(440.0, 35.0, 0.8),
+                    scattering: 0.0,
+                    dye_spectrum: None,
+                },
+                FilmLayer {
+                    name: "Green Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Green,
+                    },
+                    thickness_um: 5.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(545.0, 34.0, 0.10),
+                    scattering: 0.030,
+                    dye_spectrum: Some(dye_magenta()),
+                },
+                FilmLayer {
+                    name: "Interlayer".into(),
+                    kind: LayerKind::Interlayer,
+                    thickness_um: 1.0,
+                    refractive_index: 1.50,
+                    absorption: [0.0; BINS],
+                    scattering: 0.0,
+                    dye_spectrum: None,
+                },
+                FilmLayer {
+                    name: "Red Emulsion".into(),
+                    kind: LayerKind::Emulsion {
+                        channel: EmulsionChannel::Red,
+                    },
+                    thickness_um: 5.5,
+                    refractive_index: 1.53,
+                    absorption: gaussian_absorption(640.0, 38.0, 0.09),
+                    scattering: 0.030,
+                    dye_spectrum: Some(dye_cyan()),
+                },
+                FilmLayer {
+                    name: "Anti-Halation".into(),
+                    kind: LayerKind::AntiHalation,
+                    thickness_um: 2.0,
+                    refractive_index: 1.50,
+                    absorption: gaussian_absorption(600.0, 120.0, 0.45),
+                    scattering: 0.0,
+                    dye_spectrum: None,
+                },
+                FilmLayer {
+                    name: "Base".into(),
+                    kind: LayerKind::Base,
+                    thickness_um: 130.0,
+                    refractive_index: 1.65,
+                    absorption: [0.001; BINS],
+                    scattering: 0.0,
+                    dye_spectrum: None,
+                },
+            ],
+        }),
+    }
+}
+
 /// Get all other manufacturer film stocks
 pub fn get_stocks() -> Vec<FilmStock> {
     vec![
         STANDARD_DAYLIGHT(),
         RICOH_GR_STREET(),
+        LUCKY_COLOR_200(),
         CINESTILL_800T(),
         CINESTILL_50D(),
         LOMOGRAPHY_COLOR_CHROME(),
