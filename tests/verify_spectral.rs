@@ -43,6 +43,7 @@ mod tests {
         film.halation_strength = 0.0;
 
         let config = SimulationConfig {
+            simulation_mode: SimulationMode::Fast, // This test modifies spectral_params (Fast-mode only)
             exposure_time: 1.0,
             enable_grain: false,
             output_mode: OutputMode::Positive,

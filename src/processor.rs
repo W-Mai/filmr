@@ -315,9 +315,10 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // Exposure calibration: match Fast mode's exposure range.
-        // norm maps Accurate raw exposure → Fast-equivalent exposure (without t_eff).
-        // t_eff is applied separately in the pixel loop, same as Fast mode.
+        // Exposure calibration: match Fast mode's exposure level + channel balance.
+        // 1. Compute Fast mode's gray exposure (spectral_matrix × 0.18)
+        // 2. Use the AVERAGE as target (balanced channels)
+        // 3. Normalize Accurate raw to this target per-channel
         let gray_lin = 0.18f32;
         let spectral_matrix = film.compute_spectral_matrix();
         let fast_gray = [
@@ -325,6 +326,7 @@ impl PipelineStage for AccurateDevelopStage {
             gray_lin * (spectral_matrix[1][0] + spectral_matrix[1][1] + spectral_matrix[1][2]),
             gray_lin * (spectral_matrix[2][0] + spectral_matrix[2][1] + spectral_matrix[2][2]),
         ];
+        let fast_avg = (fast_gray[0] + fast_gray[1] + fast_gray[2]) / 3.0;
 
         let gray_spectrum = camera.uplift(gray_lin, gray_lin, gray_lin);
         let mut gray_scaled = [0.0f32; crate::spectral::BINS];
@@ -334,19 +336,20 @@ impl PipelineStage for AccurateDevelopStage {
         let gray_exp = spectral_engine::propagate(&stack, &gray_scaled);
         let acc_gray = spectral_engine::integrate_exposure(&gray_exp);
 
+        // Per-channel norm: maps Accurate raw → balanced exposure at Fast level
         let norm = [
             if acc_gray[0] > 1e-10 {
-                fast_gray[0] / acc_gray[0]
+                fast_avg / acc_gray[0]
             } else {
                 1.0
             },
             if acc_gray[1] > 1e-10 {
-                fast_gray[1] / acc_gray[1]
+                fast_avg / acc_gray[1]
             } else {
                 1.0
             },
             if acc_gray[2] > 1e-10 {
-                fast_gray[2] / acc_gray[2]
+                fast_avg / acc_gray[2]
             } else {
                 1.0
             },
@@ -478,22 +481,26 @@ impl PipelineStage for AccurateDevelopStage {
             ];
             let d = film.map_log_exposure(log_e);
 
-            // Interlayer interimage effect: inhibition proportional to density
-            // D_i_final = D_i + sum_j(inhibition[i][j] * D_j)
+            // Interlayer interimage effect: inhibition based on density DEVIATION
+            // from the mean. This ensures neutral gray is unaffected while
+            // colour differences are enhanced (physically: DIR couplers respond
+            // to development rate differences between adjacent layers).
+            let d_mean = (d[0] + d[1] + d[2]) / 3.0;
+            let dd = [d[0] - d_mean, d[1] - d_mean, d[2] - d_mean];
             pixel[0] = (d[0]
-                + inhibition[0][0] * d[0]
-                + inhibition[0][1] * d[1]
-                + inhibition[0][2] * d[2])
+                + inhibition[0][0] * dd[0]
+                + inhibition[0][1] * dd[1]
+                + inhibition[0][2] * dd[2])
                 .max(0.0);
             pixel[1] = (d[1]
-                + inhibition[1][0] * d[0]
-                + inhibition[1][1] * d[1]
-                + inhibition[1][2] * d[2])
+                + inhibition[1][0] * dd[0]
+                + inhibition[1][1] * dd[1]
+                + inhibition[1][2] * dd[2])
                 .max(0.0);
             pixel[2] = (d[2]
-                + inhibition[2][0] * d[0]
-                + inhibition[2][1] * d[1]
-                + inhibition[2][2] * d[2])
+                + inhibition[2][0] * dd[0]
+                + inhibition[2][1] * dd[1]
+                + inhibition[2][2] * dd[2])
                 .max(0.0);
         });
     }
