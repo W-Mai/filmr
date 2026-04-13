@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-04-13
+
+### ✨ Features
+
+- Default SimulationMode to Accurate (full-spectrum for all paths).
+
+### 🐛 Fixes
+
+- Fix inhibition darkening neutral gray (use density deviation, not absolute).
+- Fix per-channel norm to match Fast mode channel balance exactly.
+
+### ✅ Tests
+
+- Add strict inhibition behavior tests (neutral unaffected, color separation, mean preserved).
+- Replace external photo tests with synthetic scene histogram comparison.
+
 ## [0.7.1] - 2026-04-13
 
 ### ⚡ Performance
