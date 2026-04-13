@@ -6,6 +6,7 @@
 - [Reference Data](reference_data.md)
 - [Spectral Sensitivity](spectral_sensitivity.md)
 - [Full-Spectrum Engine](spectral_engine.md)
+- [Rendering Pipeline](rendering_pipeline.md)
 - [Validation Framework](validation.md)
 - [Metrics & Diagnosis](metrics.md)
 - [Dynamic Range & Highlights](dynamic_range.md)
