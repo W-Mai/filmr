@@ -204,6 +204,10 @@ pub struct FilmStock {
     /// Used to simulate optical softness before grain.
     pub resolution_lp_mm: f32,
 
+    /// Vignetting strength (0.0 = none, 1.0 = full cos⁴ falloff).
+    /// Simulates lens light falloff at edges.
+    pub vignette_strength: f32,
+
     /// Reciprocity Failure parameters.
     pub reciprocity: ReciprocityFailure,
 
@@ -269,6 +273,7 @@ impl FilmStock {
             color_matrix,
             grain_model,
             resolution_lp_mm,
+            vignette_strength: 0.5,
             reciprocity,
             halation_strength,
             halation_threshold,

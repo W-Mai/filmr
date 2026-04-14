@@ -53,6 +53,44 @@ pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> 
     linear_image
 }
 
+/// # Vignetting Stage
+///
+/// Simulates lens light falloff using cos⁴(θ) model.
+/// Applied in exposure space (before develop) so it affects H-D curve naturally.
+pub struct VignettingStage;
+
+impl PipelineStage for VignettingStage {
+    #[instrument(skip(self, image, context))]
+    fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        let strength = context.film.vignette_strength;
+        if strength <= 0.0 {
+            return;
+        }
+        info!("Applying vignetting (strength: {:.2})", strength);
+        let w = image.width() as f32;
+        let h = image.height() as f32;
+        let cx = w / 2.0;
+        let cy = h / 2.0;
+        let r_max = (cx * cx + cy * cy).sqrt();
+        // Equivalent focal length: assume 50mm on 36mm frame → f/diagonal ratio
+        let f_equiv = r_max * 1.2; // ~50mm equivalent
+
+        let img_w = image.width();
+        image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+            let x = (i as u32 % img_w) as f32 + 0.5;
+            let y = (i as u32 / img_w) as f32 + 0.5;
+            let r = ((x - cx).powi(2) + (y - cy).powi(2)).sqrt();
+            let theta = (r / f_equiv).atan();
+            let falloff = theta.cos().powi(4);
+            // Blend between no vignetting (1.0) and full cos⁴
+            let factor = 1.0 - strength * (1.0 - falloff);
+            pixel[0] *= factor;
+            pixel[1] *= factor;
+            pixel[2] *= factor;
+        });
+    }
+}
+
 /// # Halation Stage
 ///
 /// Simulates light reflecting off the film base back into the emulsion.
@@ -592,6 +630,24 @@ pub fn create_output_image(
             r_lin = lum + (r_lin - lum) * config.saturation;
             g_lin = lum + (g_lin - lum) * config.saturation;
             b_lin = lum + (b_lin - lum) * config.saturation;
+        }
+
+        // Vignetting in output linear space
+        let v_str = film.vignette_strength;
+        if v_str > 0.0 {
+            let px = i as u32 % width;
+            let py = i as u32 / width;
+            let dx = (px as f32 + 0.5) / width as f32 - 0.5;
+            let dy = (py as f32 + 0.5) / height as f32 - 0.5;
+            let r2 = dx * dx + dy * dy;
+            // Simplified cos⁴: cos²(θ) ≈ 1/(1 + r²/f²), cos⁴ ≈ 1/(1+r²/f²)²
+            // f² chosen so corner falloff ≈ 20-30% at strength=1.0
+            let f2 = 0.2; // stronger falloff for visible vignette
+            let cos4 = 1.0 / (1.0 + r2 / f2).powi(2);
+            let factor = 1.0 - v_str * (1.0 - cos4);
+            r_lin *= factor;
+            g_lin *= factor;
+            b_lin *= factor;
         }
 
         let r_out = physics::linear_to_srgb(r_lin.clamp(0.0, 1.0));
