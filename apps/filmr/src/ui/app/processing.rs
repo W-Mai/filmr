@@ -4,9 +4,7 @@ use super::workers::ProcessRequest;
 use super::FilmrApp;
 use crate::config::AppMode;
 use egui::Context;
-use filmr::{
-    light_leak::LightLeakConfig, SimulationConfig, SimulationMode,
-};
+use filmr::{light_leak::LightLeakConfig, SimulationConfig, SimulationMode};
 use std::sync::Arc;
 
 impl FilmrApp {

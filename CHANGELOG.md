@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2026-04-14
+
+### ✨ Features
+
+- Full-spectrum dye transmittance output (Yellow/Magenta/Cyan dye spectra × D65 → CIE XYZ → sRGB).
+- Self-calibrating exposure norm via binary search (consistent brightness across all presets).
+- Film stock analyzer tool (`cargo xtask analyze <image>`).
+- Lucky Color 200 and Ricoh GR Street Night presets.
+
+### 🐛 Fixes
+
+- Fix negative film inversion in spectral dye output path.
+- Fix grain model: Selwyn √D theory, color_correlation 0.93.
+- Rewrite grain as physically-based texture field (multiplicative, per-layer, spatially correlated).
+
+### 📝 Documentation
+
+- Rendering Pipeline chapter with LaTeX formulas in mdBook.
+
 ## [0.7.2] - 2026-04-13
 
 ### ✨ Features
