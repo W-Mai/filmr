@@ -6,3 +6,5 @@ publish = false
 
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+rustfft = "6"
+rayon = "1.8"

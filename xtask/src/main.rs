@@ -622,6 +622,236 @@ fn cmd_analyze(path: &str) -> Result {
             rg, rb, gb, avg_corr
         );
 
+        // ── PSD shape analysis (Schallauer ICIP 2006) ──
+        println!("\n═══ PSD Shape (radial power spectrum) ═══");
+        use rayon::prelude::*;
+        use rustfft::{num_complex::Complex, FftPlanner};
+
+        let blk = 64usize;
+        let half = blk / 2;
+
+        // Collect candidate block positions
+        let grid_step = blk; // non-overlapping grid
+        let block_positions: Vec<(usize, usize)> = (0..(h / grid_step))
+            .flat_map(|gy| (0..(w / grid_step)).map(move |gx| (gx * grid_step, gy * grid_step)))
+            .filter(|&(bx, by)| {
+                if bx + blk > w || by + blk > h {
+                    return false;
+                }
+                let bc = (blk * blk) as f64;
+                let (mut s, mut s2) = (0.0f64, 0.0f64);
+                for dy in 0..blk {
+                    for dx in 0..blk {
+                        let v = luma[(by + dy) * w + (bx + dx)] as f64;
+                        s += v;
+                        s2 += v * v;
+                    }
+                }
+                (s2 / bc - (s / bc).powi(2)).sqrt() < 20.0
+            })
+            .collect();
+
+        // Parallel PSD + isotropy per block
+        let block_results: Vec<(Vec<f64>, f32)> = block_positions
+            .par_iter()
+            .map(|&(bx, by)| {
+                let mut planner = FftPlanner::<f64>::new();
+                let fft = planner.plan_fft_forward(blk);
+                let mut rows: Vec<Vec<Complex<f64>>> = (0..blk)
+                    .map(|dy| {
+                        (0..blk)
+                            .map(|dx| Complex::new(luma[(by + dy) * w + (bx + dx)] as f64, 0.0))
+                            .collect()
+                    })
+                    .collect();
+                for row in rows.iter_mut() {
+                    fft.process(row);
+                }
+                let mut cols: Vec<Vec<Complex<f64>>> = (0..blk)
+                    .map(|c| (0..blk).map(|r| rows[r][c]).collect())
+                    .collect();
+                for col in cols.iter_mut() {
+                    fft.process(col);
+                }
+                // Radial PSD
+                let mut radial = vec![0.0f64; half];
+                let mut rcnt = vec![0u32; half];
+                let mut dir_power = [0.0f64; 4];
+                let mut dir_cnt = [0u32; 4];
+                for (fy, col) in cols.iter().enumerate() {
+                    for (fx, coeff) in col.iter().enumerate() {
+                        let cy = if fy < half { fy } else { blk - fy };
+                        let cx = if fx < half { fx } else { blk - fx };
+                        let r = ((cx * cx + cy * cy) as f64).sqrt() as usize;
+                        let power = coeff.norm_sqr();
+                        if r > 0 && r < half {
+                            radial[r] += power;
+                            rcnt[r] += 1;
+                        }
+                        // Isotropy
+                        let cyi = if fy < half {
+                            fy as i32
+                        } else {
+                            fy as i32 - blk as i32
+                        };
+                        let cxi = if fx < half {
+                            fx as i32
+                        } else {
+                            fx as i32 - blk as i32
+                        };
+                        let r2 = cxi * cxi + cyi * cyi;
+                        if r2 >= 4 && r2 <= (half as i32 * half as i32) {
+                            let angle = (cyi as f64)
+                                .atan2(cxi as f64)
+                                .to_degrees()
+                                .rem_euclid(180.0);
+                            let wedge = ((angle + 22.5) / 45.0) as usize % 4;
+                            dir_power[wedge] += power;
+                            dir_cnt[wedge] += 1;
+                        }
+                    }
+                }
+                for i in 0..half {
+                    if rcnt[i] > 0 {
+                        radial[i] /= rcnt[i] as f64;
+                    }
+                }
+                let dp: Vec<f64> = (0..4)
+                    .map(|i| {
+                        if dir_cnt[i] > 0 {
+                            dir_power[i] / dir_cnt[i] as f64
+                        } else {
+                            0.0
+                        }
+                    })
+                    .collect();
+                let dp_mean = dp.iter().sum::<f64>() / 4.0;
+                let dir = if dp_mean > 0.0 {
+                    let mx = dp.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+                    let mn = dp.iter().cloned().fold(f64::INFINITY, f64::min);
+                    ((mx - mn) / dp_mean) as f32
+                } else {
+                    0.0
+                };
+                (radial, dir)
+            })
+            .collect();
+
+        // Aggregate
+        let psd_cnt = block_results.len();
+        let mut psd_accum = vec![0.0f64; half];
+        let mut dir_scores: Vec<f32> = Vec::with_capacity(psd_cnt);
+        for (radial, dir) in &block_results {
+            for i in 0..half {
+                psd_accum[i] += radial[i];
+            }
+            dir_scores.push(*dir);
+        }
+
+        let psd_rolloff = if psd_cnt > 0 {
+            let lo = psd_accum[1..half / 4].iter().sum::<f64>() / (half / 4 - 1).max(1) as f64;
+            let hi = psd_accum[half * 3 / 4..half].iter().sum::<f64>() / (half / 4).max(1) as f64;
+            if lo > 0.0 {
+                (hi / lo) as f32
+            } else {
+                1.0
+            }
+        } else {
+            1.0
+        };
+        println!(
+            "  PSD high/low ratio: {:.3} (film<0.3, digital≈1.0)",
+            psd_rolloff
+        );
+
+        let isotropy = if !dir_scores.is_empty() {
+            dir_scores.iter().sum::<f32>() / dir_scores.len() as f32
+        } else {
+            0.0
+        };
+        println!(
+            "  Directionality: {:.3} (film<0.3 isotropic, texture>0.5)",
+            isotropy
+        );
+
+        // ── Signal dependency curve (sampled) ──
+        println!("\n═══ Signal Dependency (grain σ vs intensity) ═══");
+        let num_bins = 8usize;
+        let sd_step = ((w * h) / 50000).max(1);
+        let chunk_size = ((w * h) / sd_step / rayon::current_num_threads()).max(1);
+        let indices: Vec<usize> = (0..(w * h)).step_by(sd_step).collect();
+        let partial: Vec<(Vec<f64>, Vec<u64>)> = indices
+            .par_chunks(chunk_size)
+            .map(|chunk| {
+                let mut bs = vec![0.0f64; num_bins];
+                let mut bc = vec![0u64; num_bins];
+                let radius = 3i32;
+                for &idx in chunk {
+                    let x = idx % w;
+                    let y = idx / w;
+                    let l = luma[idx];
+                    let bin = ((l / 256.0) * num_bins as f32).min(num_bins as f32 - 1.0) as usize;
+                    let mut lr = 0.0f32;
+                    let mut lc = 0u32;
+                    for dy in -radius..=radius {
+                        for dx in -radius..=radius {
+                            let nx = x as i32 + dx;
+                            let ny = y as i32 + dy;
+                            if nx >= 0 && nx < w as i32 && ny >= 0 && ny < h as i32 {
+                                lr += luma[ny as usize * w + nx as usize];
+                                lc += 1;
+                            }
+                        }
+                    }
+                    let noise = luma[idx] - lr / lc as f32;
+                    bs[bin] += (noise * noise) as f64;
+                    bc[bin] += 1;
+                }
+                (bs, bc)
+            })
+            .collect();
+        let mut bin_sigma = vec![0.0f64; num_bins];
+        let mut bin_count = vec![0u64; num_bins];
+        for (bs, bc) in &partial {
+            for i in 0..num_bins {
+                bin_sigma[i] += bs[i];
+                bin_count[i] += bc[i];
+            }
+        }
+        let sigmas: Vec<f32> = (0..num_bins)
+            .map(|i| {
+                if bin_count[i] > 0 {
+                    (bin_sigma[i] / bin_count[i] as f64).sqrt() as f32
+                } else {
+                    0.0
+                }
+            })
+            .collect();
+        for (i, sigma) in sigmas.iter().enumerate() {
+            let lo = i * 256 / num_bins;
+            let hi = (i + 1) * 256 / num_bins - 1;
+            println!("  [{:3}-{:3}]: σ={:.2}", lo, hi, sigma);
+        }
+        let peak_bin = sigmas
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+            .map(|(i, _)| i)
+            .unwrap_or(0);
+        let is_bell = (2..=5).contains(&peak_bin)
+            && sigmas[0] < sigmas[peak_bin] * 0.8
+            && sigmas[num_bins - 1] < sigmas[peak_bin] * 0.8;
+        println!(
+            "  Peak at bin {}/{} → {}",
+            peak_bin,
+            num_bins,
+            if is_bell {
+                "bell-shaped (film characteristic)"
+            } else {
+                "not bell-shaped"
+            }
+        );
+
         // ── Film detection ──
         println!("\n═══ Film Detection ═══");
         let mut score = 0.0f32;
@@ -674,6 +904,30 @@ fn cmd_analyze(path: &str) -> Result {
         if shadow_cast > 8.0 {
             score += 10.0;
             reasons.push("shadow color cast (film base)");
+        }
+
+        // 6. PSD rolloff (film grain is band-limited)
+        if psd_rolloff < 0.15 {
+            score += 15.0;
+            reasons.push("strong PSD rolloff (band-limited grain)");
+        } else if psd_rolloff < 0.35 {
+            score += 8.0;
+            reasons.push("moderate PSD rolloff");
+        }
+
+        // 7. Isotropy (film grain is isotropic)
+        if isotropy < 0.15 {
+            score += 10.0;
+            reasons.push("isotropic noise (film grain)");
+        } else if isotropy < 0.3 {
+            score += 5.0;
+            reasons.push("mostly isotropic");
+        }
+
+        // 8. Bell-shaped signal dependency
+        if is_bell {
+            score += 15.0;
+            reasons.push("bell-shaped grain curve (film characteristic)");
         }
 
         let verdict = if score >= 60.0 {

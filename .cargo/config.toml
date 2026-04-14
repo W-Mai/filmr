@@ -15,4 +15,4 @@ rustflags = [
 build-std = ["std", "panic_abort"]
 
 [alias]
-xtask = "run --package xtask --"
+xtask = "run --release --package xtask --"
