@@ -427,7 +427,7 @@ impl FilmrApp {
         tx_thumb_res: Sender<(String, RgbImage)>,
         ctx: egui::Context,
     ) {
-        use filmr::{estimate_exposure_time, process_image};
+        use filmr::process_image;
 
         spawn_thread(move || {
             while let Ok(first) = rx_thumb.recv() {
@@ -442,7 +442,7 @@ impl FilmrApp {
                 }
 
                 for (name, (base_img, mut config, stock)) in latest {
-                    config.exposure_time = estimate_exposure_time(&base_img, &stock);
+                    config.exposure_time = 1.0; // Accurate mode: norm handles exposure
                     let processed = process_image(&base_img, &stock, &config);
                     let _ = tx_thumb_res.send((name, processed));
                 }

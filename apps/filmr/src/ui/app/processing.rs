@@ -5,7 +5,7 @@ use super::FilmrApp;
 use crate::config::AppMode;
 use egui::Context;
 use filmr::{
-    estimate_exposure_time, light_leak::LightLeakConfig, SimulationConfig, SimulationMode,
+    light_leak::LightLeakConfig, SimulationConfig, SimulationMode,
 };
 use std::sync::Arc;
 
@@ -177,11 +177,13 @@ impl FilmrApp {
         self.grain_roughness = preset.grain_model.roughness;
         self.grain_blur_radius = preset.grain_model.blur_radius;
 
-        let base_exposure = preset.r_curve.exposure_offset / 0.18;
-        self.exposure_time = if let Some(img) = &self.original_image {
-            estimate_exposure_time(&img.to_rgb8(), &preset)
+        let _base_exposure = preset.r_curve.exposure_offset / 0.18;
+        self.exposure_time = if let Some(_img) = &self.original_image {
+            // Accurate mode norm handles auto-exposure; t=1.0 is neutral.
+            // User can still adjust via slider.
+            1.0
         } else {
-            base_exposure
+            1.0
         };
     }
 }

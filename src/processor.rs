@@ -315,15 +315,10 @@ impl PipelineStage for AccurateDevelopStage {
         let camera = crate::spectral::CameraSensitivities::srgb();
         let d65 = crate::spectral::Spectrum::new_d65();
 
-        // Exposure calibration: match Fast mode's per-channel exposure exactly.
-        // This ensures identical output when WB=Off (Simple mode).
+        // Exposure calibration: find norm so that 18% gray → sRGB ~118 output.
+        // Binary search over a scale factor applied to propagated exposure.
+        // This makes brightness consistent across all presets.
         let gray_lin = 0.18f32;
-        let spectral_matrix = film.compute_spectral_matrix();
-        let fast_gray = [
-            gray_lin * (spectral_matrix[0][0] + spectral_matrix[0][1] + spectral_matrix[0][2]),
-            gray_lin * (spectral_matrix[1][0] + spectral_matrix[1][1] + spectral_matrix[1][2]),
-            gray_lin * (spectral_matrix[2][0] + spectral_matrix[2][1] + spectral_matrix[2][2]),
-        ];
 
         let gray_spectrum = camera.uplift(gray_lin, gray_lin, gray_lin);
         let mut gray_scaled = [0.0f32; crate::spectral::BINS];
@@ -332,26 +327,85 @@ impl PipelineStage for AccurateDevelopStage {
         }
         let gray_exp = spectral_engine::propagate(&stack, &gray_scaled);
         let acc_gray = spectral_engine::integrate_exposure(&gray_exp);
+        let acc_gray_avg = (acc_gray[0] + acc_gray[1] + acc_gray[2]) / 3.0;
 
+        // Simulate full pipeline for a single gray pixel at a given scale
+        let simulate_gray = |scale: f32| -> f32 {
+            let exposure = [
+                acc_gray[0] * scale,
+                acc_gray[1] * scale,
+                acc_gray[2] * scale,
+            ];
+            let epsilon = 1e-6f32;
+            let log_e = [
+                exposure[0].max(epsilon).log10(),
+                exposure[1].max(epsilon).log10(),
+                exposure[2].max(epsilon).log10(),
+            ];
+            let d = film.map_log_exposure(log_e);
+            // Simplified positive output (same as create_output_image)
+            let net_r = (d[0] - film.r_curve.d_min).max(0.0);
+            let net_g = (d[1] - film.g_curve.d_min).max(0.0);
+            let net_b = (d[2] - film.b_curve.d_min).max(0.0);
+            let t_r = physics::density_to_transmission(net_r);
+            let t_g = physics::density_to_transmission(net_g);
+            let t_b = physics::density_to_transmission(net_b);
+            let t_max = 1.0f32;
+            let t_r_min = physics::density_to_transmission(
+                (film.r_curve.d_max - film.r_curve.d_min).max(0.0),
+            );
+            let t_g_min = physics::density_to_transmission(
+                (film.g_curve.d_max - film.g_curve.d_min).max(0.0),
+            );
+            let t_b_min = physics::density_to_transmission(
+                (film.b_curve.d_max - film.b_curve.d_min).max(0.0),
+            );
+            let norm_t = |t: f32, t_min: f32| {
+                let denom = (t_max - t_min).max(1e-6);
+                let n = (t_max - t).clamp(0.0, denom) / denom;
+                n.powf(2.0) // paper_gamma for negative
+            };
+            let r = norm_t(t_r, t_r_min);
+            let g = norm_t(t_g, t_g_min);
+            let b = norm_t(t_b, t_b_min);
+            0.2126 * r + 0.7152 * g + 0.0722 * b
+        };
+
+        // Binary search: find scale where simulate_gray(scale) ≈ 0.18 (linear)
+        let target_linear = 0.18f32;
+        let mut lo = 1e-8f32;
+        let mut hi = 1e4f32;
+        for _ in 0..40 {
+            let mid = (lo * hi).sqrt(); // geometric midpoint (log-space search)
+            let result = simulate_gray(mid);
+            if result < target_linear {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        let optimal_scale = (lo * hi).sqrt();
+
+        // norm = optimal_scale / acc_gray (per-channel for white balance)
         let norm = [
             if acc_gray[0] > 1e-10 {
-                fast_gray[0] / acc_gray[0]
+                optimal_scale * acc_gray_avg / acc_gray[0]
             } else {
                 1.0
             },
             if acc_gray[1] > 1e-10 {
-                fast_gray[1] / acc_gray[1]
+                optimal_scale * acc_gray_avg / acc_gray[1]
             } else {
                 1.0
             },
             if acc_gray[2] > 1e-10 {
-                fast_gray[2] / acc_gray[2]
+                optimal_scale * acc_gray_avg / acc_gray[2]
             } else {
                 1.0
             },
         ];
 
-        // exposure_time applied separately (same role as in Fast mode)
+        // exposure_time: user EV adjustment (1.0 = neutral for Accurate mode)
         let t_eff = config.exposure_time;
         let width = image.width();
 

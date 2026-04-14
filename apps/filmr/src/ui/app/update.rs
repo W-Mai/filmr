@@ -6,7 +6,6 @@ use crate::config::AppMode;
 use crate::ui::panels;
 use eframe::{App, Frame};
 use egui::{ColorImage, Context};
-use filmr::estimate_exposure_time;
 #[cfg(target_arch = "wasm32")]
 use filmr::film::FilmStockCollection;
 #[cfg(target_arch = "wasm32")]
@@ -89,16 +88,8 @@ impl App for FilmrApp {
                     self.load_preset_values();
 
                     if self.mode == AppMode::Develop {
-                        // Estimate exposure for the loaded image if in Develop mode
-                        if let Some(exposure) = data.estimated_exposure {
-                            self.exposure_time = exposure;
-                        } else {
-                            let stock = self.get_current_stock();
-                            self.exposure_time = estimate_exposure_time(
-                                self.preview_image.as_ref().unwrap(),
-                                &stock,
-                            );
-                        }
+                        // Accurate mode: norm handles auto-exposure, t=1.0 is neutral
+                        self.exposure_time = 1.0;
                     }
 
                     // Auto-process logic: Immediately process the preview after loading
