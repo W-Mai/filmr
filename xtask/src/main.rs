@@ -456,6 +456,9 @@ fn cmd_analyze(path: &str) -> Result {
     );
     println!("  {}", "-".repeat(55));
 
+    let mut shadow_rg = 0.0f32;
+    let mut shadow_rb = 0.0f32;
+
     for &(name, lo, hi) in zones {
         let mut sr = 0.0f32;
         let mut sg = 0.0f32;
@@ -474,6 +477,10 @@ fn cmd_analyze(path: &str) -> Result {
         }
         let (r, g, b) = (sr / cnt as f32, sg / cnt as f32, sb / cnt as f32);
         let (rg, rb) = (r - g, r - b);
+        if name == "Shadows" {
+            shadow_rg = rg;
+            shadow_rb = rb;
+        }
         let bias = if rg > 2.0 && rb > 2.0 {
             "RED"
         } else if rg < -2.0 && rb < -2.0 {
@@ -564,6 +571,7 @@ fn cmd_analyze(path: &str) -> Result {
     );
     println!("  {}", "-".repeat(45));
 
+    let mut grain_zones: Vec<(&str, f32)> = Vec::new();
     for &(name, lo, hi) in zones {
         let mask: Vec<bool> = (0..n).map(|i| luma[i] >= lo && luma[i] < hi).collect();
         let count = mask.iter().filter(|&&m| m).count();
@@ -572,6 +580,7 @@ fn cmd_analyze(path: &str) -> Result {
         }
         let (sr, sg, sb) = grain_std(&mask);
         let avg = (sr + sg + sb) / 3.0;
+        grain_zones.push((name, avg));
         println!("  {:12} {:8.2} {:6.2} {:6.2} {:6.2}", name, avg, sr, sg, sb);
     }
 
@@ -607,13 +616,77 @@ fn cmd_analyze(path: &str) -> Result {
         let rg = corr(&mr, &mg);
         let rb = corr(&mr, &mb);
         let gb = corr(&mg, &mb);
+        let avg_corr = (rg + rb + gb) / 3.0;
         println!(
             "  R-G={:.3}  R-B={:.3}  G-B={:.3}  avg={:.3}",
-            rg,
-            rb,
-            gb,
-            (rg + rb + gb) / 3.0
+            rg, rb, gb, avg_corr
         );
+
+        // ── Film detection ──
+        println!("\n═══ Film Detection ═══");
+        let mut score = 0.0f32;
+        let mut reasons: Vec<&str> = Vec::new();
+
+        // 1. Grain intensity: film shadows σ > 15
+        let shadow_grain = grain_zones.first().map(|z| z.1).unwrap_or(0.0);
+        if shadow_grain > 15.0 {
+            score += 25.0;
+            reasons.push("strong grain in shadows");
+        } else if shadow_grain > 8.0 {
+            score += 10.0;
+            reasons.push("moderate grain");
+        }
+
+        // 2. Channel decorrelation: film < 0.85
+        if avg_corr < 0.7 {
+            score += 25.0;
+            reasons.push("low channel correlation (independent RGB grain)");
+        } else if avg_corr < 0.85 {
+            score += 15.0;
+            reasons.push("moderate channel decorrelation");
+        }
+
+        // 3. Grain varies with luminance (negative film: shadows > highlights)
+        let highlight_grain = grain_zones.last().map(|z| z.1).unwrap_or(0.0);
+        if shadow_grain > 1.0 && highlight_grain > 0.1 {
+            let ratio = shadow_grain / highlight_grain.max(0.01);
+            if ratio > 2.0 {
+                score += 25.0;
+                reasons.push("grain increases in shadows (negative film characteristic)");
+            } else if ratio > 1.3 {
+                score += 10.0;
+                reasons.push("slight grain-luminance dependence");
+            }
+        }
+
+        // 4. Compressed dynamic range (film scan typically < 220)
+        let dr = pct(99) - pct(1); // p99 - p1
+        if dr < 200.0 {
+            score += 15.0;
+            reasons.push("compressed dynamic range");
+        } else if dr < 230.0 {
+            score += 5.0;
+            reasons.push("slightly compressed DR");
+        }
+
+        // 5. Shadow color cast (film base + fog)
+        let shadow_cast = shadow_rg.abs().max(shadow_rb.abs());
+        if shadow_cast > 8.0 {
+            score += 10.0;
+            reasons.push("shadow color cast (film base)");
+        }
+
+        let verdict = if score >= 60.0 {
+            "Very likely FILM scan"
+        } else if score >= 35.0 {
+            "Possibly film or heavy film simulation"
+        } else {
+            "Likely DIGITAL"
+        };
+        println!("  Score: {:.0}/100 → {}", score.min(100.0), verdict);
+        if !reasons.is_empty() {
+            println!("  Evidence: {}", reasons.join("; "));
+        }
     }
 
     Ok(())
