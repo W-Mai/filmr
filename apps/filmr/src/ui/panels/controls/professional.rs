@@ -220,7 +220,7 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
             *changed = true;
         }
 
-        // Trajectory preview canvas (uses same seed as pipeline)
+        // Trajectory preview
         if app.motion_blur_amount > 0.0 {
             ui.horizontal(|ui| {
                 if ui.button("🎲").on_hover_text("New trajectory").clicked() {
@@ -233,42 +233,91 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
                 ui.label(format!("seed: {}", app.motion_blur_seed));
             });
 
-            let size = egui::vec2(120.0, 120.0);
-            let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
-            let painter = ui.painter_at(rect);
-            painter.rect_filled(rect, 2.0, egui::Color32::from_gray(30));
+            let traj = filmr::shake::ShakeTrajectory::generate(
+                app.motion_blur_amount * 25.0,
+                64,
+                app.motion_blur_seed,
+            );
 
-            let preview_amp = app.motion_blur_amount * 25.0;
-            let traj =
-                filmr::shake::ShakeTrajectory::generate(preview_amp, 64, app.motion_blur_seed);
-            let cx = rect.center().x;
-            let cy = rect.center().y;
-            let pts: Vec<egui::Pos2> = traj
-                .points
-                .iter()
-                .map(|&(x, y, _)| egui::pos2(cx + x, cy + y))
-                .collect();
-
-            if pts.len() >= 2 {
-                for (i, w) in pts.windows(2).enumerate() {
-                    let weight = traj.points[i].2;
-                    let alpha =
-                        (weight * traj.points.len() as f32 * 255.0).clamp(30.0, 255.0) as u8;
-                    let stroke = egui::Stroke::new(
-                        1.5,
-                        egui::Color32::from_rgba_unmultiplied(255, 120, 60, alpha),
-                    );
-                    painter.line_segment([w[0], w[1]], stroke);
-                }
-                painter.circle_filled(pts[0], 3.0, egui::Color32::from_rgb(80, 220, 80));
-                painter.circle_filled(
-                    *pts.last().unwrap(),
-                    3.0,
-                    egui::Color32::from_rgb(220, 80, 80),
-                );
-            }
+            ui.horizontal(|ui| {
+                draw_trajectory_canvas(ui, &traj);
+                draw_dwell_chart(ui, &traj);
+            });
         }
     });
+}
+
+fn draw_trajectory_canvas(ui: &mut egui::Ui, traj: &filmr::shake::ShakeTrajectory) {
+    let size = egui::vec2(120.0, 120.0);
+    let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+    let painter = ui.painter_at(rect);
+    painter.rect_filled(rect, 2.0, egui::Color32::from_gray(30));
+
+    let cx = rect.center().x;
+    let cy = rect.center().y;
+    let pts: Vec<egui::Pos2> = traj
+        .points
+        .iter()
+        .map(|&(x, y, _)| egui::pos2(cx + x, cy + y))
+        .collect();
+
+    if pts.len() >= 2 {
+        for (i, w) in pts.windows(2).enumerate() {
+            let weight = traj.points[i].2;
+            let alpha = (weight * traj.points.len() as f32 * 255.0).clamp(30.0, 255.0) as u8;
+            let stroke = egui::Stroke::new(
+                1.5,
+                egui::Color32::from_rgba_unmultiplied(255, 120, 60, alpha),
+            );
+            painter.line_segment([w[0], w[1]], stroke);
+        }
+        painter.circle_filled(pts[0], 3.0, egui::Color32::from_rgb(80, 220, 80));
+        painter.circle_filled(
+            *pts.last().unwrap(),
+            3.0,
+            egui::Color32::from_rgb(220, 80, 80),
+        );
+    }
+}
+
+fn draw_dwell_chart(ui: &mut egui::Ui, traj: &filmr::shake::ShakeTrajectory) {
+    let size = egui::vec2(120.0, 120.0);
+    let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+    let painter = ui.painter_at(rect);
+    painter.rect_filled(rect, 2.0, egui::Color32::from_gray(30));
+
+    let n = traj.points.len();
+    if n <= 1 {
+        return;
+    }
+
+    let max_w = traj.points.iter().map(|p| p.2).fold(0.0f32, f32::max);
+    let bar_w = rect.width() / n as f32;
+
+    for (i, &(_, _, w)) in traj.points.iter().enumerate() {
+        let h = if max_w > 0.0 {
+            w / max_w * (rect.height() - 4.0)
+        } else {
+            0.0
+        };
+        let x = rect.left() + i as f32 * bar_w;
+        let bar_rect = egui::Rect::from_min_size(
+            egui::pos2(x, rect.bottom() - h),
+            egui::vec2(bar_w.max(1.0), h),
+        );
+        let t = w / max_w.max(1e-6);
+        let r = (t * 255.0) as u8;
+        let b = ((1.0 - t) * 200.0) as u8;
+        painter.rect_filled(bar_rect, 0.0, egui::Color32::from_rgb(r, 40, b));
+    }
+
+    painter.text(
+        egui::pos2(rect.left() + 2.0, rect.top() + 2.0),
+        egui::Align2::LEFT_TOP,
+        "dwell",
+        egui::FontId::proportional(9.0),
+        egui::Color32::from_gray(150),
+    );
 }
 
 fn render_halation(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {

@@ -52,6 +52,8 @@ impl ShakeTrajectory {
         let sum_y: f32 = harmonics_y.iter().map(|h| h.1).sum::<f32>() + 1.0;
 
         let mut points = Vec::with_capacity(n_samples);
+        let mut prev_x = 0.0f32;
+        let mut prev_y = 0.0f32;
 
         for i in 0..n_samples {
             let t = i as f32 * dt;
@@ -79,7 +81,12 @@ impl ShakeTrajectory {
             } else {
                 1.0
             };
-            points.push((x, y, curtain));
+            // Dwell = curtain × (1/speed): slower segments get more exposure
+            let displacement = ((x - prev_x).powi(2) + (y - prev_y).powi(2)).sqrt();
+            let dwell = curtain / (displacement + 0.01);
+            prev_x = x;
+            prev_y = y;
+            points.push((x, y, dwell));
         }
 
         // Normalize weights
