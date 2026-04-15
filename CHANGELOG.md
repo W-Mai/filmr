@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-04-15
+
+### ✨ Features
+
+- Vignetting: cos⁴ lens falloff model in output space (~25% corner darkening).
+- Micro motion blur: multi-frequency hand tremor simulation with Brownian trajectory.
+  - UI: Motion Blur slider, seed control, trajectory + dwell weight visualization.
+- Radial MTF: center-sharp, edge-soft blur (replaces uniform MTF).
+- Chromatic aberration: R/B channel radial scaling for edge RGB fringing.
+- Film stock analyzer: PSD shape, isotropy, signal dependency, film detection scoring.
+  - Parallelized with rayon, xtask runs in release mode.
+
+### 🐛 Fixes
+
+- Self-calibrating exposure norm via binary search (consistent brightness across presets).
+
 ## [0.7.3] - 2026-04-14
 
 ### ✨ Features
