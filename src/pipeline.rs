@@ -251,18 +251,111 @@ impl PipelineStage for MtfStage {
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
         let film = context.film;
         let width = image.width();
+        let height = image.height();
 
-        // Assuming 35mm film width = 36mm.
         let pixels_per_mm = width as f32 / 36.0;
         let mtf_sigma = (0.5 / film.resolution_lp_mm) * pixels_per_mm;
 
-        if mtf_sigma > 0.5 {
-            info!("Applying MTF blur (sigma: {:.2})", mtf_sigma);
-            utils::apply_gaussian_blur(image, mtf_sigma);
-        } else {
+        if mtf_sigma <= 0.5 {
             debug!("MTF blur skipped (sigma too small: {:.2})", mtf_sigma);
+            return;
         }
+
+        info!("Applying radial MTF blur (edge sigma: {:.2})", mtf_sigma);
+
+        // Blur a copy at full MTF sigma
+        let mut blurred = image.clone();
+        utils::apply_gaussian_blur(&mut blurred, mtf_sigma);
+
+        // Blend: center = sharp (original), edges = blurred
+        let cx = width as f32 / 2.0;
+        let cy = height as f32 / 2.0;
+        let r_max = (cx * cx + cy * cy).sqrt();
+
+        image
+            .par_chunks_mut(3)
+            .zip(blurred.par_chunks(3))
+            .enumerate()
+            .for_each(|(i, (orig, blur))| {
+                let x = (i as u32 % width) as f32 + 0.5 - cx;
+                let y = (i as u32 / width) as f32 + 0.5 - cy;
+                let r = (x * x + y * y).sqrt() / r_max;
+                // Quadratic falloff: center=0, corner=1
+                let t = (r * r).clamp(0.0, 1.0);
+                orig[0] = orig[0] * (1.0 - t) + blur[0] * t;
+                orig[1] = orig[1] * (1.0 - t) + blur[1] * t;
+                orig[2] = orig[2] * (1.0 - t) + blur[2] * t;
+            });
     }
+}
+
+/// # Chromatic Aberration Stage
+///
+/// Simulates lateral chromatic aberration: R channel slightly magnified,
+/// B channel slightly demagnified relative to G. Produces RGB fringing at edges.
+pub struct ChromaticAberrationStage;
+
+impl PipelineStage for ChromaticAberrationStage {
+    #[instrument(skip(self, image, _context))]
+    fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, _context: &PipelineContext) {
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+        let cx = width as f32 / 2.0;
+        let cy = height as f32 / 2.0;
+
+        // Scale factors: R slightly larger, B slightly smaller
+        let r_scale = 1.0015f32; // R magnified
+        let b_scale = 0.9985f32; // B demagnified
+
+        info!(
+            "Applying chromatic aberration (R×{}, B×{})",
+            r_scale, b_scale
+        );
+
+        let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
+
+        image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+            let x = (i % width) as f32 + 0.5;
+            let y = (i / width) as f32 + 0.5;
+            let dx = x - cx;
+            let dy = y - cy;
+
+            // R channel: sample from slightly inward (magnified → inward lookup)
+            let rx = cx + dx / r_scale;
+            let ry = cy + dy / r_scale;
+            pixel[0] = sample_channel(&src, width, height, rx, ry, 0);
+
+            // G channel: unchanged
+            // pixel[1] stays as is
+
+            // B channel: sample from slightly outward (demagnified → outward lookup)
+            let bx = cx + dx / b_scale;
+            let by = cy + dy / b_scale;
+            pixel[2] = sample_channel(&src, width, height, bx, by, 2);
+        });
+    }
+}
+
+/// Bilinear sample of a single channel from flat RGB buffer.
+fn sample_channel(src: &[f32], w: usize, h: usize, x: f32, y: f32, ch: usize) -> f32 {
+    let ix = (x - 0.5).floor() as i32;
+    let iy = (y - 0.5).floor() as i32;
+    if ix < 0 || ix >= w as i32 - 1 || iy < 0 || iy >= h as i32 - 1 {
+        // Edge: clamp
+        let sx = (x as i32).clamp(0, w as i32 - 1) as usize;
+        let sy = (y as i32).clamp(0, h as i32 - 1) as usize;
+        return src[(sy * w + sx) * 3 + ch];
+    }
+    let fx = x - 0.5 - ix as f32;
+    let fy = y - 0.5 - iy as f32;
+    let i00 = (iy as usize * w + ix as usize) * 3 + ch;
+    let i10 = i00 + 3;
+    let i01 = i00 + w * 3;
+    let i11 = i01 + 3;
+    src[i00] * (1.0 - fx) * (1.0 - fy)
+        + src[i10] * fx * (1.0 - fy)
+        + src[i01] * (1.0 - fx) * fy
+        + src[i11] * fx * fy
 }
 
 /// # Develop Stage
