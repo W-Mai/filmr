@@ -3,8 +3,8 @@ use crate::film_layer::FilmLayerStack;
 use crate::light_leak::{LightLeakConfig, LightLeakStage};
 use crate::physics;
 use crate::pipeline::{
-    create_linear_image, create_output_image, DevelopStage, GrainStage, HalationStage, MtfStage,
-    PipelineContext, PipelineStage,
+    create_linear_image, create_output_image, DevelopStage, GrainStage, HalationStage,
+    MicroMotionStage, MtfStage, PipelineContext, PipelineStage,
 };
 use crate::spectral_engine;
 use image::RgbImage;
@@ -268,6 +268,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     // 3. Other Stages
     let stages: Vec<Box<dyn PipelineStage>> = match config.simulation_mode {
         SimulationMode::Fast => vec![
+            Box::new(MicroMotionStage),
             Box::new(MtfStage),
             Box::new(DevelopStage),
             Box::new(GrainStage),
@@ -275,7 +276,11 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
         SimulationMode::Accurate => {
             // Full-spectrum develop replaces DevelopStage
             AccurateDevelopStage.process(&mut image_buffer, &context);
-            vec![Box::new(MtfStage), Box::new(GrainStage)]
+            vec![
+                Box::new(MicroMotionStage),
+                Box::new(MtfStage),
+                Box::new(GrainStage),
+            ]
         }
     };
 
@@ -683,6 +688,7 @@ pub async fn process_image_async(
     let stages: Vec<Box<dyn PipelineStage>> = vec![
         Box::new(LightLeakStage),
         Box::new(HalationStage),
+        Box::new(MicroMotionStage),
         Box::new(MtfStage),
         Box::new(DevelopStage),
         Box::new(GrainStage),
