@@ -213,6 +213,61 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
         {
             *changed = true;
         }
+        if ui
+            .add(egui::Slider::new(&mut app.motion_blur_amount, 0.0..=3.0).text("Motion Blur"))
+            .changed()
+        {
+            *changed = true;
+        }
+
+        // Trajectory preview canvas (uses same seed as pipeline)
+        if app.motion_blur_amount > 0.0 {
+            ui.horizontal(|ui| {
+                if ui.button("🎲").on_hover_text("New trajectory").clicked() {
+                    app.motion_blur_seed = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_nanos() as u64;
+                    *changed = true;
+                }
+                ui.label(format!("seed: {}", app.motion_blur_seed));
+            });
+
+            let size = egui::vec2(120.0, 120.0);
+            let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+            let painter = ui.painter_at(rect);
+            painter.rect_filled(rect, 2.0, egui::Color32::from_gray(30));
+
+            let preview_amp = app.motion_blur_amount * 25.0;
+            let traj =
+                filmr::shake::ShakeTrajectory::generate(preview_amp, 64, app.motion_blur_seed);
+            let cx = rect.center().x;
+            let cy = rect.center().y;
+            let pts: Vec<egui::Pos2> = traj
+                .points
+                .iter()
+                .map(|&(x, y, _)| egui::pos2(cx + x, cy + y))
+                .collect();
+
+            if pts.len() >= 2 {
+                for (i, w) in pts.windows(2).enumerate() {
+                    let weight = traj.points[i].2;
+                    let alpha =
+                        (weight * traj.points.len() as f32 * 255.0).clamp(30.0, 255.0) as u8;
+                    let stroke = egui::Stroke::new(
+                        1.5,
+                        egui::Color32::from_rgba_unmultiplied(255, 120, 60, alpha),
+                    );
+                    painter.line_segment([w[0], w[1]], stroke);
+                }
+                painter.circle_filled(pts[0], 3.0, egui::Color32::from_rgb(80, 220, 80));
+                painter.circle_filled(
+                    *pts.last().unwrap(),
+                    3.0,
+                    egui::Color32::from_rgb(220, 80, 80),
+                );
+            }
+        }
     });
 }
 

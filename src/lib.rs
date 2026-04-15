@@ -12,6 +12,7 @@ pub mod physics;
 pub mod pipeline;
 pub mod presets;
 pub mod processor;
+pub mod shake;
 pub mod spectral;
 pub mod spectral_engine;
 pub mod utils;

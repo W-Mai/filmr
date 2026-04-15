@@ -57,6 +57,16 @@ pub struct SimulationConfig {
     pub saturation: f32,
     /// Light leak simulation configuration.
     pub light_leak: LightLeakConfig,
+    /// Motion blur amount (0.0 = off, 1.0 = default hand shake).
+    #[serde(default = "default_motion_blur")]
+    pub motion_blur_amount: f32,
+    /// Motion blur random seed (same seed = same trajectory).
+    #[serde(default)]
+    pub motion_blur_seed: u64,
+}
+
+fn default_motion_blur() -> f32 {
+    1.0
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -86,6 +96,8 @@ impl Default for SimulationConfig {
             warmth: 0.0,
             saturation: 1.0,
             light_leak: LightLeakConfig::default(),
+            motion_blur_amount: 1.0,
+            motion_blur_seed: 42,
         }
     }
 }

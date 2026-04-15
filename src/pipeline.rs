@@ -60,88 +60,20 @@ pub fn create_linear_image(input: &RgbImage) -> ImageBuffer<Rgb<f32>, Vec<f32>> 
 /// Applied before DevelopStage so bright areas naturally produce stronger trails.
 pub struct MicroMotionStage;
 
-struct ShakeTrajectory {
-    points: Vec<(f32, f32, f32)>, // (x_px, y_px, dwell_weight)
-}
-
-impl ShakeTrajectory {
-    fn generate(amplitude_px: f32, n_samples: usize) -> Self {
-        let exposure_time = 1.0 / 60.0f32;
-        let dt = exposure_time / n_samples as f32;
-        let tau = std::f32::consts::TAU;
-
-        let freq_x = 8.0 + rand::random::<f32>() * 4.0;
-        let freq_y = 8.0 + rand::random::<f32>() * 4.0;
-        let phase_x: f32 = rand::random::<f32>() * tau;
-        let phase_y: f32 = rand::random::<f32>() * tau;
-        let drift_vx = (rand::random::<f32>() - 0.5) * amplitude_px * 0.1 / exposure_time;
-        let drift_vy = (rand::random::<f32>() - 0.5) * amplitude_px * 0.1 / exposure_time;
-        let ax = amplitude_px * (0.3 + rand::random::<f32>() * 0.7);
-        let ay = amplitude_px * (0.3 + rand::random::<f32>() * 0.7);
-        let phase_x2: f32 = rand::random::<f32>() * tau;
-        let phase_y2: f32 = rand::random::<f32>() * tau;
-        let phase_x3: f32 = rand::random::<f32>() * tau;
-        let phase_y3: f32 = rand::random::<f32>() * tau;
-
-        let mut points = Vec::with_capacity(n_samples);
-
-        for i in 0..n_samples {
-            let t = i as f32 * dt;
-            let x = ax * (tau * freq_x * t + phase_x).sin()
-                + ax * 0.2 * (tau * freq_x * 0.3 * t + phase_x2).sin()
-                + ax * 0.08 * (tau * freq_x * 2.2 * t + phase_x3).sin()
-                + drift_vx * t;
-            let y = ay * (tau * freq_y * t + phase_y).sin()
-                + ay * 0.2 * (tau * freq_y * 0.3 * t + phase_y2).sin()
-                + ay * 0.08 * (tau * freq_y * 2.2 * t + phase_y3).sin()
-                + drift_vy * t;
-
-            let frac = i as f32 / n_samples as f32;
-            let ramp = 0.1;
-            let curtain = if frac < ramp {
-                frac / ramp
-            } else if frac > 1.0 - ramp {
-                (1.0 - frac) / ramp
-            } else {
-                1.0
-            };
-            let dwell = curtain;
-            points.push((x, y, dwell));
-        }
-
-        let total: f32 = points.iter().map(|p| p.2).sum();
-        if total > 0.0 {
-            for p in points.iter_mut() {
-                p.2 /= total;
-            }
-        }
-
-        // Center trajectory: weighted average position → origin
-        // This prevents the image from shifting, only blur remains
-        let mean_x: f32 = points.iter().map(|p| p.0 * p.2).sum();
-        let mean_y: f32 = points.iter().map(|p| p.1 * p.2).sum();
-        for p in points.iter_mut() {
-            p.0 -= mean_x;
-            p.1 -= mean_y;
-        }
-
-        Self { points }
-    }
-}
-
 impl PipelineStage for MicroMotionStage {
     #[instrument(skip(self, image, _context))]
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, _context: &PipelineContext) {
         let width = image.width() as usize;
         let height = image.height() as usize;
+        let amount = _context.config.motion_blur_amount;
 
-        // Amplitude: ~15px at 4000px width
-        let amplitude = (width as f32 / 4000.0) * 15.0;
+        let amplitude = (width as f32 / 4000.0) * 15.0 * amount;
         if amplitude < 0.3 {
             return;
         }
 
-        let traj = ShakeTrajectory::generate(amplitude, 64);
+        let seed = _context.config.motion_blur_seed;
+        let traj = crate::shake::ShakeTrajectory::generate(amplitude, 64, seed);
 
         info!(
             "Applying micro motion ({} samples, amp {:.1}px)",

@@ -75,6 +75,8 @@ pub struct FilmrApp {
     pub grain_sigma: f32,
     pub grain_roughness: f32,
     pub grain_blur_radius: f32,
+    pub motion_blur_amount: f32,
+    pub motion_blur_seed: u64,
 
     // Light Leak Parameters
     pub light_leak_config: LightLeakConfig,
@@ -205,6 +207,8 @@ impl FilmrApp {
             grain_sigma: 0.01,
             grain_roughness: 0.5,
             grain_blur_radius: 0.5,
+            motion_blur_amount: 1.0,
+            motion_blur_seed: 42,
 
             light_leak_config: LightLeakConfig::default(),
 

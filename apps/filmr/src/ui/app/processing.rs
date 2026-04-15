@@ -56,6 +56,8 @@ impl FilmrApp {
                 warmth: self.warmth,
                 saturation: self.saturation,
                 light_leak: self.light_leak_config.clone(),
+                motion_blur_amount: self.motion_blur_amount,
+                motion_blur_seed: self.motion_blur_seed,
             };
 
             // Send request to worker
@@ -91,6 +93,8 @@ impl FilmrApp {
                 warmth: self.warmth,
                 saturation: self.saturation,
                 light_leak: LightLeakConfig::default(),
+                motion_blur_amount: 0.0,
+                motion_blur_seed: 0,
             };
             for stock in &self.stocks {
                 let mut thumb_stock = stock.as_ref().clone();
@@ -148,6 +152,8 @@ impl FilmrApp {
                 warmth: self.warmth,
                 saturation: self.saturation,
                 light_leak: self.light_leak_config.clone(),
+                motion_blur_amount: self.motion_blur_amount,
+                motion_blur_seed: self.motion_blur_seed,
             };
 
             let request = ProcessRequest {
