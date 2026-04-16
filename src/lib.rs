@@ -22,7 +22,7 @@ pub use film::{FilmStock, FilmStyle};
 pub use grain::GrainModel;
 pub use metrics::FilmMetrics;
 pub use processor::{
-    estimate_exposure_time, process_image, process_image_async, OutputMode, SimulationConfig,
-    SimulationMode, WhiteBalanceMode,
+    estimate_exposure_time, process_image, process_image_async, process_image_with_depth,
+    OutputMode, SimulationConfig, SimulationMode, WhiteBalanceMode,
 };
 pub use spectral::Spectrum;

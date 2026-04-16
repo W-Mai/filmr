@@ -58,7 +58,7 @@ impl FilmrApp {
                 light_leak: self.light_leak_config.clone(),
                 motion_blur_amount: self.motion_blur_amount,
                 motion_blur_seed: self.motion_blur_seed,
-                object_motion_amount: 0.0,
+                object_motion_amount: self.object_motion_amount,
             };
 
             // Send request to worker
@@ -156,7 +156,7 @@ impl FilmrApp {
                 light_leak: self.light_leak_config.clone(),
                 motion_blur_amount: self.motion_blur_amount,
                 motion_blur_seed: self.motion_blur_seed,
-                object_motion_amount: 0.0,
+                object_motion_amount: self.object_motion_amount,
             };
 
             let request = ProcessRequest {

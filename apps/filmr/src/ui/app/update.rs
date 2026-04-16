@@ -87,6 +87,25 @@ impl App for FilmrApp {
                     // Load preset values to ensure grain and other parameters are correct
                     self.load_preset_values();
 
+                    // Run depth estimation in background
+                    if filmr::depth::is_model_available() {
+                        if let Some(img) = &self.original_image {
+                            let rgb = img.to_rgb8();
+                            let model_path = filmr::depth::default_model_path()
+                                .to_string_lossy()
+                                .to_string();
+                            // Run in background thread to avoid blocking UI
+                            let depth_result = std::thread::spawn(move || {
+                                filmr::depth::estimate_with_model(&rgb, &model_path).ok()
+                            });
+                            // Store handle; we'll poll it later or just block briefly
+                            if let Ok(Some(dm)) = depth_result.join() {
+                                self.depth_map = Some(dm);
+                                self.status_msg += " | Depth map ready";
+                            }
+                        }
+                    }
+
                     if self.mode == AppMode::Develop {
                         // Accurate mode: norm handles auto-exposure, t=1.0 is neutral
                         self.exposure_time = 1.0;

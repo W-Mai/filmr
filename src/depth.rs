@@ -101,8 +101,6 @@ pub fn estimate_with_model(
     let outputs = session.run(ort::inputs!["pixel_values" => input_tensor])?;
 
     let depth_array = outputs[0].try_extract_array::<f32>()?;
-    let shape = depth_array.shape();
-    let depth_w = shape[shape.len() - 1];
     let raw: Vec<f32> = depth_array.iter().cloned().collect();
 
     // Normalize to [0, 1]

@@ -249,13 +249,21 @@ pub fn estimate_exposure_time_for_mode(
 /// Takes an input image and film parameters, returns the simulated image.
 #[instrument(skip(input, film, config))]
 pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConfig) -> RgbImage {
+    process_image_with_depth(input, film, config, None)
+}
+
+pub fn process_image_with_depth(
+    input: &RgbImage,
+    film: &FilmStock,
+    config: &SimulationConfig,
+    depth_map: Option<&crate::depth::DepthMap>,
+) -> RgbImage {
     info!("Starting film simulation processing");
 
-    // Pipeline initialization
     let context = PipelineContext {
         film,
         config,
-        depth_map: None,
+        depth_map,
     };
 
     #[cfg(feature = "compute-gpu")]

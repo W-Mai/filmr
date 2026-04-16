@@ -21,7 +21,7 @@ eula = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-filmr = { version = "0.8.1", path = "../../", features = ["compute-gpu"] }
+filmr = { version = "0.8.1", path = "../../", features = ["compute-gpu", "depth"] }
 image = "0.25"
 kamadak-exif = "0.5"
 little_exif = "0.6"
