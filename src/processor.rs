@@ -4,7 +4,7 @@ use crate::light_leak::{LightLeakConfig, LightLeakStage};
 use crate::physics;
 use crate::pipeline::{
     create_linear_image, create_output_image, ChromaticAberrationStage, DevelopStage, GrainStage,
-    HalationStage, MicroMotionStage, MtfStage, PipelineContext, PipelineStage,
+    HalationStage, MicroMotionStage, MtfStage, ObjectMotionStage, PipelineContext, PipelineStage,
 };
 use crate::spectral_engine;
 use image::RgbImage;
@@ -63,6 +63,9 @@ pub struct SimulationConfig {
     /// Motion blur random seed (same seed = same trajectory).
     #[serde(default)]
     pub motion_blur_seed: u64,
+    /// Object motion amount (0.0 = off, 1.0 = default depth-based motion).
+    #[serde(default)]
+    pub object_motion_amount: f32,
 }
 
 fn default_motion_blur() -> f32 {
@@ -98,6 +101,7 @@ impl Default for SimulationConfig {
             light_leak: LightLeakConfig::default(),
             motion_blur_amount: 1.0,
             motion_blur_seed: 42,
+            object_motion_amount: 0.0,
         }
     }
 }
@@ -248,7 +252,11 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     info!("Starting film simulation processing");
 
     // Pipeline initialization
-    let context = PipelineContext { film, config };
+    let context = PipelineContext {
+        film,
+        config,
+        depth_map: None,
+    };
 
     #[cfg(feature = "compute-gpu")]
     let gpu_result = if config.use_gpu {
@@ -272,6 +280,7 @@ pub fn process_image(input: &RgbImage, film: &FilmStock, config: &SimulationConf
     let stages: Vec<Box<dyn PipelineStage>> = match config.simulation_mode {
         SimulationMode::Fast => vec![
             Box::new(MicroMotionStage),
+            Box::new(ObjectMotionStage),
             Box::new(MtfStage),
             Box::new(ChromaticAberrationStage),
             Box::new(DevelopStage),
@@ -666,7 +675,11 @@ pub async fn process_image_async(
     config: &SimulationConfig,
 ) -> RgbImage {
     info!("Starting film simulation processing (Async)");
-    let context = PipelineContext { film, config };
+    let context = PipelineContext {
+        film,
+        config,
+        depth_map: None,
+    };
 
     #[cfg(feature = "compute-gpu")]
     let gpu_result = if config.use_gpu {

@@ -137,7 +137,11 @@ where
         processing_buffer.put_pixel(x, y, exp_px);
     }
 
-    let context = PipelineContext { film, config };
+    let context = PipelineContext {
+        film,
+        config,
+        depth_map: None,
+    };
 
     // Standard Pipeline Stages (reused where possible)
     let stages: Vec<Box<dyn PipelineStage>> = vec![

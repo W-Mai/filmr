@@ -12,6 +12,7 @@ use wide::f32x4;
 pub struct PipelineContext<'a> {
     pub film: &'a FilmStock,
     pub config: &'a SimulationConfig,
+    pub depth_map: Option<&'a crate::depth::DepthMap>,
 }
 
 /// A stage in the image processing pipeline.
@@ -110,6 +111,96 @@ impl PipelineStage for MicroMotionStage {
             pixel[0] = r;
             pixel[1] = g;
             pixel[2] = b;
+        });
+    }
+}
+
+/// # Object Motion Stage
+///
+/// Simulates micro-movement of scene objects (people walking, leaves swaying).
+/// Uses depth map to modulate displacement: near objects move more (1/depth).
+/// Applied in linear light space so bright areas produce stronger trails.
+pub struct ObjectMotionStage;
+
+impl PipelineStage for ObjectMotionStage {
+    #[instrument(skip(self, image, context))]
+    fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        let depth_map = match context.depth_map {
+            Some(dm) => dm,
+            None => return, // No depth map, skip
+        };
+
+        let amount = context.config.object_motion_amount;
+        if amount <= 0.0 {
+            return;
+        }
+
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+
+        info!("Applying object motion (amount={:.2})", amount);
+
+        // Generate low-frequency noise field for motion direction
+        // Same seed as motion blur for consistency
+        let seed = context.config.motion_blur_seed;
+        let mut rng = {
+            use rand::SeedableRng;
+            rand::rngs::StdRng::seed_from_u64(seed.wrapping_add(12345))
+        };
+
+        // Generate coarse direction field (32x32 grid, interpolated)
+        let grid = 32usize;
+        let mut dir_x = vec![0.0f32; grid * grid];
+        let mut dir_y = vec![0.0f32; grid * grid];
+        use rand::Rng;
+        for i in 0..grid * grid {
+            let angle: f32 = rng.gen::<f32>() * std::f32::consts::TAU;
+            dir_x[i] = angle.cos();
+            dir_y[i] = angle.sin();
+        }
+
+        // Max displacement in pixels (scales with image size)
+        let max_disp = (width as f32 / 4000.0) * 8.0 * amount;
+
+        let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
+
+        image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+            let px = i % width;
+            let py = i / width;
+
+            // Get depth (0=near, 1=far)
+            let depth = depth_map.get(px as u32, py as u32);
+            // Displacement inversely proportional to depth
+            // Near (depth≈0): full displacement. Far (depth≈1): minimal.
+            let depth_factor = 1.0 / (depth * 4.0 + 0.25); // range ~0.25 to 4.0
+
+            // Sample direction from coarse grid (bilinear)
+            let gx = px as f32 / width as f32 * (grid - 1) as f32;
+            let gy = py as f32 / height as f32 * (grid - 1) as f32;
+            let gix = (gx as usize).min(grid - 2);
+            let giy = (gy as usize).min(grid - 2);
+            let gfx = gx - gix as f32;
+            let gfy = gy - giy as f32;
+            let dx = dir_x[giy * grid + gix] * (1.0 - gfx) * (1.0 - gfy)
+                + dir_x[giy * grid + gix + 1] * gfx * (1.0 - gfy)
+                + dir_x[(giy + 1) * grid + gix] * (1.0 - gfx) * gfy
+                + dir_x[(giy + 1) * grid + gix + 1] * gfx * gfy;
+            let dy = dir_y[giy * grid + gix] * (1.0 - gfx) * (1.0 - gfy)
+                + dir_y[giy * grid + gix + 1] * gfx * (1.0 - gfy)
+                + dir_y[(giy + 1) * grid + gix] * (1.0 - gfx) * gfy
+                + dir_y[(giy + 1) * grid + gix + 1] * gfx * gfy;
+
+            let disp = max_disp * depth_factor;
+            let sx = (px as f32 - dx * disp).round() as i32;
+            let sy = (py as f32 - dy * disp).round() as i32;
+
+            if sx >= 0 && sx < width as i32 && sy >= 0 && sy < height as i32 {
+                let si = (sy as usize * width + sx as usize) * 3;
+                // Blend: 50% original + 50% displaced (multi-exposure feel)
+                pixel[0] = pixel[0] * 0.5 + src[si] * 0.5;
+                pixel[1] = pixel[1] * 0.5 + src[si + 1] * 0.5;
+                pixel[2] = pixel[2] * 0.5 + src[si + 2] * 0.5;
+            }
         });
     }
 }
