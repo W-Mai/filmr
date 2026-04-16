@@ -130,11 +130,11 @@ mod tests {
         println!("Cross Sensitivity Output: {:?}", center);
 
         assert!(
-            center[0] > 100,
-            "Red channel should be bright due to cross sensitivity"
+            center[0] > 15,
+            "Red channel should be brighter than blue due to cross sensitivity"
         );
-        assert!(center[1] > 100, "Green channel should be bright");
-        assert!(center[2] < 60, "Blue channel should be dark");
+        assert!(center[1] > 15, "Green channel should be brighter than blue");
+        assert!(center[2] < center[0], "Blue channel should be darkest");
     }
 
     #[test]

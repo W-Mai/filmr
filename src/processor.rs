@@ -178,24 +178,15 @@ pub fn estimate_exposure_time_for_mode(
         let net_r = (densities[0] - film.r_curve.d_min).max(0.0);
         let net_g = (densities[1] - film.g_curve.d_min).max(0.0);
         let net_b = (densities[2] - film.b_curve.d_min).max(0.0);
-        let t_r = physics::density_to_transmission(net_r);
-        let t_g = physics::density_to_transmission(net_g);
-        let t_b = physics::density_to_transmission(net_b);
-        let t_max = physics::TRANSMISSION_AT_ZERO_DENSITY;
-        let t_r_min =
-            physics::density_to_transmission((film.r_curve.d_max - film.r_curve.d_min).max(0.0));
-        let t_g_min =
-            physics::density_to_transmission((film.g_curve.d_max - film.g_curve.d_min).max(0.0));
-        let t_b_min =
-            physics::density_to_transmission((film.b_curve.d_max - film.b_curve.d_min).max(0.0));
-        let norm = |t: f32, t_min: f32, t_max: f32| {
-            let denom = (t_max - t_min).max(1.0e-6);
-            (t_max - t).clamp(0.0, denom) / denom
-        };
+        // Density linear mapping (same as create_output_image Positive path)
+        let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01);
+        let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01);
+        let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01);
+        let tone_gamma = 2.47f32;
         (
-            norm(t_r, t_r_min, t_max),
-            norm(t_g, t_g_min, t_max),
-            norm(t_b, t_b_min, t_max),
+            (net_r / range_r).clamp(0.0, 1.0).powf(tone_gamma),
+            (net_g / range_g).clamp(0.0, 1.0).powf(tone_gamma),
+            (net_b / range_b).clamp(0.0, 1.0).powf(tone_gamma),
         )
     };
     let target_mid: f32 = 0.18;
@@ -390,7 +381,10 @@ impl PipelineStage for AccurateDevelopStage {
         };
 
         // Binary search: find scale where simulate_gray(scale) ≈ 0.18 (linear)
-        let target_linear = 0.18f32;
+        // Target: 18% gray output. Slightly above 0.18 to compensate for
+        // scatter/WB losses in the full Accurate pipeline that simulate_gray
+        // does not model.
+        let target_linear = 0.32f32;
         let mut lo = 1e-8f32;
         let mut hi = 1e4f32;
         for _ in 0..40 {

@@ -458,15 +458,10 @@ impl FilmStock {
         let d_g = self.g_curve.map_smooth(log_e[1]);
         let d_b = self.b_curve.map_smooth(log_e[2]);
 
-        // Apply Shoulder Softening
-        // This simulates the space charge limit at high densities
-        let d_r_soft = physics::shoulder_softening(d_r, self.r_curve.shoulder_point);
-        let d_g_soft = physics::shoulder_softening(d_g, self.g_curve.shoulder_point);
-        let d_b_soft = physics::shoulder_softening(d_b, self.b_curve.shoulder_point);
-
-        let net_r = (d_r_soft - self.r_curve.d_min).max(0.0);
-        let net_g = (d_g_soft - self.g_curve.d_min).max(0.0);
-        let net_b = (d_b_soft - self.b_curve.d_min).max(0.0);
+        // Sigmoid already provides natural shoulder; skip additional softening
+        let net_r = (d_r - self.r_curve.d_min).max(0.0);
+        let net_g = (d_g - self.g_curve.d_min).max(0.0);
+        let net_b = (d_b - self.b_curve.d_min).max(0.0);
 
         // 2. Apply Color Matrix (Simulates Section 5 - Layer Coupling)
         // [Dr']   [ M00 M01 M02 ] [ Dr ]

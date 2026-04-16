@@ -634,41 +634,18 @@ pub fn create_output_image(
                 )
             }
             OutputMode::Positive => {
-                let t_r = physics::apply_dye_self_absorption(
-                    net_r,
-                    physics::density_to_transmission(net_r),
-                );
-                let t_g = physics::apply_dye_self_absorption(
-                    net_g,
-                    physics::density_to_transmission(net_g),
-                );
-                let t_b = physics::apply_dye_self_absorption(
-                    net_b,
-                    physics::density_to_transmission(net_b),
-                );
-                let t_max = physics::TRANSMISSION_AT_ZERO_DENSITY;
-                let t_r_min = physics::density_to_transmission(
-                    (film.r_curve.d_max - film.r_curve.d_min).max(0.0),
-                );
-                let t_g_min = physics::density_to_transmission(
-                    (film.g_curve.d_max - film.g_curve.d_min).max(0.0),
-                );
-                let t_b_min = physics::density_to_transmission(
-                    (film.b_curve.d_max - film.b_curve.d_min).max(0.0),
-                );
-                let norm = |t: f32, t_min: f32, t_max: f32| {
-                    let denom = (t_max - t_min).max(1e-6);
-                    let n = (t_max - t).clamp(0.0, denom) / denom;
-                    let paper_gamma = match film.film_type {
-                        FilmType::ColorSlide => 1.5,
-                        _ => 2.0,
-                    };
-                    n.powf(paper_gamma)
+                // Density linear mapping + tone gamma (scan model)
+                let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01);
+                let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01);
+                let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01);
+                let tone_gamma = match film.film_type {
+                    FilmType::ColorSlide => 1.5,
+                    _ => 2.47, // ln(0.18)/ln(0.5): maps density midpoint to 18% gray
                 };
                 (
-                    norm(t_r, t_r_min, t_max),
-                    norm(t_g, t_g_min, t_max),
-                    norm(t_b, t_b_min, t_max),
+                    (net_r / range_r).clamp(0.0, 1.0).powf(tone_gamma),
+                    (net_g / range_g).clamp(0.0, 1.0).powf(tone_gamma),
+                    (net_b / range_b).clamp(0.0, 1.0).powf(tone_gamma),
                 )
             }
         }
