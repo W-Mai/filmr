@@ -373,27 +373,13 @@ impl PipelineStage for AccurateDevelopStage {
             let net_r = (d[0] - film.r_curve.d_min).max(0.0);
             let net_g = (d[1] - film.g_curve.d_min).max(0.0);
             let net_b = (d[2] - film.b_curve.d_min).max(0.0);
-            let t_r = physics::density_to_transmission(net_r);
-            let t_g = physics::density_to_transmission(net_g);
-            let t_b = physics::density_to_transmission(net_b);
-            let t_max = 1.0f32;
-            let t_r_min = physics::density_to_transmission(
-                (film.r_curve.d_max - film.r_curve.d_min).max(0.0),
-            );
-            let t_g_min = physics::density_to_transmission(
-                (film.g_curve.d_max - film.g_curve.d_min).max(0.0),
-            );
-            let t_b_min = physics::density_to_transmission(
-                (film.b_curve.d_max - film.b_curve.d_min).max(0.0),
-            );
-            let norm_t = |t: f32, t_min: f32| {
-                let denom = (t_max - t_min).max(1e-6);
-                let n = (t_max - t).clamp(0.0, denom) / denom;
-                n.powf(2.0) // paper_gamma for negative
-            };
-            let r = norm_t(t_r, t_r_min);
-            let g = norm_t(t_g, t_g_min);
-            let b = norm_t(t_b, t_b_min);
+            let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01);
+            let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01);
+            let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01);
+            let tone_gamma = 2.47f32;
+            let r = (net_r / range_r).clamp(0.0, 1.0).powf(tone_gamma);
+            let g = (net_g / range_g).clamp(0.0, 1.0).powf(tone_gamma);
+            let b = (net_b / range_b).clamp(0.0, 1.0).powf(tone_gamma);
             0.2126 * r + 0.7152 * g + 0.0722 * b
         };
 
@@ -401,7 +387,7 @@ impl PipelineStage for AccurateDevelopStage {
         // Target: 18% gray output. Slightly above 0.18 to compensate for
         // scatter/WB losses in the full Accurate pipeline that simulate_gray
         // does not model.
-        let target_linear = 0.32f32;
+        let target_linear = 0.18f32;
         let mut lo = 1e-8f32;
         let mut hi = 1e4f32;
         for _ in 0..40 {
