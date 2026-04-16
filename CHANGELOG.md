@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-04-17
+
+### ✨ Features
+
+- Depth-aware object motion: monocular depth estimation (Depth Anything V2 Small) drives per-object motion blur.
+  - Connected region segmentation by depth similarity — each object moves coherently.
+  - Near objects get more motion blur, far objects stay sharp.
+  - UI: Object Motion slider + depth map preview.
+- `process_image_with_depth()` API for passing depth maps through the pipeline.
+
+### 🐛 Fixes
+
+- Fix exposure calibration: simulate_gray now uses same output model as create_output_image (density linear + tone_gamma=2.47).
+- Fix ObjectMotionStage missing from Accurate pipeline.
+
 ## [0.8.1] - 2026-04-16
 
 ### 🐛 Fixes
