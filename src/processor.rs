@@ -298,6 +298,7 @@ pub fn process_image_with_depth(
             AccurateDevelopStage.process(&mut image_buffer, &context);
             vec![
                 Box::new(MicroMotionStage),
+                Box::new(ObjectMotionStage),
                 Box::new(MtfStage),
                 Box::new(ChromaticAberrationStage),
                 Box::new(GrainStage),

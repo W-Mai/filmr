@@ -225,10 +225,34 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
         {
             *changed = true;
         }
-        // Depth map status
+        // Depth map preview
         if app.object_motion_amount > 0.0 {
-            if app.depth_map.is_some() {
+            if let Some(ref dm) = app.depth_map {
                 ui.label("✅ Depth map ready");
+                // Render depth map as small preview
+                let preview_w = 160u32;
+                let preview_h = (preview_w as f32 * dm.height as f32 / dm.width as f32) as u32;
+                let size = egui::vec2(preview_w as f32, preview_h as f32);
+                let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+                let painter = ui.painter_at(rect);
+                // Sample depth map at preview resolution
+                for py in (0..preview_h).step_by(2) {
+                    for px in (0..preview_w).step_by(2) {
+                        let sx = (px as f32 / preview_w as f32 * dm.width as f32) as u32;
+                        let sy = (py as f32 / preview_h as f32 * dm.height as f32) as u32;
+                        let d = dm.get(sx, sy);
+                        // Near=bright(warm), Far=dark(cool)
+                        let r = ((1.0 - d) * 255.0) as u8;
+                        let g = ((1.0 - d) * 200.0) as u8;
+                        let b = ((1.0 - d * 0.5) * 255.0) as u8;
+                        let pos = egui::pos2(rect.left() + px as f32, rect.top() + py as f32);
+                        painter.rect_filled(
+                            egui::Rect::from_min_size(pos, egui::vec2(2.0, 2.0)),
+                            0.0,
+                            egui::Color32::from_rgb(r, g, b),
+                        );
+                    }
+                }
             } else {
                 ui.label("⚠ No depth map (model not found at ~/.filmr/models/)");
             }

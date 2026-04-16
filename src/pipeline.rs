@@ -160,7 +160,7 @@ impl PipelineStage for ObjectMotionStage {
         }
 
         // Max displacement in pixels (scales with image size)
-        let max_disp = (width as f32 / 4000.0) * 8.0 * amount;
+        let max_disp = (width as f32 / 2000.0) * 15.0 * amount;
 
         let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
 
@@ -191,15 +191,27 @@ impl PipelineStage for ObjectMotionStage {
                 + dir_y[(giy + 1) * grid + gix + 1] * gfx * gfy;
 
             let disp = max_disp * depth_factor;
-            let sx = (px as f32 - dx * disp).round() as i32;
-            let sy = (py as f32 - dy * disp).round() as i32;
 
-            if sx >= 0 && sx < width as i32 && sy >= 0 && sy < height as i32 {
-                let si = (sy as usize * width + sx as usize) * 3;
-                // Blend: 50% original + 50% displaced (multi-exposure feel)
-                pixel[0] = pixel[0] * 0.5 + src[si] * 0.5;
-                pixel[1] = pixel[1] * 0.5 + src[si + 1] * 0.5;
-                pixel[2] = pixel[2] * 0.5 + src[si + 2] * 0.5;
+            // Multi-sample along motion direction (like multi-exposure)
+            let n_samples = 8;
+            let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
+            let mut w_sum = 0.0f32;
+            for s in 0..n_samples {
+                let t = s as f32 / (n_samples - 1).max(1) as f32 - 0.5; // -0.5 to 0.5
+                let sx = (px as f32 + dx * disp * t).round() as i32;
+                let sy = (py as f32 + dy * disp * t).round() as i32;
+                if sx >= 0 && sx < width as i32 && sy >= 0 && sy < height as i32 {
+                    let si = (sy as usize * width + sx as usize) * 3;
+                    r += src[si];
+                    g += src[si + 1];
+                    b += src[si + 2];
+                    w_sum += 1.0;
+                }
+            }
+            if w_sum > 0.0 {
+                pixel[0] = r / w_sum;
+                pixel[1] = g / w_sum;
+                pixel[2] = b / w_sum;
             }
         });
     }
