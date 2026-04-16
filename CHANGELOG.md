@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-04-16
+
+### 🐛 Fixes
+
+- Fix highlight clipping: remove redundant shoulder_softening (sigmoid H-D curve provides natural shoulder).
+- Unified output model: density linear mapping + tone gamma=2.47 for both Fast and Accurate modes.
+- Norm target raised 0.18→0.32 to compensate scatter/WB losses in Accurate pipeline.
+
+### 🔧 Improvements
+
+- Physically correct d_min per channel for C-41 color negative films (orange mask residual).
+  - Kodak: R=0.14, G=0.16, B=0.19. Fuji: R=0.13, G=0.15, B=0.17.
+  - Shadow color cast now emerges naturally from physics.
+
 ## [0.8.0] - 2026-04-15
 
 ### ✨ Features
