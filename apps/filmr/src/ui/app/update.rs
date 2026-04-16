@@ -88,6 +88,7 @@ impl App for FilmrApp {
                     self.load_preset_values();
 
                     // Run depth estimation in background
+                    #[cfg(feature = "depth")]
                     if filmr::depth::is_model_available() {
                         if let Some(img) = &self.original_image {
                             let rgb = img.to_rgb8();

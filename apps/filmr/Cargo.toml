@@ -21,7 +21,7 @@ eula = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-filmr = { version = "0.9.0", path = "../../", features = ["compute-gpu", "depth"] }
+filmr = { version = "0.9.0", path = "../../", features = ["compute-gpu"] }
 image = "0.25"
 kamadak-exif = "0.5"
 little_exif = "0.6"
@@ -68,6 +68,7 @@ default = ["cli", "ui", "compute-gpu"]
 cli = ["dep:clap"]
 ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:flume", "dep:rayon"]
 compute-gpu = []
+depth = ["filmr/depth"]
 
 [[bin]]
 name = "filmr"
