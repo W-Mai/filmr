@@ -68,6 +68,10 @@ impl FilmrApp {
                 film,
                 config,
                 is_preview: true,
+                depth_map: self
+                    .depth_map
+                    .as_ref()
+                    .map(|dm| std::sync::Arc::new(dm.clone())),
             };
 
             let _ = self.tx_req.send(request);
@@ -164,6 +168,10 @@ impl FilmrApp {
                 film,
                 config,
                 is_preview: false,
+                depth_map: self
+                    .depth_map
+                    .as_ref()
+                    .map(|dm| std::sync::Arc::new(dm.clone())),
             };
 
             let _ = self.tx_req.send(request);

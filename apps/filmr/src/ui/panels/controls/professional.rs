@@ -219,6 +219,20 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
         {
             *changed = true;
         }
+        if ui
+            .add(egui::Slider::new(&mut app.object_motion_amount, 0.0..=2.0).text("Object Motion"))
+            .changed()
+        {
+            *changed = true;
+        }
+        // Depth map status
+        if app.object_motion_amount > 0.0 {
+            if app.depth_map.is_some() {
+                ui.label("✅ Depth map ready");
+            } else {
+                ui.label("⚠ No depth map (model not found at ~/.filmr/models/)");
+            }
+        }
 
         // Trajectory preview
         if app.motion_blur_amount > 0.0 {

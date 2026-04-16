@@ -36,6 +36,7 @@ pub struct ProcessRequest {
     pub film: FilmStock,
     pub config: SimulationConfig,
     pub is_preview: bool,
+    pub depth_map: Option<Arc<filmr::depth::DepthMap>>,
 }
 
 /// Result of image processing.
@@ -68,13 +69,12 @@ pub struct LoadResult {
     pub result: Result<LoadResultData, String>,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::types::process_image_with_metrics;
-
 /// Process worker logic for native builds.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn process_worker_logic(req: ProcessRequest) -> ProcessResult {
-    let (processed, metrics) = process_image_with_metrics(&req.image, &req.film, &req.config);
+    let dm_ref = req.depth_map.as_deref();
+    let processed = filmr::process_image_with_depth(&req.image, &req.film, &req.config, dm_ref);
+    let metrics = filmr::FilmMetrics::analyze(&processed);
     ProcessResult {
         image: processed,
         metrics,
