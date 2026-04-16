@@ -127,7 +127,7 @@ impl PipelineStage for ObjectMotionStage {
     fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
         let depth_map = match context.depth_map {
             Some(dm) => dm,
-            None => return, // No depth map, skip
+            None => return,
         };
 
         let amount = context.config.object_motion_amount;
@@ -140,64 +140,122 @@ impl PipelineStage for ObjectMotionStage {
 
         info!("Applying object motion (amount={:.2})", amount);
 
-        // Generate low-frequency noise field for motion direction
-        // Same seed as motion blur for consistency
+        // Step 1: Label connected regions by depth similarity
+        // Two pixels are connected if their depth difference < threshold
+        let depth_threshold = 0.08f32; // ~8% depth difference = same object
+        let mut labels = vec![0u32; width * height];
+        let mut parent: Vec<u32> = vec![0]; // index 0 unused
+        let mut next_label = 1u32;
+
+        let find = |parent: &mut Vec<u32>, mut x: u32| -> u32 {
+            while parent[x as usize] != x {
+                parent[x as usize] = parent[parent[x as usize] as usize];
+                x = parent[x as usize];
+            }
+            x
+        };
+
+        // First pass
+        for y in 0..height {
+            for x in 0..width {
+                let idx = y * width + x;
+                let d = depth_map.data[idx.min(depth_map.data.len() - 1)];
+
+                let left = if x > 0 {
+                    let ld = depth_map.data[(idx - 1).min(depth_map.data.len() - 1)];
+                    if (d - ld).abs() < depth_threshold {
+                        Some(labels[idx - 1])
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                let up = if y > 0 {
+                    let ud = depth_map.data[(idx - width).min(depth_map.data.len() - 1)];
+                    if (d - ud).abs() < depth_threshold {
+                        Some(labels[idx - width])
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                match (left, up) {
+                    (Some(l), Some(u)) => {
+                        let rl = find(&mut parent, l);
+                        let ru = find(&mut parent, u);
+                        labels[idx] = rl.min(ru);
+                        if rl != ru {
+                            parent[rl.max(ru) as usize] = rl.min(ru);
+                        }
+                    }
+                    (Some(l), None) => labels[idx] = find(&mut parent, l),
+                    (None, Some(u)) => labels[idx] = find(&mut parent, u),
+                    (None, None) => {
+                        labels[idx] = next_label;
+                        if parent.len() <= next_label as usize {
+                            parent.resize(next_label as usize + 1, 0);
+                        }
+                        parent[next_label as usize] = next_label;
+                        next_label += 1;
+                    }
+                }
+            }
+        }
+
+        // Second pass: flatten
+        for label in labels.iter_mut() {
+            *label = find(&mut parent, *label);
+        }
+
+        // Step 2: Assign random motion direction per region
+        let max_label = labels.iter().cloned().max().unwrap_or(0) as usize;
         let seed = context.config.motion_blur_seed;
         let mut rng = {
             use rand::SeedableRng;
             rand::rngs::StdRng::seed_from_u64(seed.wrapping_add(12345))
         };
-
-        // Generate coarse direction field (32x32 grid, interpolated)
-        let grid = 32usize;
-        let mut dir_x = vec![0.0f32; grid * grid];
-        let mut dir_y = vec![0.0f32; grid * grid];
         use rand::Rng;
-        for i in 0..grid * grid {
+        let mut region_dx = vec![0.0f32; max_label + 1];
+        let mut region_dy = vec![0.0f32; max_label + 1];
+        for i in 0..=max_label {
             let angle: f32 = rng.gen::<f32>() * std::f32::consts::TAU;
-            dir_x[i] = angle.cos();
-            dir_y[i] = angle.sin();
+            region_dx[i] = angle.cos();
+            region_dy[i] = angle.sin();
         }
 
-        // Max displacement in pixels (scales with image size)
-        let max_disp = (width as f32 / 2000.0) * 15.0 * amount;
-
+        // Step 3: Apply depth-modulated multi-sample blur per region
+        let max_disp = (width as f32 / 4000.0) * 4.0 * amount;
         let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
 
         image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
             let px = i % width;
             let py = i / width;
 
-            // Get depth (0=near, 1=far)
             let depth = depth_map.get(px as u32, py as u32);
-            // Displacement inversely proportional to depth
-            // Near (depth≈0): full displacement. Far (depth≈1): minimal.
-            let depth_factor = 1.0 / (depth * 4.0 + 0.25); // range ~0.25 to 4.0
+            let depth_factor = 1.0 / (depth * 4.0 + 0.25);
 
-            // Sample direction from coarse grid (bilinear)
-            let gx = px as f32 / width as f32 * (grid - 1) as f32;
-            let gy = py as f32 / height as f32 * (grid - 1) as f32;
-            let gix = (gx as usize).min(grid - 2);
-            let giy = (gy as usize).min(grid - 2);
-            let gfx = gx - gix as f32;
-            let gfy = gy - giy as f32;
-            let dx = dir_x[giy * grid + gix] * (1.0 - gfx) * (1.0 - gfy)
-                + dir_x[giy * grid + gix + 1] * gfx * (1.0 - gfy)
-                + dir_x[(giy + 1) * grid + gix] * (1.0 - gfx) * gfy
-                + dir_x[(giy + 1) * grid + gix + 1] * gfx * gfy;
-            let dy = dir_y[giy * grid + gix] * (1.0 - gfx) * (1.0 - gfy)
-                + dir_y[giy * grid + gix + 1] * gfx * (1.0 - gfy)
-                + dir_y[(giy + 1) * grid + gix] * (1.0 - gfx) * gfy
-                + dir_y[(giy + 1) * grid + gix + 1] * gfx * gfy;
+            let label = labels[i] as usize;
+            let dx = if label < region_dx.len() {
+                region_dx[label]
+            } else {
+                0.0
+            };
+            let dy = if label < region_dy.len() {
+                region_dy[label]
+            } else {
+                0.0
+            };
 
             let disp = max_disp * depth_factor;
 
-            // Multi-sample along motion direction (like multi-exposure)
             let n_samples = 8;
             let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
             let mut w_sum = 0.0f32;
             for s in 0..n_samples {
-                let t = s as f32 / (n_samples - 1).max(1) as f32 - 0.5; // -0.5 to 0.5
+                let t = s as f32 / (n_samples - 1).max(1) as f32 - 0.5;
                 let sx = (px as f32 + dx * disp * t).round() as i32;
                 let sy = (py as f32 + dy * disp * t).round() as i32;
                 if sx >= 0 && sx < width as i32 && sy >= 0 && sy < height as i32 {
