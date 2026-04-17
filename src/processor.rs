@@ -5,7 +5,7 @@ use crate::physics;
 use crate::pipeline::{
     create_linear_image, create_output_image, ChromaticAberrationStage, DepthOfFieldStage,
     DevelopStage, GrainStage, HalationStage, MicroMotionStage, MtfStage, ObjectMotionStage,
-    PipelineContext, PipelineStage,
+    PipelineContext, PipelineStage, RotationalBlurStage,
 };
 use crate::spectral_engine;
 use image::RgbImage;
@@ -76,6 +76,9 @@ pub struct SimulationConfig {
     /// Depth of field focus point (0.0 = nearest, 1.0 = farthest).
     #[serde(default = "default_dof_focus")]
     pub dof_focus: f32,
+    /// Rotational blur amount (0.0 = off, simulates camera rotation).
+    #[serde(default)]
+    pub rotational_blur_amount: f32,
 }
 
 fn default_motion_blur() -> f32 {
@@ -115,6 +118,7 @@ impl Default for SimulationConfig {
             auto_levels: false,
             dof_amount: 0.0,
             dof_focus: 0.5,
+            rotational_blur_amount: 0.0,
         }
     }
 }
@@ -307,6 +311,7 @@ pub fn process_image_with_depth(
             Box::new(MicroMotionStage),
             Box::new(ObjectMotionStage),
             Box::new(DepthOfFieldStage),
+            Box::new(RotationalBlurStage),
             Box::new(MtfStage),
             Box::new(ChromaticAberrationStage),
             Box::new(DevelopStage),
@@ -318,6 +323,7 @@ pub fn process_image_with_depth(
                 Box::new(MicroMotionStage),
                 Box::new(ObjectMotionStage),
                 Box::new(DepthOfFieldStage),
+                Box::new(RotationalBlurStage),
                 Box::new(MtfStage),
                 Box::new(ChromaticAberrationStage),
             ];
@@ -751,6 +757,7 @@ pub async fn process_image_async(
         Box::new(HalationStage),
         Box::new(MicroMotionStage),
         Box::new(DepthOfFieldStage),
+        Box::new(RotationalBlurStage),
         Box::new(MtfStage),
         Box::new(ChromaticAberrationStage),
         Box::new(DevelopStage),

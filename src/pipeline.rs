@@ -534,6 +534,71 @@ impl PipelineStage for DepthOfFieldStage {
     }
 }
 
+/// # Rotational Blur Stage
+///
+/// Simulates camera rotation around the optical axis.
+/// Center stays sharp, edges blur along tangent direction.
+/// Blur amount increases with distance from center.
+pub struct RotationalBlurStage;
+
+impl PipelineStage for RotationalBlurStage {
+    #[instrument(skip(self, image, context))]
+    fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        let amount = context.config.rotational_blur_amount;
+        if amount <= 0.0 {
+            return;
+        }
+
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+        let cx = width as f32 / 2.0;
+        let cy = height as f32 / 2.0;
+        // Max rotation angle in radians (amount=1.0 → ~0.5°)
+        let max_angle = amount * 0.03;
+        let n_samples = 32;
+
+        info!("Applying rotational blur (amount={:.2})", amount);
+
+        let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
+
+        image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+            let px = (i % width) as f32;
+            let py = (i / width) as f32;
+            let dx = px - cx;
+            let dy = py - cy;
+            let dist = (dx * dx + dy * dy).sqrt();
+
+            // Blur proportional to distance from center
+            let angle_range = max_angle * (dist / cx.max(cy));
+
+            let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
+            for s in 0..n_samples {
+                let t = s as f32 / (n_samples - 1).max(1) as f32 - 0.5;
+                let a = angle_range * t;
+                let cos_a = a.cos();
+                let sin_a = a.sin();
+                let sx = (cx + dx * cos_a - dy * sin_a).round() as i32;
+                let sy = (cy + dx * sin_a + dy * cos_a).round() as i32;
+                if sx >= 0 && sx < width as i32 && sy >= 0 && sy < height as i32 {
+                    let si = (sy as usize * width + sx as usize) * 3;
+                    r += src[si];
+                    g += src[si + 1];
+                    b += src[si + 2];
+                } else {
+                    let si = i * 3;
+                    r += src[si];
+                    g += src[si + 1];
+                    b += src[si + 2];
+                }
+            }
+            let inv = 1.0 / n_samples as f32;
+            pixel[0] = r * inv;
+            pixel[1] = g * inv;
+            pixel[2] = b * inv;
+        });
+    }
+}
+
 /// # MTF (Modulation Transfer Function) Stage
 ///
 /// Simulates optical softness based on the film's resolving power (lp/mm).

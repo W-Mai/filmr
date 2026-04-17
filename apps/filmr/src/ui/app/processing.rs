@@ -62,6 +62,7 @@ impl FilmrApp {
                 auto_levels: self.auto_levels,
                 dof_amount: self.dof_amount,
                 dof_focus: self.dof_focus,
+                rotational_blur_amount: self.rotational_blur_amount,
             };
 
             // Send request to worker
@@ -107,6 +108,7 @@ impl FilmrApp {
                 auto_levels: false,
                 dof_amount: 0.0,
                 dof_focus: 0.5,
+                rotational_blur_amount: 0.0,
             };
             for stock in &self.stocks {
                 let mut thumb_stock = stock.as_ref().clone();
@@ -170,6 +172,7 @@ impl FilmrApp {
                 auto_levels: self.auto_levels,
                 dof_amount: self.dof_amount,
                 dof_focus: self.dof_focus,
+                rotational_blur_amount: self.rotational_blur_amount,
             };
 
             let request = ProcessRequest {

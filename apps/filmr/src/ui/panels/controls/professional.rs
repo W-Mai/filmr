@@ -238,6 +238,15 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
         {
             *changed = true;
         }
+        if ui
+            .add(
+                egui::Slider::new(&mut app.rotational_blur_amount, 0.0..=2.0)
+                    .text("Rotational Blur"),
+            )
+            .changed()
+        {
+            *changed = true;
+        }
         // Depth map preview
         if app.object_motion_amount > 0.0 {
             if let Some(ref dm) = app.depth_map {

@@ -81,6 +81,7 @@ pub struct FilmrApp {
     pub auto_levels: bool,
     pub dof_amount: f32,
     pub dof_focus: f32,
+    pub rotational_blur_amount: f32,
     pub depth_map: Option<filmr::depth::DepthMap>,
 
     // Light Leak Parameters
@@ -218,6 +219,7 @@ impl FilmrApp {
             auto_levels: false,
             dof_amount: 0.0,
             dof_focus: 0.5,
+            rotational_blur_amount: 0.0,
             depth_map: None,
 
             light_leak_config: LightLeakConfig::default(),
