@@ -416,6 +416,17 @@ impl FilmStock {
     /// Precompute the 3x3 spectral matrix that maps Linear RGB -> Film Layer Exposure.
     /// This avoids per-pixel full spectrum integration (~600 FLOPS -> 15 FLOPS).
     /// The matrix incorporates camera sensitivities, D65 illuminant, and film sensitivities.
+    /// Compute normalized RGB→mono weights from the film's spectral response.
+    /// Used by BW films to merge color channels into grayscale.
+    pub fn bw_weights(&self) -> [f32; 3] {
+        let sm = self.compute_spectral_matrix();
+        let wr = sm[0][0] + sm[1][0] + sm[2][0];
+        let wg = sm[0][1] + sm[1][1] + sm[2][1];
+        let wb = sm[0][2] + sm[1][2] + sm[2][2];
+        let wsum = (wr + wg + wb).max(1e-6);
+        [wr / wsum, wg / wsum, wb / wsum]
+    }
+
     pub fn compute_spectral_matrix(&self) -> [[f32; 3]; 3] {
         use crate::spectral::{CameraSensitivities, Spectrum};
 

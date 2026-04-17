@@ -295,14 +295,19 @@ pub fn process_image_with_depth(
             Box::new(GrainStage),
         ],
         SimulationMode::Accurate => {
-            AccurateDevelopStage.process(&mut image_buffer, &context);
-            vec![
+            // Lens/scene effects BEFORE develop (operate on linear RGB)
+            let pre_stages: Vec<Box<dyn PipelineStage>> = vec![
                 Box::new(MicroMotionStage),
                 Box::new(ObjectMotionStage),
                 Box::new(MtfStage),
                 Box::new(ChromaticAberrationStage),
-                Box::new(GrainStage),
-            ]
+            ];
+            for stage in pre_stages {
+                stage.process(&mut image_buffer, &context);
+            }
+            // Spectral develop (includes BW grayscale merge)
+            AccurateDevelopStage.process(&mut image_buffer, &context);
+            vec![Box::new(GrainStage)]
         }
     };
 
@@ -356,13 +361,22 @@ impl PipelineStage for AccurateDevelopStage {
         let acc_gray = spectral_engine::integrate_exposure(&gray_exp);
         let acc_gray_avg = (acc_gray[0] + acc_gray[1] + acc_gray[2]) / 3.0;
 
+        // BW weights (precompute once, used in simulate_gray and pixel path)
+        let is_bw = film.film_type == crate::film::FilmType::BwNegative;
+        let bw_w = if is_bw { film.bw_weights() } else { [0.0; 3] };
+
         // Simulate full pipeline for a single gray pixel at a given scale
         let simulate_gray = |scale: f32| -> f32 {
-            let exposure = [
+            let mut exposure = [
                 acc_gray[0] * scale,
                 acc_gray[1] * scale,
                 acc_gray[2] * scale,
             ];
+            // BW: merge channels before density mapping (same as pixel path)
+            if is_bw {
+                let v = bw_w[0] * exposure[0] + bw_w[1] * exposure[1] + bw_w[2] * exposure[2];
+                exposure = [v, v, v];
+            }
             let epsilon = 1e-6f32;
             let log_e = [
                 exposure[0].max(epsilon).log10(),
@@ -470,6 +484,19 @@ impl PipelineStage for AccurateDevelopStage {
             pixel[1] = rgb[1] * norm[1] * t_eff;
             pixel[2] = rgb[2] * norm[2] * t_eff;
         });
+
+        // BW films: single emulsion layer only produces one channel of exposure.
+        // Merge RGB→mono using the film's spectral response weights before
+        // density mapping, so all subsequent stages operate on grayscale.
+        if is_bw {
+            let [wr, wg, wb] = bw_w;
+            image.par_chunks_mut(3).for_each(|pixel| {
+                let v = wr * pixel[0] + wg * pixel[1] + wb * pixel[2];
+                pixel[0] = v;
+                pixel[1] = v;
+                pixel[2] = v;
+            });
+        }
 
         // Pass 2: scattering spatial diffusion (Gaussian blur per emulsion scatter)
         // Total scatter sigma ≈ sum of (thickness * scattering) across emulsion layers,
