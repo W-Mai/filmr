@@ -225,6 +225,19 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
         {
             *changed = true;
         }
+        if ui
+            .add(egui::Slider::new(&mut app.dof_amount, 0.0..=2.0).text("DOF Amount"))
+            .changed()
+        {
+            *changed = true;
+        }
+        if app.dof_amount > 0.0
+            && ui
+                .add(egui::Slider::new(&mut app.dof_focus, 0.0..=1.0).text("Focus Depth"))
+                .changed()
+        {
+            *changed = true;
+        }
         // Depth map preview
         if app.object_motion_amount > 0.0 {
             if let Some(ref dm) = app.depth_map {

@@ -3,8 +3,9 @@ use crate::film_layer::FilmLayerStack;
 use crate::light_leak::{LightLeakConfig, LightLeakStage};
 use crate::physics;
 use crate::pipeline::{
-    create_linear_image, create_output_image, ChromaticAberrationStage, DevelopStage, GrainStage,
-    HalationStage, MicroMotionStage, MtfStage, ObjectMotionStage, PipelineContext, PipelineStage,
+    create_linear_image, create_output_image, ChromaticAberrationStage, DepthOfFieldStage,
+    DevelopStage, GrainStage, HalationStage, MicroMotionStage, MtfStage, ObjectMotionStage,
+    PipelineContext, PipelineStage,
 };
 use crate::spectral_engine;
 use image::RgbImage;
@@ -69,6 +70,12 @@ pub struct SimulationConfig {
     /// Auto black/white point stretch (like scanner auto-levels).
     #[serde(default)]
     pub auto_levels: bool,
+    /// Depth of field blur amount (0.0 = off, 1.0 = default).
+    #[serde(default)]
+    pub dof_amount: f32,
+    /// Depth of field focus point (0.0 = nearest, 1.0 = farthest).
+    #[serde(default = "default_dof_focus")]
+    pub dof_focus: f32,
 }
 
 fn default_motion_blur() -> f32 {
@@ -106,8 +113,14 @@ impl Default for SimulationConfig {
             motion_blur_seed: 42,
             object_motion_amount: 0.0,
             auto_levels: false,
+            dof_amount: 0.0,
+            dof_focus: 0.5,
         }
     }
+}
+
+fn default_dof_focus() -> f32 {
+    0.5
 }
 
 const SPECTRAL_NORM: f32 = 1.0;
@@ -293,6 +306,7 @@ pub fn process_image_with_depth(
         SimulationMode::Fast => vec![
             Box::new(MicroMotionStage),
             Box::new(ObjectMotionStage),
+            Box::new(DepthOfFieldStage),
             Box::new(MtfStage),
             Box::new(ChromaticAberrationStage),
             Box::new(DevelopStage),
@@ -303,6 +317,7 @@ pub fn process_image_with_depth(
             let pre_stages: Vec<Box<dyn PipelineStage>> = vec![
                 Box::new(MicroMotionStage),
                 Box::new(ObjectMotionStage),
+                Box::new(DepthOfFieldStage),
                 Box::new(MtfStage),
                 Box::new(ChromaticAberrationStage),
             ];
@@ -735,6 +750,7 @@ pub async fn process_image_async(
         Box::new(LightLeakStage),
         Box::new(HalationStage),
         Box::new(MicroMotionStage),
+        Box::new(DepthOfFieldStage),
         Box::new(MtfStage),
         Box::new(ChromaticAberrationStage),
         Box::new(DevelopStage),

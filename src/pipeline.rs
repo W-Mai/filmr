@@ -156,13 +156,20 @@ impl PipelineStage for ObjectMotionStage {
         };
 
         // First pass
+        let dm_w = depth_map.width as f32;
+        let dm_h = depth_map.height as f32;
+        let w_f = width as f32;
+        let h_f = height as f32;
         for y in 0..height {
             for x in 0..width {
                 let idx = y * width + x;
-                let d = depth_map.data[idx.min(depth_map.data.len() - 1)];
+                let dx = (x as f32 / w_f * dm_w) as u32;
+                let dy = (y as f32 / h_f * dm_h) as u32;
+                let d = depth_map.get(dx, dy);
 
                 let left = if x > 0 {
-                    let ld = depth_map.data[(idx - 1).min(depth_map.data.len() - 1)];
+                    let ldx = ((x - 1) as f32 / w_f * dm_w) as u32;
+                    let ld = depth_map.get(ldx, dy);
                     if (d - ld).abs() < depth_threshold {
                         Some(labels[idx - 1])
                     } else {
@@ -172,7 +179,8 @@ impl PipelineStage for ObjectMotionStage {
                     None
                 };
                 let up = if y > 0 {
-                    let ud = depth_map.data[(idx - width).min(depth_map.data.len() - 1)];
+                    let udy = ((y - 1) as f32 / h_f * dm_h) as u32;
+                    let ud = depth_map.get(dx, udy);
                     if (d - ud).abs() < depth_threshold {
                         Some(labels[idx - width])
                     } else {
@@ -230,11 +238,16 @@ impl PipelineStage for ObjectMotionStage {
         let max_disp = (width as f32 / 4000.0) * 4.0 * amount;
         let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
 
+        let dm_w = depth_map.width;
+        let dm_h = depth_map.height;
+
         image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
             let px = i % width;
             let py = i / width;
 
-            let depth = depth_map.get(px as u32, py as u32);
+            let dmx = (px as f32 / width as f32 * dm_w as f32) as u32;
+            let dmy = (py as f32 / height as f32 * dm_h as f32) as u32;
+            let depth = depth_map.get(dmx, dmy);
             let depth_factor = 1.0 / (depth * 4.0 + 0.25);
 
             let label = labels[i] as usize;
@@ -398,6 +411,126 @@ impl PipelineStage for HalationStage {
                     }
                 }
             });
+    }
+}
+
+/// # Depth of Field Stage
+///
+/// Simulates lens bokeh using depth map. Mipmap-based variable radius blur:
+/// precompute multiple Gaussian blur levels, then per-pixel interpolate
+/// between levels based on Circle of Confusion (CoC).
+pub struct DepthOfFieldStage;
+
+impl PipelineStage for DepthOfFieldStage {
+    #[instrument(skip(self, image, context))]
+    fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        let amount = context.config.dof_amount;
+        if amount <= 0.0 {
+            return;
+        }
+        let depth_map = match context.depth_map {
+            Some(dm) => dm,
+            None => return,
+        };
+
+        let focus = context.config.dof_focus;
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+        let max_radius = (width as f32 / 200.0) * amount;
+
+        info!(
+            "Applying depth of field (amount={:.2}, focus={:.2}, max_r={:.1}px)",
+            amount, focus, max_radius
+        );
+
+        // Build mipmap: 6 levels of increasing Gaussian blur
+        let n_levels = 6usize;
+        let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
+        let mut levels: Vec<Vec<f32>> = vec![src.clone()];
+
+        let mut prev = src;
+        for level in 1..n_levels {
+            let sigma = (1 << level) as f32 * 0.5;
+            let kernel_r = (sigma * 2.5).ceil() as usize;
+            let kernel: Vec<f32> = (0..=kernel_r)
+                .map(|i| (-0.5 * (i as f32 / sigma).powi(2)).exp())
+                .collect();
+            let k_sum: f32 = kernel[0] + 2.0 * kernel[1..].iter().sum::<f32>();
+
+            // Horizontal pass
+            let mut temp = vec![0.0f32; width * height * 3];
+            for y in 0..height {
+                for x in 0..width {
+                    let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
+                    for (ki, &w) in kernel.iter().enumerate() {
+                        for &dx in &[-(ki as i32), ki as i32] {
+                            if ki == 0 && dx != 0 {
+                                continue;
+                            }
+                            let sx = (x as i32 + dx).clamp(0, width as i32 - 1) as usize;
+                            let si = (y * width + sx) * 3;
+                            r += prev[si] * w;
+                            g += prev[si + 1] * w;
+                            b += prev[si + 2] * w;
+                        }
+                    }
+                    let di = (y * width + x) * 3;
+                    temp[di] = r / k_sum;
+                    temp[di + 1] = g / k_sum;
+                    temp[di + 2] = b / k_sum;
+                }
+            }
+
+            // Vertical pass
+            let mut blurred = vec![0.0f32; width * height * 3];
+            for y in 0..height {
+                for x in 0..width {
+                    let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
+                    for (ki, &w) in kernel.iter().enumerate() {
+                        for &dy in &[-(ki as i32), ki as i32] {
+                            if ki == 0 && dy != 0 {
+                                continue;
+                            }
+                            let sy = (y as i32 + dy).clamp(0, height as i32 - 1) as usize;
+                            let si = (sy * width + x) * 3;
+                            r += temp[si] * w;
+                            g += temp[si + 1] * w;
+                            b += temp[si + 2] * w;
+                        }
+                    }
+                    let di = (y * width + x) * 3;
+                    blurred[di] = r / k_sum;
+                    blurred[di + 1] = g / k_sum;
+                    blurred[di + 2] = b / k_sum;
+                }
+            }
+
+            levels.push(blurred.clone());
+            prev = blurred;
+        }
+
+        // Per-pixel: compute CoC, interpolate between mipmap levels
+        let dm_w = depth_map.width;
+        let dm_h = depth_map.height;
+        image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+            let px = i % width;
+            let py = i / width;
+            let dx = (px as f32 / width as f32 * dm_w as f32) as u32;
+            let dy = (py as f32 / height as f32 * dm_h as f32) as u32;
+            let depth = depth_map.get(dx, dy);
+            let coc = max_radius * (depth - focus).abs();
+
+            // Map CoC to mipmap level (log2 scale)
+            let level_f = if coc > 1.0 { coc.log2() } else { 0.0 };
+            let level_lo = (level_f as usize).min(n_levels - 2);
+            let level_hi = level_lo + 1;
+            let frac = (level_f - level_lo as f32).clamp(0.0, 1.0);
+
+            let si = i * 3;
+            pixel[0] = levels[level_lo][si] * (1.0 - frac) + levels[level_hi][si] * frac;
+            pixel[1] = levels[level_lo][si + 1] * (1.0 - frac) + levels[level_hi][si + 1] * frac;
+            pixel[2] = levels[level_lo][si + 2] * (1.0 - frac) + levels[level_hi][si + 2] * frac;
+        });
     }
 }
 
