@@ -362,7 +362,7 @@ impl PipelineStage for AccurateDevelopStage {
         let acc_gray_avg = (acc_gray[0] + acc_gray[1] + acc_gray[2]) / 3.0;
 
         // BW weights (precompute once, used in simulate_gray and pixel path)
-        let is_bw = film.film_type == crate::film::FilmType::BwNegative;
+        let is_bw = film.grain_model.monochrome;
         let bw_w = if is_bw { film.bw_weights() } else { [0.0; 3] };
 
         // Simulate full pipeline for a single gray pixel at a given scale
