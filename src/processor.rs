@@ -66,6 +66,9 @@ pub struct SimulationConfig {
     /// Object motion amount (0.0 = off, 1.0 = default depth-based motion).
     #[serde(default)]
     pub object_motion_amount: f32,
+    /// Auto black/white point stretch (like scanner auto-levels).
+    #[serde(default)]
+    pub auto_levels: bool,
 }
 
 fn default_motion_blur() -> f32 {
@@ -102,6 +105,7 @@ impl Default for SimulationConfig {
             motion_blur_amount: 1.0,
             motion_blur_seed: 42,
             object_motion_amount: 0.0,
+            auto_levels: false,
         }
     }
 }

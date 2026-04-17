@@ -652,6 +652,63 @@ impl PipelineStage for DevelopStage {
     }
 }
 
+/// # Auto Levels Stage
+///
+/// Stretches the image's actual density range to fill the full output range,
+/// like a film scanner's auto-levels. Uses 1st/99th percentile to avoid
+/// outlier influence. Operates on density values before output conversion.
+pub struct AutoLevelsStage;
+
+impl PipelineStage for AutoLevelsStage {
+    #[instrument(skip(self, image, context))]
+    fn process(&self, image: &mut ImageBuffer<Rgb<f32>, Vec<f32>>, context: &PipelineContext) {
+        if !context.config.auto_levels {
+            return;
+        }
+
+        let n = image.width() as usize * image.height() as usize;
+        if n == 0 {
+            return;
+        }
+
+        info!("Applying auto levels (black/white point stretch)");
+
+        // Collect per-channel values (subsample for performance on large images)
+        let step = (n / 50_000).max(1);
+        let mut vals: [Vec<f32>; 3] = [Vec::new(), Vec::new(), Vec::new()];
+        for (i, pixel) in image.chunks(3).enumerate() {
+            if i % step == 0 {
+                vals[0].push(pixel[0]);
+                vals[1].push(pixel[1]);
+                vals[2].push(pixel[2]);
+            }
+        }
+
+        // Find 1st and 99th percentile per channel
+        let mut lo = [0.0f32; 3];
+        let mut hi = [0.0f32; 3];
+        for c in 0..3 {
+            vals[c].sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            let len = vals[c].len();
+            lo[c] = vals[c][(len as f32 * 0.01) as usize];
+            hi[c] = vals[c][((len as f32 * 0.99) as usize).min(len - 1)];
+        }
+
+        // Stretch each channel: (val - lo) / (hi - lo)
+        let range = [
+            (hi[0] - lo[0]).max(0.01),
+            (hi[1] - lo[1]).max(0.01),
+            (hi[2] - lo[2]).max(0.01),
+        ];
+
+        image.par_chunks_mut(3).for_each(|pixel| {
+            pixel[0] = ((pixel[0] - lo[0]) / range[0]).clamp(0.0, 1.0);
+            pixel[1] = ((pixel[1] - lo[1]) / range[1]).clamp(0.0, 1.0);
+            pixel[2] = ((pixel[2] - lo[2]) / range[2]).clamp(0.0, 1.0);
+        });
+    }
+}
+
 /// # Grain Stage
 ///
 /// Adds film grain noise based on density.
@@ -863,92 +920,119 @@ pub fn create_output_image(
         )
     });
 
+    // First pass: compute linear RGB for all pixels
+    let mut linear_buf: Vec<f32> = vec![0.0; (width * height * 3) as usize];
+
+    linear_buf
+        .par_chunks_mut(3)
+        .enumerate()
+        .for_each(|(i, out)| {
+            let x = (i as u32) % width;
+            let y = (i as u32) / width;
+            let d = image.get_pixel(x, y).0;
+
+            let (mut r_lin, mut g_lin, mut b_lin) = if let Some(ref sp) = spectral_output {
+                let (y_dye, m_dye, c_dye, d65_x, d65_y, d65_z, y_norm, xyz_to_srgb) = sp;
+                let net = [
+                    (d[0] - film.r_curve.d_min).max(0.0),
+                    (d[1] - film.g_curve.d_min).max(0.0),
+                    (d[2] - film.b_curve.d_min).max(0.0),
+                ];
+                let mut xyz = [0.0f32; 3];
+                for i in 0..crate::spectral::BINS {
+                    let od = net[0] * c_dye[i] + net[1] * m_dye[i] + net[2] * y_dye[i];
+                    let t = 10.0f32.powf(-od);
+                    xyz[0] += t * d65_x[i];
+                    xyz[1] += t * d65_y[i];
+                    xyz[2] += t * d65_z[i];
+                }
+                xyz[0] *= y_norm;
+                xyz[1] *= y_norm;
+                xyz[2] *= y_norm;
+                let mut r = xyz_to_srgb[0][0] * xyz[0]
+                    + xyz_to_srgb[0][1] * xyz[1]
+                    + xyz_to_srgb[0][2] * xyz[2];
+                let mut g = xyz_to_srgb[1][0] * xyz[0]
+                    + xyz_to_srgb[1][1] * xyz[1]
+                    + xyz_to_srgb[1][2] * xyz[2];
+                let mut b = xyz_to_srgb[2][0] * xyz[0]
+                    + xyz_to_srgb[2][1] * xyz[1]
+                    + xyz_to_srgb[2][2] * xyz[2];
+                if film.film_type == FilmType::ColorNegative
+                    || film.film_type == FilmType::BwNegative
+                {
+                    r = 1.0 - r;
+                    g = 1.0 - g;
+                    b = 1.0 - b;
+                }
+                (r, g, b)
+            } else {
+                map_densities(d)
+            };
+
+            if config.saturation != 1.0 {
+                let lum = 0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin;
+                r_lin = lum + (r_lin - lum) * config.saturation;
+                g_lin = lum + (g_lin - lum) * config.saturation;
+                b_lin = lum + (b_lin - lum) * config.saturation;
+            }
+
+            let v_str = film.vignette_strength;
+            if v_str > 0.0 {
+                let px = i as u32 % width;
+                let py = i as u32 / width;
+                let dx = (px as f32 + 0.5) / width as f32 - 0.5;
+                let dy = (py as f32 + 0.5) / height as f32 - 0.5;
+                let r2 = dx * dx + dy * dy;
+                let f2 = 0.2;
+                let cos4 = 1.0 / (1.0 + r2 / f2).powi(2);
+                let factor = 1.0 - v_str * (1.0 - cos4);
+                r_lin *= factor;
+                g_lin *= factor;
+                b_lin *= factor;
+            }
+
+            out[0] = r_lin;
+            out[1] = g_lin;
+            out[2] = b_lin;
+        });
+
+    // Auto Levels in linear f32 space (no banding)
+    if config.auto_levels {
+        let n = linear_buf.len() / 3;
+        let step = (n / 50_000).max(1);
+        let mut lums: Vec<f32> = Vec::with_capacity(n / step + 1);
+        for i in (0..n).step_by(step) {
+            let idx = i * 3;
+            lums.push(
+                0.2126 * linear_buf[idx]
+                    + 0.7152 * linear_buf[idx + 1]
+                    + 0.0722 * linear_buf[idx + 2],
+            );
+        }
+        lums.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let p_lo = lums[(lums.len() as f32 * 0.01) as usize];
+        let p_hi = lums[((lums.len() as f32 * 0.99) as usize).min(lums.len() - 1)];
+        let strength = 0.6;
+        let lo = p_lo * (1.0 - strength);
+        let hi = p_hi + (1.0 - p_hi) * strength;
+        let range = (hi - lo).max(1e-6);
+        linear_buf.par_chunks_mut(3).for_each(|px| {
+            px[0] = ((px[0] - lo) / range).clamp(0.0, 1.0);
+            px[1] = ((px[1] - lo) / range).clamp(0.0, 1.0);
+            px[2] = ((px[2] - lo) / range).clamp(0.0, 1.0);
+        });
+    }
+
+    // Final pass: linear → sRGB u8
     let mut pixels: Vec<u8> = vec![0; (width * height * 3) as usize];
-
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, chunk)| {
-        let x = (i as u32) % width;
-        let y = (i as u32) / width;
-        let d = image.get_pixel(x, y).0;
-
-        let (mut r_lin, mut g_lin, mut b_lin) = if let Some(ref sp) = spectral_output {
-            // Full-spectrum dye output path
-            let (y_dye, m_dye, c_dye, d65_x, d65_y, d65_z, y_norm, xyz_to_srgb) = sp;
-            let net = [
-                (d[0] - film.r_curve.d_min).max(0.0), // cyan density (from red layer)
-                (d[1] - film.g_curve.d_min).max(0.0), // magenta density (from green layer)
-                (d[2] - film.b_curve.d_min).max(0.0), // yellow density (from blue layer)
-            ];
-
-            // Per-wavelength: T(λ) = 10^(-Dc×cyan(λ)) × 10^(-Dm×magenta(λ)) × 10^(-Dy×yellow(λ))
-            let mut xyz = [0.0f32; 3];
-            for i in 0..crate::spectral::BINS {
-                let od = net[0] * c_dye[i] + net[1] * m_dye[i] + net[2] * y_dye[i];
-                let t = 10.0f32.powf(-od);
-                xyz[0] += t * d65_x[i];
-                xyz[1] += t * d65_y[i];
-                xyz[2] += t * d65_z[i];
-            }
-            xyz[0] *= y_norm;
-            xyz[1] *= y_norm;
-            xyz[2] *= y_norm;
-
-            // XYZ → linear sRGB
-            let mut r = xyz_to_srgb[0][0] * xyz[0]
-                + xyz_to_srgb[0][1] * xyz[1]
-                + xyz_to_srgb[0][2] * xyz[2];
-            let mut g = xyz_to_srgb[1][0] * xyz[0]
-                + xyz_to_srgb[1][1] * xyz[1]
-                + xyz_to_srgb[1][2] * xyz[2];
-            let mut b = xyz_to_srgb[2][0] * xyz[0]
-                + xyz_to_srgb[2][1] * xyz[1]
-                + xyz_to_srgb[2][2] * xyz[2];
-
-            // Negative film: invert (high density = bright in print)
-            if film.film_type == FilmType::ColorNegative || film.film_type == FilmType::BwNegative {
-                r = 1.0 - r;
-                g = 1.0 - g;
-                b = 1.0 - b;
-            }
-
-            (r, g, b)
-        } else {
-            // Legacy per-channel output path
-            map_densities(d)
-        };
-
-        // Apply Saturation
-        if config.saturation != 1.0 {
-            let lum = 0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin;
-            r_lin = lum + (r_lin - lum) * config.saturation;
-            g_lin = lum + (g_lin - lum) * config.saturation;
-            b_lin = lum + (b_lin - lum) * config.saturation;
-        }
-
-        // Vignetting in output linear space
-        let v_str = film.vignette_strength;
-        if v_str > 0.0 {
-            let px = i as u32 % width;
-            let py = i as u32 / width;
-            let dx = (px as f32 + 0.5) / width as f32 - 0.5;
-            let dy = (py as f32 + 0.5) / height as f32 - 0.5;
-            let r2 = dx * dx + dy * dy;
-            // Simplified cos⁴: cos²(θ) ≈ 1/(1 + r²/f²), cos⁴ ≈ 1/(1+r²/f²)²
-            // f² chosen so corner falloff ≈ 20-30% at strength=1.0
-            let f2 = 0.2; // stronger falloff for visible vignette
-            let cos4 = 1.0 / (1.0 + r2 / f2).powi(2);
-            let factor = 1.0 - v_str * (1.0 - cos4);
-            r_lin *= factor;
-            g_lin *= factor;
-            b_lin *= factor;
-        }
-
-        let r_out = physics::linear_to_srgb(r_lin.clamp(0.0, 1.0));
-        let g_out = physics::linear_to_srgb(g_lin.clamp(0.0, 1.0));
-        let b_out = physics::linear_to_srgb(b_lin.clamp(0.0, 1.0));
-
-        chunk[0] = (r_out * 255.0).round() as u8;
-        chunk[1] = (g_out * 255.0).round() as u8;
-        chunk[2] = (b_out * 255.0).round() as u8;
+        let idx = i * 3;
+        chunk[0] = (physics::linear_to_srgb(linear_buf[idx].clamp(0.0, 1.0)) * 255.0).round() as u8;
+        chunk[1] =
+            (physics::linear_to_srgb(linear_buf[idx + 1].clamp(0.0, 1.0)) * 255.0).round() as u8;
+        chunk[2] =
+            (physics::linear_to_srgb(linear_buf[idx + 2].clamp(0.0, 1.0)) * 255.0).round() as u8;
     });
 
     RgbImage::from_raw(width, height, pixels).unwrap()

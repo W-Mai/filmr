@@ -227,6 +227,11 @@ pub fn render_simple_controls(
     });
 
     ui.add_space(15.0);
+    if ui.checkbox(&mut app.auto_levels, "🎚 Auto Levels").changed() {
+        *changed = true;
+    }
+
+    ui.add_space(5.0);
     if ui
         .button(RichText::new("✨ Auto Enhance").strong())
         .clicked()

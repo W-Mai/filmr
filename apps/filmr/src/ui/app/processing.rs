@@ -59,6 +59,7 @@ impl FilmrApp {
                 motion_blur_amount: self.motion_blur_amount,
                 motion_blur_seed: self.motion_blur_seed,
                 object_motion_amount: self.object_motion_amount,
+                auto_levels: self.auto_levels,
             };
 
             // Send request to worker
@@ -101,6 +102,7 @@ impl FilmrApp {
                 motion_blur_amount: 0.0,
                 motion_blur_seed: 0,
                 object_motion_amount: 0.0,
+                auto_levels: false,
             };
             for stock in &self.stocks {
                 let mut thumb_stock = stock.as_ref().clone();
@@ -161,6 +163,7 @@ impl FilmrApp {
                 motion_blur_amount: self.motion_blur_amount,
                 motion_blur_seed: self.motion_blur_seed,
                 object_motion_amount: self.object_motion_amount,
+                auto_levels: self.auto_levels,
             };
 
             let request = ProcessRequest {
