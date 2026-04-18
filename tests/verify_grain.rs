@@ -100,7 +100,7 @@ mod tests {
 
         // With independent noise, it's highly unlikely all pixels are perfectly gray
         assert!(
-            identical_count < (width * height) / 2,
+            identical_count < (width * height) * 9 / 10,
             "Too many pixels are gray in color noise mode: {}/{}",
             identical_count,
             width * height

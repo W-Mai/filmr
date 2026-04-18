@@ -4,8 +4,8 @@ use crate::light_leak::{LightLeakConfig, LightLeakStage};
 use crate::physics;
 use crate::pipeline::{
     create_linear_image, create_output_image, ChromaticAberrationStage, DepthOfFieldStage,
-    DevelopStage, GrainStage, HalationStage, MicroMotionStage, MtfStage, ObjectMotionStage,
-    PipelineContext, PipelineStage, RotationalBlurStage,
+    DevelopStage, HalationStage, MicroMotionStage, MtfStage, ObjectMotionStage, PipelineContext,
+    PipelineStage, RotationalBlurStage,
 };
 use crate::spectral_engine;
 use image::RgbImage;
@@ -315,7 +315,6 @@ pub fn process_image_with_depth(
             Box::new(MtfStage),
             Box::new(ChromaticAberrationStage),
             Box::new(DevelopStage),
-            Box::new(GrainStage),
         ],
         SimulationMode::Accurate => {
             // Lens/scene effects BEFORE develop (operate on linear RGB)
@@ -327,21 +326,35 @@ pub fn process_image_with_depth(
                 Box::new(MtfStage),
                 Box::new(ChromaticAberrationStage),
             ];
-            for stage in pre_stages {
+            for (idx, stage) in pre_stages.iter().enumerate() {
+                let t = std::time::Instant::now();
                 stage.process(&mut image_buffer, &context);
+                eprintln!(
+                    "  Pre-Stage {idx}: {:.1}ms",
+                    t.elapsed().as_secs_f64() * 1000.0
+                );
             }
             // Spectral develop (includes BW grayscale merge)
+            let t = std::time::Instant::now();
             AccurateDevelopStage.process(&mut image_buffer, &context);
-            vec![Box::new(GrainStage)]
+            eprintln!(
+                "  AccurateDevelop: {:.1}ms",
+                t.elapsed().as_secs_f64() * 1000.0
+            );
+            vec![]
         }
     };
 
-    for stage in stages {
+    for (idx, stage) in stages.iter().enumerate() {
+        let t = std::time::Instant::now();
         stage.process(&mut image_buffer, &context);
+        eprintln!("  Stage {idx}: {:.1}ms", t.elapsed().as_secs_f64() * 1000.0);
     }
 
-    // Output Conversion
-    create_output_image(&image_buffer, &context)
+    let t = std::time::Instant::now();
+    let result = create_output_image(&image_buffer, &context);
+    eprintln!("  Output: {:.1}ms", t.elapsed().as_secs_f64() * 1000.0);
+    result
 }
 
 /// # Accurate Develop Stage
@@ -761,7 +774,6 @@ pub async fn process_image_async(
         Box::new(MtfStage),
         Box::new(ChromaticAberrationStage),
         Box::new(DevelopStage),
-        Box::new(GrainStage),
     ];
 
     for stage in stages {

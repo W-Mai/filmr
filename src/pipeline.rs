@@ -926,14 +926,15 @@ impl PipelineStage for GrainStage {
         let height = image.height();
         let gm = &film.grain_model;
 
-        // Physical grain size in pixels (blur_radius in mm-equivalent units)
+        // Physical grain size in pixels
         let pixels_per_mm = width as f32 / 36.0;
-        let grain_sigma = gm.blur_radius * 0.05 * pixels_per_mm; // 0.5 → 25µm → ~1-2px
-        let grain_sigma = grain_sigma.max(0.8); // minimum 0.8px for visible structure
+        let grain_sigma = (gm.blur_radius * 0.05 * pixels_per_mm).max(0.8);
 
-        // Generate 3 independent noise textures (one per emulsion layer)
-        // + 1 shared luminance texture for channel correlation
-        let gen_texture = || -> Vec<f32> {
+        let mono = gm.monochrome;
+        let n_textures = if mono { 1 } else { 4 }; // mono: 1 shared; color: shared + R/G/B
+
+        // Generate and blur noise textures
+        let gen_and_blur = |sigma: f32| -> Vec<f32> {
             let mut tex = vec![0.0f32; (width * height) as usize];
             tex.par_chunks_mut(1).for_each(|p| {
                 let mut rng = rand::thread_rng();
@@ -942,68 +943,53 @@ impl PipelineStage for GrainStage {
                     &mut rng,
                 );
             });
+            if sigma >= 0.5 {
+                let mut img: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
+                img.chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+                    pixel[0] = tex[i];
+                    pixel[1] = tex[i];
+                    pixel[2] = tex[i];
+                });
+                utils::apply_gaussian_blur(&mut img, sigma);
+                img.chunks(3).enumerate().for_each(|(i, pixel)| {
+                    tex[i] = pixel[0];
+                });
+            }
             tex
         };
 
-        let mut tex_shared = gen_texture();
-        let mut tex_r = gen_texture();
-        let mut tex_g = gen_texture();
-        let mut tex_b = gen_texture();
+        let textures: Vec<Vec<f32>> = (0..n_textures).map(|_| gen_and_blur(grain_sigma)).collect();
 
-        // Blur all textures to create spatial grain structure
-        // Reuse existing Gaussian blur on temporary ImageBuffers
-        let blur_texture = |tex: &mut Vec<f32>, sigma: f32| {
-            if sigma < 0.5 {
-                return;
-            }
-            // Wrap as single-channel image (abuse Rgb with same value)
-            let mut img: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
-            img.chunks_mut(3).enumerate().for_each(|(i, pixel)| {
-                pixel[0] = tex[i];
-                pixel[1] = tex[i];
-                pixel[2] = tex[i];
-            });
-            utils::apply_gaussian_blur(&mut img, sigma);
-            img.chunks(3).enumerate().for_each(|(i, pixel)| {
-                tex[i] = pixel[0];
-            });
-        };
-
-        blur_texture(&mut tex_shared, grain_sigma);
-        blur_texture(&mut tex_r, grain_sigma);
-        blur_texture(&mut tex_g, grain_sigma);
-        blur_texture(&mut tex_b, grain_sigma);
-
-        // Apply grain: multiplicative modulation of density
-        // D_final = D × (1 + strength × texture)
-        // strength scales with √D (Selwyn) and preset alpha
+        // Grain strength: Selwyn law σ_D = alpha × √D
+        // In sRGB output space, this needs significant amplification.
+        // Real Portra 400 shows σ ≈ 8-20 in sRGB 8-bit; our density-space
+        // grain needs to produce similar output variation.
         let corr = gm.color_correlation;
         let alpha = gm.alpha;
-        let boost = 25.0f32; // visual compensation
-
-        let mono = gm.monochrome;
+        // Scale factor: alpha is tiny (0.000125 for Portra), but real grain σ_D ≈ 0.02-0.05.
+        // boost converts alpha to physical σ_D scale.
+        let boost = 2000.0f32;
 
         image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
-            let shared = tex_shared[i];
+            let shared = textures[0][i];
             let (nr, ng, nb) = if mono {
                 (shared, shared, shared)
             } else {
                 (
-                    corr * shared + (1.0 - corr) * tex_r[i],
-                    corr * shared + (1.0 - corr) * tex_g[i],
-                    corr * shared + (1.0 - corr) * tex_b[i],
+                    corr * shared + (1.0 - corr) * textures[1][i],
+                    corr * shared + (1.0 - corr) * textures[2][i],
+                    corr * shared + (1.0 - corr) * textures[3][i],
                 )
             };
 
-            // Grain strength proportional to √D (Selwyn)
-            let str_r = (alpha * pixel[0].max(0.0).sqrt() * boost).sqrt();
-            let str_g = (alpha * pixel[1].max(0.0).sqrt() * boost).sqrt();
-            let str_b = (alpha * pixel[2].max(0.0).sqrt() * boost).sqrt();
+            // Selwyn: σ_D ∝ √D. Additive grain in density space.
+            let str_r = alpha * boost * pixel[0].max(0.01).sqrt();
+            let str_g = alpha * boost * pixel[1].max(0.01).sqrt();
+            let str_b = alpha * boost * pixel[2].max(0.01).sqrt();
 
-            // Multiplicative: density modulated by grain texture
-            pixel[0] = (pixel[0] * (1.0 + str_r * nr)).max(0.0);
-            pixel[1] = (pixel[1] * (1.0 + str_g * ng)).max(0.0);
-            pixel[2] = (pixel[2] * (1.0 + str_b * nb)).max(0.0);
+            pixel[0] = (pixel[0] + str_r * nr).max(0.0);
+            pixel[1] = (pixel[1] + str_g * ng).max(0.0);
+            pixel[2] = (pixel[2] + str_b * nb).max(0.0);
         });
     }
 }
@@ -1220,6 +1206,74 @@ pub fn create_output_image(
             px[1] = ((px[1] - lo) / range).clamp(0.0, 1.0);
             px[2] = ((px[2] - lo) / range).clamp(0.0, 1.0);
         });
+    }
+
+    // Grain in linear output space (after tone mapping, before sRGB)
+    if config.enable_grain {
+        let gm = &film.grain_model;
+        let pixels_per_mm = width as f32 / 36.0;
+        let grain_sigma = (gm.blur_radius * 0.05 * pixels_per_mm).max(0.8);
+        let mono = gm.monochrome;
+        let n_tex = if mono { 1usize } else { 4 };
+
+        // Generate blurred noise textures
+        let gen_blur = |sigma: f32| -> Vec<f32> {
+            let mut tex = vec![0.0f32; (width * height) as usize];
+            tex.par_chunks_mut(1).for_each(|p| {
+                let mut rng = rand::thread_rng();
+                p[0] = rand_distr::Distribution::sample(
+                    &rand_distr::Normal::new(0.0f32, 1.0f32).unwrap(),
+                    &mut rng,
+                );
+            });
+            if sigma >= 0.5 {
+                let mut img: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::new(width, height);
+                img.chunks_mut(3).enumerate().for_each(|(i, px)| {
+                    px[0] = tex[i];
+                    px[1] = tex[i];
+                    px[2] = tex[i];
+                });
+                utils::apply_gaussian_blur(&mut img, sigma);
+                img.chunks(3).enumerate().for_each(|(i, px)| {
+                    tex[i] = px[0];
+                });
+            }
+            tex
+        };
+        let textures: Vec<Vec<f32>> = (0..n_tex).map(|_| gen_blur(grain_sigma)).collect();
+
+        let corr = gm.color_correlation;
+        // Grain strength in linear output space.
+        // Real Portra 400 σ ≈ 8-20 in sRGB 8-bit → σ ≈ 0.03-0.08 in linear.
+        // Scale by alpha (preset-specific) and pixel brightness (Selwyn: brighter = less grain).
+        let base_strength = gm.alpha * 1500.0;
+
+        linear_buf
+            .par_chunks_mut(3)
+            .enumerate()
+            .for_each(|(i, px)| {
+                let shared = textures[0][i];
+                let (nr, ng, nb) = if mono {
+                    (shared, shared, shared)
+                } else {
+                    (
+                        corr * shared + (1.0 - corr) * textures[1][i],
+                        corr * shared + (1.0 - corr) * textures[2][i],
+                        corr * shared + (1.0 - corr) * textures[3][i],
+                    )
+                };
+                // Selwyn in output space: grain stronger in shadows (low linear value)
+                // σ ∝ sqrt(1 - brightness) — shadows get more grain
+                let lum = (0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]).clamp(0.01, 1.0);
+                // Selwyn law: σ_D ∝ √D. In output space, high density = low brightness.
+                // Grain stronger in shadows, weaker in highlights.
+                // But cap absolute noise to avoid bright speckles in pure black.
+                let selwyn = (1.0 - lum).sqrt();
+                let strength = base_strength * selwyn * lum.max(0.05);
+                px[0] = (px[0] + strength * nr).clamp(0.0, 1.0);
+                px[1] = (px[1] + strength * ng).clamp(0.0, 1.0);
+                px[2] = (px[2] + strength * nb).clamp(0.0, 1.0);
+            });
     }
 
     // Final pass: linear → sRGB u8
