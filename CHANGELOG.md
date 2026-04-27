@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-04-27
+
+### ✨ Features
+
+- Depth of Field: mipmap-based variable radius blur driven by depth map
+- Petzval Swirly Bokeh: tangential stretch on out-of-focus areas
+- Rotational Blur: camera rotation around optical axis simulation
+- Grain rewrite: moved to output linear space with physical Selwyn law (σ ∝ √(1-lum) × lum)
+- Preview downscaled to 1024px for fast interactive processing
+
+### 🐛 Fixes
+
+- Enable depth feature in release builds (was missing from cargo-dist)
+- Prevent worker thread death on panic (catch_unwind + fallback result)
+- Fix depth map coordinate mapping (was using pixel coords instead of scaling)
+- Remove musl target from dist (ort doesn't provide musl prebuilts)
+- Configure Trunk to exclude depth for WASM builds
+
 ## [0.9.1] - 2026-04-17
 
 ### ✨ Features

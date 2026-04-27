@@ -1,7 +1,7 @@
-//! Monocular depth estimation using Depth Anything V2 Small (ONNX).
+//! Monocular depth estimation using Depth Anything V2 Small (RTen).
 //!
-//! Requires the `depth` feature flag and a downloaded ONNX model.
-//! Model: https://huggingface.co/onnx-community/depth-anything-v2-small
+//! Requires the `depth` feature flag and a downloaded .rten model.
+//! Model converted from: https://huggingface.co/onnx-community/depth-anything-v2-small
 
 /// Depth map: normalized relative depth values [0.0, 1.0] at original image resolution.
 /// 0.0 = nearest, 1.0 = farthest.
@@ -32,10 +32,10 @@ pub fn default_model_dir() -> std::path::PathBuf {
         .join("models")
 }
 
-/// Default model path for Depth Anything V2 Small.
+/// Default model path for Depth Anything V2 Small (.rten format).
 #[cfg(feature = "depth")]
 pub fn default_model_path() -> std::path::PathBuf {
-    default_model_dir().join("depth_anything_v2_vits.onnx")
+    default_model_dir().join("depth_anything_v2_vits.rten")
 }
 
 /// Check if the depth model is available.
@@ -56,8 +56,9 @@ pub fn estimate_with_model(
     image: &image::RgbImage,
     model_path: &str,
 ) -> Result<DepthMap, Box<dyn std::error::Error>> {
-    use ort::session::Session;
-    use ort::value::Tensor;
+    use rten::Model;
+    use rten_tensor::prelude::*;
+    use rten_tensor::NdTensor;
 
     let (orig_w, orig_h) = (image.width(), image.height());
     let input_size = 518u32;
@@ -92,16 +93,20 @@ pub fn estimate_with_model(
         }
     }
 
-    let input_tensor = Tensor::from_array((
-        vec![1i64, 3, input_size as i64, input_size as i64],
-        data.into_boxed_slice(),
-    ))?;
+    // Load model and run inference
+    let model = Model::load_file(model_path)?;
+    let input: NdTensor<f32, 4> =
+        NdTensor::from_data([1, 3, input_size as usize, input_size as usize], data);
+    let input_id = model.node_id("pixel_values")?;
+    let output_id = model.output_ids()[0];
 
-    let mut session = Session::builder()?.commit_from_file(model_path)?;
-    let outputs = session.run(ort::inputs!["pixel_values" => input_tensor])?;
+    let mut results = model.run(vec![(input_id, input.as_dyn().into())], &[output_id], None)?;
 
-    let depth_array = outputs[0].try_extract_array::<f32>()?;
-    let raw: Vec<f32> = depth_array.iter().cloned().collect();
+    let output = results
+        .remove(0)
+        .into_tensor::<f32>()
+        .ok_or("output not float")?;
+    let raw: Vec<f32> = output.iter().copied().collect();
 
     // Normalize to [0, 1]
     let d_min = raw.iter().cloned().fold(f32::MAX, f32::min);
@@ -109,7 +114,7 @@ pub fn estimate_with_model(
     let range = (d_max - d_min).max(1e-6);
     let normalized: Vec<f32> = raw.iter().map(|v| (v - d_min) / range).collect();
 
-    // Remove padding + resize to original
+    // Remove padding + resize to original (bilinear interpolation)
     let mut result = vec![0.0f32; (orig_w * orig_h) as usize];
     for y in 0..orig_h {
         for x in 0..orig_w {

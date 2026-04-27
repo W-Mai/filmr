@@ -330,35 +330,19 @@ pub fn process_image_with_depth(
                 Box::new(MtfStage),
                 Box::new(ChromaticAberrationStage),
             ];
-            for (idx, stage) in pre_stages.iter().enumerate() {
-                let t = std::time::Instant::now();
+            for stage in pre_stages.iter() {
                 stage.process(&mut image_buffer, &context);
-                eprintln!(
-                    "  Pre-Stage {idx}: {:.1}ms",
-                    t.elapsed().as_secs_f64() * 1000.0
-                );
             }
-            // Spectral develop (includes BW grayscale merge)
-            let t = std::time::Instant::now();
             AccurateDevelopStage.process(&mut image_buffer, &context);
-            eprintln!(
-                "  AccurateDevelop: {:.1}ms",
-                t.elapsed().as_secs_f64() * 1000.0
-            );
             vec![]
         }
     };
 
-    for (idx, stage) in stages.iter().enumerate() {
-        let t = std::time::Instant::now();
+    for stage in stages.iter() {
         stage.process(&mut image_buffer, &context);
-        eprintln!("  Stage {idx}: {:.1}ms", t.elapsed().as_secs_f64() * 1000.0);
     }
 
-    let t = std::time::Instant::now();
-    let result = create_output_image(&image_buffer, &context);
-    eprintln!("  Output: {:.1}ms", t.elapsed().as_secs_f64() * 1000.0);
-    result
+    create_output_image(&image_buffer, &context)
 }
 
 /// # Accurate Develop Stage
