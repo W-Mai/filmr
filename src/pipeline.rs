@@ -531,6 +531,60 @@ impl PipelineStage for DepthOfFieldStage {
             pixel[1] = levels[level_lo][si + 1] * (1.0 - frac) + levels[level_hi][si + 1] * frac;
             pixel[2] = levels[level_lo][si + 2] * (1.0 - frac) + levels[level_hi][si + 2] * frac;
         });
+
+        // Petzval swirly bokeh: tangential stretch on out-of-focus areas
+        let swirl = context.config.dof_swirl;
+        if swirl > 0.0 {
+            let cx = width as f32 / 2.0;
+            let cy = height as f32 / 2.0;
+            let src: Vec<f32> = image.as_flat_samples().as_slice().to_vec();
+            let n_samples = 16;
+
+            image.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+                let px = (i % width) as f32;
+                let py = (i / width) as f32;
+                let ddx = (px / width as f32 * dm_w as f32) as u32;
+                let ddy = (py / height as f32 * dm_h as f32) as u32;
+                let depth = depth_map.get(ddx, ddy);
+                let defocus = (depth - focus).abs();
+
+                if defocus < 0.05 {
+                    return; // In focus, skip
+                }
+
+                // Tangent direction (perpendicular to radial)
+                let dx = px - cx;
+                let dy = py - cy;
+                let dist = (dx * dx + dy * dy).sqrt().max(1.0);
+                let tx = -dy / dist;
+                let ty = dx / dist;
+
+                // Stretch amount: proportional to defocus × distance from center × swirl
+                let stretch = swirl * defocus * (dist / cx.max(cy)) * max_radius * 0.5;
+
+                let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
+                for s in 0..n_samples {
+                    let t = s as f32 / (n_samples - 1) as f32 - 0.5;
+                    let sx = (px + tx * stretch * t).round() as i32;
+                    let sy = (py + ty * stretch * t).round() as i32;
+                    if sx >= 0 && sx < width as i32 && sy >= 0 && sy < height as i32 {
+                        let si = (sy as usize * width + sx as usize) * 3;
+                        r += src[si];
+                        g += src[si + 1];
+                        b += src[si + 2];
+                    } else {
+                        let si = i * 3;
+                        r += src[si];
+                        g += src[si + 1];
+                        b += src[si + 2];
+                    }
+                }
+                let inv = 1.0 / n_samples as f32;
+                pixel[0] = r * inv;
+                pixel[1] = g * inv;
+                pixel[2] = b * inv;
+            });
+        }
     }
 }
 

@@ -238,6 +238,13 @@ fn render_look_overrides(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
         {
             *changed = true;
         }
+        if app.dof_amount > 0.0
+            && ui
+                .add(egui::Slider::new(&mut app.dof_swirl, 0.0..=2.0).text("Swirly Bokeh"))
+                .changed()
+        {
+            *changed = true;
+        }
         if ui
             .add(
                 egui::Slider::new(&mut app.rotational_blur_amount, 0.0..=2.0)

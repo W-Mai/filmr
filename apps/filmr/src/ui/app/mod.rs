@@ -81,6 +81,7 @@ pub struct FilmrApp {
     pub auto_levels: bool,
     pub dof_amount: f32,
     pub dof_focus: f32,
+    pub dof_swirl: f32,
     pub rotational_blur_amount: f32,
     pub depth_map: Option<filmr::depth::DepthMap>,
 
@@ -219,6 +220,7 @@ impl FilmrApp {
             auto_levels: false,
             dof_amount: 0.0,
             dof_focus: 0.5,
+            dof_swirl: 0.0,
             rotational_blur_amount: 0.0,
             depth_map: None,
 

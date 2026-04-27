@@ -76,6 +76,9 @@ pub struct SimulationConfig {
     /// Depth of field focus point (0.0 = nearest, 1.0 = farthest).
     #[serde(default = "default_dof_focus")]
     pub dof_focus: f32,
+    /// Swirly bokeh (Petzval) amount (0.0 = off, circular bokeh; >0 = tangential stretch).
+    #[serde(default)]
+    pub dof_swirl: f32,
     /// Rotational blur amount (0.0 = off, simulates camera rotation).
     #[serde(default)]
     pub rotational_blur_amount: f32,
@@ -118,6 +121,7 @@ impl Default for SimulationConfig {
             auto_levels: false,
             dof_amount: 0.0,
             dof_focus: 0.5,
+            dof_swirl: 0.0,
             rotational_blur_amount: 0.0,
         }
     }

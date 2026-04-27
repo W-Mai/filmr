@@ -62,6 +62,7 @@ impl FilmrApp {
                 auto_levels: self.auto_levels,
                 dof_amount: self.dof_amount,
                 dof_focus: self.dof_focus,
+                dof_swirl: self.dof_swirl,
                 rotational_blur_amount: self.rotational_blur_amount,
             };
 
@@ -108,6 +109,7 @@ impl FilmrApp {
                 auto_levels: false,
                 dof_amount: 0.0,
                 dof_focus: 0.5,
+                dof_swirl: 0.0,
                 rotational_blur_amount: 0.0,
             };
             for stock in &self.stocks {
@@ -172,6 +174,7 @@ impl FilmrApp {
                 auto_levels: self.auto_levels,
                 dof_amount: self.dof_amount,
                 dof_focus: self.dof_focus,
+                dof_swirl: self.dof_swirl,
                 rotational_blur_amount: self.rotational_blur_amount,
             };
 
