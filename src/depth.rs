@@ -44,6 +44,56 @@ pub fn is_model_available() -> bool {
     default_model_path().exists()
 }
 
+pub const MODEL_URL: &str =
+    "https://github.com/W-Mai/filmr/releases/download/models-v1/depth_anything_v2_vits.rten";
+pub const MODEL_SIZE: u64 = 99_060_839; // ~95MB
+
+/// Download the depth model with progress callback.
+/// `on_progress(downloaded_bytes, total_bytes)` called periodically.
+#[cfg(feature = "depth")]
+pub fn download_model(on_progress: impl Fn(u64, u64)) -> Result<(), Box<dyn std::error::Error>> {
+    use std::io::Read;
+    let dir = default_model_dir();
+    std::fs::create_dir_all(&dir)?;
+
+    let resp = ureq::get(MODEL_URL).call()?;
+    let total = resp
+        .headers()
+        .get("content-length")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(MODEL_SIZE);
+
+    let mut reader = resp.into_body().into_reader();
+    let tmp = dir.join("depth_anything_v2_vits.rten.tmp");
+    let mut file = std::fs::File::create(&tmp)?;
+
+    let mut downloaded = 0u64;
+    let mut buf = [0u8; 65536];
+    loop {
+        let n = reader.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        std::io::Write::write_all(&mut file, &buf[..n])?;
+        downloaded += n as u64;
+        on_progress(downloaded, total);
+    }
+
+    std::fs::rename(&tmp, default_model_path())?;
+    Ok(())
+}
+
+/// Delete the depth model.
+#[cfg(feature = "depth")]
+pub fn delete_model() -> std::io::Result<()> {
+    let path = default_model_path();
+    if path.exists() {
+        std::fs::remove_file(path)?;
+    }
+    Ok(())
+}
+
 /// Run depth estimation on an RGB image.
 #[cfg(feature = "depth")]
 pub fn estimate(image: &image::RgbImage) -> Result<DepthMap, Box<dyn std::error::Error>> {

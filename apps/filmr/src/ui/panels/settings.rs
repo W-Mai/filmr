@@ -61,6 +61,48 @@ pub fn render_settings_window(app: &mut FilmrApp, ctx: &Context) {
 
             ui.add_space(10.0);
             ui.separator();
+
+            // Model Management
+            #[cfg(feature = "depth")]
+            {
+                ui.heading("Depth Model");
+                ui.group(|ui| {
+                    if filmr::depth::is_model_available() {
+                        ui.horizontal(|ui| {
+                            ui.label("✅ Installed (~95MB)");
+                            if ui.button("🗑 Delete").clicked() {
+                                app.delete_model();
+                            }
+                        });
+                    } else if let Some((dl, total)) = app.model_download_progress {
+                        let pct = dl as f32 / total.max(1) as f32;
+                        ui.add(egui::ProgressBar::new(pct).text(format!(
+                            "{:.1} / {:.1} MB ({:.0}%)",
+                            dl as f64 / 1e6,
+                            total as f64 / 1e6,
+                            pct * 100.0
+                        )));
+                    } else {
+                        ui.label("❌ Not installed");
+                        ui.label(
+                            egui::RichText::new(
+                                "Required for DOF, object motion, and depth preview.",
+                            )
+                            .weak()
+                            .small(),
+                        );
+                        if let Some(ref err) = app.model_download_error {
+                            ui.colored_label(egui::Color32::RED, format!("Error: {}", err));
+                        }
+                        if ui.button("⬇ Download (~95MB)").clicked() {
+                            app.start_model_download();
+                        }
+                    }
+                });
+            }
+
+            ui.add_space(10.0);
+            ui.separator();
             ui.horizontal(|ui| {
                 ui.label(format!("Version: {}", env!("CARGO_PKG_VERSION")));
             });

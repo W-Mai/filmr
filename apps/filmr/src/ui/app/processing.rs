@@ -236,4 +236,30 @@ impl FilmrApp {
             1.0
         };
     }
+
+    /// Start model download in background thread.
+    #[cfg(feature = "depth")]
+    pub fn start_model_download(&mut self) {
+        if self.model_download_progress.is_some() {
+            return; // Already downloading
+        }
+        self.model_download_progress = Some((0, filmr::depth::MODEL_SIZE));
+        self.model_download_error = None;
+        let tx = self.tx_model_dl.clone();
+        std::thread::spawn(move || {
+            let result = filmr::depth::download_model(|downloaded, total| {
+                let _ = tx.send(Ok((downloaded, total)));
+            });
+            if let Err(e) = result {
+                let _ = tx.send(Err(e.to_string()));
+            }
+        });
+    }
+
+    /// Delete the depth model.
+    #[cfg(feature = "depth")]
+    pub fn delete_model(&mut self) {
+        let _ = filmr::depth::delete_model();
+        self.depth_map = None;
+    }
 }

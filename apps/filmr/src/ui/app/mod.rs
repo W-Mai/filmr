@@ -84,6 +84,10 @@ pub struct FilmrApp {
     pub dof_swirl: f32,
     pub rotational_blur_amount: f32,
     pub depth_map: Option<filmr::depth::DepthMap>,
+    /// Model download state
+    pub model_download_progress: Option<(u64, u64)>, // (downloaded, total)
+    pub model_download_error: Option<String>,
+    pub model_prompt_dismissed: bool,
 
     // Light Leak Parameters
     pub light_leak_config: LightLeakConfig,
@@ -128,6 +132,10 @@ pub struct FilmrApp {
     pub tx_preset: Sender<Vec<u8>>,
     #[cfg(target_arch = "wasm32")]
     pub rx_preset: Receiver<Vec<u8>>,
+
+    /// Model download progress channel
+    pub rx_model_dl: Receiver<Result<(u64, u64), String>>,
+    tx_model_dl: Sender<Result<(u64, u64), String>>,
 }
 
 impl FilmrApp {
@@ -163,6 +171,7 @@ impl FilmrApp {
 
         #[cfg(target_arch = "wasm32")]
         let (tx_preset, rx_preset) = unbounded();
+        let (tx_model_dl, rx_model_dl) = unbounded();
 
         let ux_mode = config_manager
             .as_ref()
@@ -223,6 +232,9 @@ impl FilmrApp {
             dof_swirl: 0.0,
             rotational_blur_amount: 0.0,
             depth_map: None,
+            model_download_progress: None,
+            model_download_error: None,
+            model_prompt_dismissed: false,
 
             light_leak_config: LightLeakConfig::default(),
 
@@ -254,6 +266,8 @@ impl FilmrApp {
             tx_preset,
             #[cfg(target_arch = "wasm32")]
             rx_preset,
+            rx_model_dl,
+            tx_model_dl,
         }
     }
 

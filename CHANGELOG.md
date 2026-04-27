@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-04-28
+
+### ✨ Features
+
+- Switch depth inference from ort (C++ ONNX Runtime) to RTen (pure Rust)
+  - Zero C dependencies, compiles on all platforms including musl
+  - Model format: .onnx → .rten
+- Auto-download depth model from GitHub Release on first run
+  - Startup prompt: Download Now / Later / Don't ask again
+  - Download progress bar in UI
+- Model management in Settings: view status, download, delete
+- Restore all dist targets (Linux, musl) — pure Rust, no more glibc issues
+
 ## [0.10.0] - 2026-04-27
 
 ### ✨ Features

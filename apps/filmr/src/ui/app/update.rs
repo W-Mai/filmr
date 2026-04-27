@@ -15,6 +15,76 @@ use image::DynamicImage;
 impl App for FilmrApp {
     #[allow(deprecated)]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
+        // Poll model download progress
+        #[cfg(feature = "depth")]
+        while let Ok(msg) = self.rx_model_dl.try_recv() {
+            match msg {
+                Ok((downloaded, total)) => {
+                    self.model_download_progress = Some((downloaded, total));
+                    if downloaded >= total {
+                        self.model_download_progress = None;
+                        self.status_msg = "Depth model downloaded!".to_string();
+                    }
+                    ctx.request_repaint();
+                }
+                Err(e) => {
+                    self.model_download_error = Some(e);
+                    self.model_download_progress = None;
+                }
+            }
+        }
+
+        // Model download prompt (shown once if model missing and not dismissed)
+        #[cfg(feature = "depth")]
+        if !filmr::depth::is_model_available()
+            && !self.model_prompt_dismissed
+            && self.model_download_progress.is_none()
+        {
+            egui::Window::new("📦 Depth Model Required")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ctx, |ui| {
+                    ui.label("Depth estimation requires a model file (~95MB).");
+                    ui.label("This enables DOF, object motion, and depth preview.");
+                    ui.add_space(8.0);
+                    if let Some(ref err) = self.model_download_error {
+                        ui.colored_label(egui::Color32::RED, format!("Error: {}", err));
+                        ui.add_space(4.0);
+                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("⬇ Download Now").clicked() {
+                            self.start_model_download();
+                        }
+                        if ui.button("Later").clicked() {
+                            self.model_prompt_dismissed = true;
+                        }
+                        if ui.button("Don't ask again").clicked() {
+                            self.model_prompt_dismissed = true;
+                            // TODO: persist to config
+                        }
+                    });
+                });
+        }
+
+        // Show download progress bar
+        #[cfg(feature = "depth")]
+        if let Some((downloaded, total)) = self.model_download_progress {
+            egui::Window::new("Downloading Model...")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ctx, |ui| {
+                    let pct = downloaded as f32 / total.max(1) as f32;
+                    ui.add(egui::ProgressBar::new(pct).text(format!(
+                        "{:.1} / {:.1} MB ({:.0}%)",
+                        downloaded as f64 / 1e6,
+                        total as f64 / 1e6,
+                        pct * 100.0
+                    )));
+                });
+        }
+
         // Handle File Drops
         if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
             let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
