@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" id="oranda" class="cupcake">
+  <head>
+    <title>filmr</title>
+    
+      <meta property="og:url" content="https://benign.host/" />
+    
+    
+      <link rel="icon" href="/favicon.ico" />
+    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+      <meta name="description" content="A high-fidelity, physics-based film simulation engine written in Rust." />
+      <meta property="og:description" content="A high-fidelity, physics-based film simulation engine written in Rust." />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="filmr" />
+    
+    
+    
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()" />
+    <link rel="stylesheet" href="/oranda-v0.6.1.css" />
+    
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-body">
+        
+          <div class="repo_banner">
+            <a href="https://github.com/W-Mai/filmr">
+              <div class="github-icon" aria-hidden="true"></div>
+              Check out our GitHub!
+            </a>
+          </div>
+        
+
+        <main>
+          <header>
+            
+            <h1 class="title">filmr</h1>
+            
+  <nav class="nav">
+    <ul>
+      <li><a href="/">Home</a></li>
+
+      
+
+      
+        <li><a href="/artifacts/">Install</a></li>
+      
+
+      
+        <li><a href="/book/">Docs</a></li>
+      
+
+      
+
+      
+        <li><a href="/changelog/">Changelog</a></li>
+      
+    </ul>
+  </nav>
+
+          </header>
+
+          
+  <div>
+    <h1>0.7.0 - 2026-04-12</h1>
+    <div class="releases-body">
+      
+      
+      <section class="release ">
+  
+  <div class="release-info">
+    <span class="flex items-center gap-2">
+      <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6'>
+    <path stroke-linecap='round' stroke-linejoin='round' d='M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z' />
+    <path stroke-linecap='round' stroke-linejoin='round' d='M6 6h.008v.008H6V6z' /></svg>
+      v0.7.0
+    </span>
+    <span class="flex items-center gap-2">
+      
+        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6'><path stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' /></svg>
+        Apr 12 2026 at 14:13 UTC
+      
+    </span>
+  </div>
+  <div class="release-body">
+    <h3>✨ Features</h3>
+<ul>
+<li><strong>Spectral</strong>: Add CIE 1931 XYZ colour matching functions and D65 illuminant lookup tables (380–780nm, 5nm, 81 bins).</li>
+<li><strong>Spectral</strong>: Replace blackbody approximation for D65 with CIE standard data.</li>
+<li><strong>Spectral</strong>: Replace Gaussian camera sensitivities with CIE XYZ CMF × XYZ→sRGB matrix.</li>
+<li><strong>Film Layer</strong>: Add multi-layer film structure model (<code>FilmLayerStack</code> / <code>FilmLayer</code>) with refractive index, thickness, spectral absorption, and scattering coefficients.</li>
+<li><strong>Spectral Engine</strong>: Add full-spectrum propagation engine — per-wavelength per-layer light transport with Beer-Lambert absorption, Fresnel interface reflection, and forward+backward (halation) passes.</li>
+<li><strong>Core</strong>: Add <code>SimulationMode::Fast</code> / <code>Accurate</code> — Fast uses existing 3×3 matrix path, Accurate uses full-spectrum engine.</li>
+<li><strong>Film</strong>: Add <code>layer_stack: Option&lt;FilmLayerStack&gt;</code> to <code>FilmStock</code> for custom per-preset layer structures.</li>
+<li><strong>UI</strong>: Develop button triggers Accurate mode (full-spectrum); preview stays Fast (matrix).</li>
+<li><strong>Spectral</strong>: Add scattering spatial diffusion — Gaussian blur derived from physical layer scatter coefficients.</li>
+<li><strong>Spectral</strong>: Add interlayer interimage effect (DIR coupler developer inhibition matrix).</li>
+<li><strong>Presets</strong>: Calibrated layer stacks for Kodak Portra 400, Kodak Tri-X 400, Fujifilm Velvia 50.</li>
+</ul>
+
+  </div>
+</section>
+    </div>
+  </div>
+
+        </main>
+      </div>
+
+      <footer>
+        
+          <a href="https://github.com/W-Mai/filmr"><div class="github-icon" aria-hidden="true"></div></a>
+        
+        <span>
+          filmr, MIT
+        </span>
+      </footer>
+    </div>
+
+    
+      <script async="true" src="https://www.googletagmanager.com/gtag/js?id=G-ZCH0DFY43H"></script>
+    
+    
+      window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date());gtag('config', 'G-ZCH0DFY43H');
+    
+
+    
+  </body>
+</html>

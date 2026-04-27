@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>filmr Changelog</title><link>http://127.0.0.1:7979/changelog</link><description>Changelog information for filmr</description><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><atom:link href="http://127.0.0.1:7979/changelog.rss" rel="self"/><item><title>0.10.0 - 2026-04-27</title><link>http://127.0.0.1:7979/changelog/v0.10.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.10.0</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li>Depth of Field: mipmap-based variable radius blur driven by depth map</li>
+<li>Petzval Swirly Bokeh: tangential stretch on out-of-focus areas</li>
+<li>Rotational Blur: camera rotation around optical axis simulation</li>
+<li>Grain rewrite: moved to output linear space with physical Selwyn law (σ ∝ √(1-lum) × lum)</li>
+<li>Preview downscaled to 1024px for fast interactive processing</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li>Enable depth feature in release builds (was missing from cargo-dist)</li>
+<li>Prevent worker thread death on panic (catch_unwind + fallback result)</li>
+<li>Fix depth map coordinate mapping (was using pixel coords instead of scaling)</li>
+<li>Remove musl target from dist (ort doesn't provide musl prebuilts)</li>
+<li>Configure Trunk to exclude depth for WASM builds</li>
+</ul>
+]]></content:encoded></item><item><title>0.9.1 - 2026-04-17</title><link>http://127.0.0.1:7979/changelog/v0.9.1</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.9.1</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li>Auto Levels: scanner-style black/white point stretch (opt-in checkbox in UI)</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li>Fix BW films rendering as flat gray in Accurate mode (R/B channels were zero from single-emulsion spectral engine)</li>
+<li>Fix Polaroid B&amp;W 667 all-white output (exposure_offset was 0.00)</li>
+<li>Detect BW films by <code>monochrome</code> flag instead of <code>FilmType::BwNegative</code> (fixes Agfa Scala 200)</li>
+<li>Reorder Accurate pipeline: lens effects (ChromaticAberration, MTF, etc.) now run before develop</li>
+<li>BW grayscale merge uses film's spectral response weights via <code>bw_weights()</code></li>
+</ul>
+]]></content:encoded></item><item><title>0.9.0 - 2026-04-17</title><link>http://127.0.0.1:7979/changelog/v0.9.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.9.0</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li>Depth-aware object motion: monocular depth estimation (Depth Anything V2 Small) drives per-object motion blur.
+<ul>
+<li>Connected region segmentation by depth similarity — each object moves coherently.</li>
+<li>Near objects get more motion blur, far objects stay sharp.</li>
+<li>UI: Object Motion slider + depth map preview.</li>
+</ul>
+</li>
+<li><code>process_image_with_depth()</code> API for passing depth maps through the pipeline.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li>Fix exposure calibration: simulate_gray now uses same output model as create_output_image (density linear + tone_gamma=2.47).</li>
+<li>Fix ObjectMotionStage missing from Accurate pipeline.</li>
+</ul>
+]]></content:encoded></item><item><title>0.8.1 - 2026-04-16</title><link>http://127.0.0.1:7979/changelog/v0.8.1</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.8.1</guid><content:encoded><![CDATA[<h3>🐛 Fixes</h3>
+<ul>
+<li>Fix highlight clipping: remove redundant shoulder_softening (sigmoid H-D curve provides natural shoulder).</li>
+<li>Unified output model: density linear mapping + tone gamma=2.47 for both Fast and Accurate modes.</li>
+<li>Norm target raised 0.18→0.32 to compensate scatter/WB losses in Accurate pipeline.</li>
+</ul>
+<h3>🔧 Improvements</h3>
+<ul>
+<li>Physically correct d_min per channel for C-41 color negative films (orange mask residual).
+<ul>
+<li>Kodak: R=0.14, G=0.16, B=0.19. Fuji: R=0.13, G=0.15, B=0.17.</li>
+<li>Shadow color cast now emerges naturally from physics.</li>
+</ul>
+</li>
+</ul>
+]]></content:encoded></item><item><title>0.8.0 - 2026-04-15</title><link>http://127.0.0.1:7979/changelog/v0.8.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.8.0</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li>Vignetting: cos⁴ lens falloff model in output space (~25% corner darkening).</li>
+<li>Micro motion blur: multi-frequency hand tremor simulation with Brownian trajectory.
+<ul>
+<li>UI: Motion Blur slider, seed control, trajectory + dwell weight visualization.</li>
+</ul>
+</li>
+<li>Radial MTF: center-sharp, edge-soft blur (replaces uniform MTF).</li>
+<li>Chromatic aberration: R/B channel radial scaling for edge RGB fringing.</li>
+<li>Film stock analyzer: PSD shape, isotropy, signal dependency, film detection scoring.
+<ul>
+<li>Parallelized with rayon, xtask runs in release mode.</li>
+</ul>
+</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li>Self-calibrating exposure norm via binary search (consistent brightness across presets).</li>
+</ul>
+]]></content:encoded></item><item><title>0.7.3 - 2026-04-14</title><link>http://127.0.0.1:7979/changelog/v0.7.3</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.7.3</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li>Full-spectrum dye transmittance output (Yellow/Magenta/Cyan dye spectra × D65 → CIE XYZ → sRGB).</li>
+<li>Self-calibrating exposure norm via binary search (consistent brightness across all presets).</li>
+<li>Film stock analyzer tool (<code>cargo xtask analyze &lt;image&gt;</code>).</li>
+<li>Lucky Color 200 and Ricoh GR Street Night presets.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li>Fix negative film inversion in spectral dye output path.</li>
+<li>Fix grain model: Selwyn √D theory, color_correlation 0.93.</li>
+<li>Rewrite grain as physically-based texture field (multiplicative, per-layer, spatially correlated).</li>
+</ul>
+<h3>📝 Documentation</h3>
+<ul>
+<li>Rendering Pipeline chapter with LaTeX formulas in mdBook.</li>
+</ul>
+]]></content:encoded></item><item><title>0.7.2 - 2026-04-13</title><link>http://127.0.0.1:7979/changelog/v0.7.2</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.7.2</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li>Default SimulationMode to Accurate (full-spectrum for all paths).</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li>Fix inhibition darkening neutral gray (use density deviation, not absolute).</li>
+<li>Fix per-channel norm to match Fast mode channel balance exactly.</li>
+</ul>
+<h3>✅ Tests</h3>
+<ul>
+<li>Add strict inhibition behavior tests (neutral unaffected, color separation, mean preserved).</li>
+<li>Replace external photo tests with synthetic scene histogram comparison.</li>
+</ul>
+]]></content:encoded></item><item><title>0.7.1 - 2026-04-13</title><link>http://127.0.0.1:7979/changelog/v0.7.1</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.7.1</guid><content:encoded><![CDATA[<h3>⚡ Performance</h3>
+<ul>
+<li>Optimize Accurate mode ~10x via precomputed layer coefficients (eliminates per-pixel exp() calls).</li>
+</ul>
+<h3>✨ Features</h3>
+<ul>
+<li>Add xtask for bump, ci, publish, release automation.</li>
+<li>Add criterion benchmark for Fast vs Accurate mode comparison.</li>
+</ul>
+<h3>📝 Documentation</h3>
+<ul>
+<li>Add Full-Spectrum Engine chapter to mdBook.</li>
+</ul>
+]]></content:encoded></item><item><title>0.7.0 - 2026-04-12</title><link>http://127.0.0.1:7979/changelog/v0.7.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.7.0</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li><strong>Spectral</strong>: Add CIE 1931 XYZ colour matching functions and D65 illuminant lookup tables (380–780nm, 5nm, 81 bins).</li>
+<li><strong>Spectral</strong>: Replace blackbody approximation for D65 with CIE standard data.</li>
+<li><strong>Spectral</strong>: Replace Gaussian camera sensitivities with CIE XYZ CMF × XYZ→sRGB matrix.</li>
+<li><strong>Film Layer</strong>: Add multi-layer film structure model (<code>FilmLayerStack</code> / <code>FilmLayer</code>) with refractive index, thickness, spectral absorption, and scattering coefficients.</li>
+<li><strong>Spectral Engine</strong>: Add full-spectrum propagation engine — per-wavelength per-layer light transport with Beer-Lambert absorption, Fresnel interface reflection, and forward+backward (halation) passes.</li>
+<li><strong>Core</strong>: Add <code>SimulationMode::Fast</code> / <code>Accurate</code> — Fast uses existing 3×3 matrix path, Accurate uses full-spectrum engine.</li>
+<li><strong>Film</strong>: Add <code>layer_stack: Option&lt;FilmLayerStack&gt;</code> to <code>FilmStock</code> for custom per-preset layer structures.</li>
+<li><strong>UI</strong>: Develop button triggers Accurate mode (full-spectrum); preview stays Fast (matrix).</li>
+<li><strong>Spectral</strong>: Add scattering spatial diffusion — Gaussian blur derived from physical layer scatter coefficients.</li>
+<li><strong>Spectral</strong>: Add interlayer interimage effect (DIR coupler developer inhibition matrix).</li>
+<li><strong>Presets</strong>: Calibrated layer stacks for Kodak Portra 400, Kodak Tri-X 400, Fujifilm Velvia 50.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.8 - 2026-02-12</title><link>http://127.0.0.1:7979/changelog/v0.6.8</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.8</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li><strong>Film</strong>: Add FilmStyle system for systematic rendering style modifiers (Accurate, Artistic, Vintage, HighContrast, Pastel).</li>
+<li><strong>Presets</strong>: Add artistic variants for popular films (Portra 400, Tri-X 400, Velvia 50, HP5 Plus 400).</li>
+<li><strong>UI</strong>: Add FilmStyle selector to both Simple and Professional modes with horizontal button layout.</li>
+<li><strong>UI</strong>: Trigger automatic reprocessing when switching between Simple and Professional modes.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Presets</strong>: Fix grain alpha values using correct formula <code>(RMS/1000)²</code> for all 51 films (was incorrectly <code>RMS/1000</code>).</li>
+<li><strong>Presets</strong>: Restore original curve parameters for Portra 400, Tri-X 400, HP5 Plus, and Velvia 50.</li>
+<li><strong>Grain</strong>: Add visual grain boost factor (25x) to compensate for display/perception differences - grain was physically correct but visually too weak.</li>
+<li><strong>UI</strong>: Load preset values on image load to fix initial grain intensity issue (first load showed extreme grain).</li>
+</ul>
+<h3>💄 Style</h3>
+<ul>
+<li><strong>UI</strong>: Move Rendering Style to separate section with consistent grouping.</li>
+<li><strong>UI</strong>: Change FilmStyle selector from dropdown to horizontal buttons for better UX.</li>
+<li><strong>UI</strong>: Force white balance Off in Simple mode during processing.</li>
+</ul>
+<h3>♻️ Refactor</h3>
+<ul>
+<li><strong>Film</strong>: Add helper methods to FilmStyle enum (<code>all()</code>, <code>name()</code>, <code>description()</code>, <code>short_description()</code>) for cleaner UI code.</li>
+</ul>
+<h3>🙈 Chore</h3>
+<ul>
+<li><strong>Git</strong>: Add .DS_Store to .gitignore.</li>
+</ul>
+<h3>📄 Documentation</h3>
+<ul>
+<li><strong>README</strong>: Update snapshot image.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.7 - 2026-02-11</title><link>http://127.0.0.1:7979/changelog/v0.6.7</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.7</guid><content:encoded><![CDATA[<h3>♻️ Refactor</h3>
+<ul>
+<li><strong>IO</strong>: Separate EXIF metadata building from file I/O operations.</li>
+<li><strong>IO</strong>: Unify image encoding and EXIF writing to memory (<code>Vec&lt;u8&gt;</code>) before file output.</li>
+<li><strong>IO</strong>: Use <code>write_to_vec()</code> instead of <code>write_to_file()</code> for EXIF metadata to enable cross-platform support.</li>
+<li><strong>IO</strong>: Remove platform-specific <code>#[cfg]</code> guards from <code>build_exif_metadata()</code> - now works on both desktop and WASM.</li>
+<li><strong>IO</strong>: Consolidate file I/O to single point: <code>std::fs::write()</code> for desktop, <code>handle.write()</code> for WASM.</li>
+<li><strong>UI</strong>: Split <code>controls.rs</code> into modular components (film_list, technical, simple).</li>
+<li><strong>UI</strong>: Split <code>app.rs</code> into modular components (io, state, update).</li>
+<li><strong>GPU</strong>: Split <code>gpu_pipelines.rs</code> into modular pipeline stages.</li>
+<li><strong>Presets</strong>: Split into manufacturer-specific modules (kodak, fujifilm, ilford, vintage).</li>
+<li><strong>App</strong>: Extract EXIF orientation utils to shared module.</li>
+</ul>
+<h3>💄 Style</h3>
+<ul>
+<li><strong>UI</strong>: Update window size to 1200x800 and rename title.</li>
+</ul>
+<h3>🔧 Fixes</h3>
+<ul>
+<li><strong>Presets</strong>: Fix imports after module refactoring.</li>
+<li><strong>Presets</strong>: Fix <code>get_stocks()</code> function calls in all preset modules.</li>
+<li><strong>Examples</strong>: Update preset function names after module split.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.6 - 2026-02-07</title><link>http://127.0.0.1:7979/changelog/v0.6.6</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.6</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li><strong>Controls</strong>: Improve film stock list row interaction with full row hover/click highlighting, better padding, and rounded thumbnail corners in Simple mode.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.5 - 2026-02-07</title><link>http://127.0.0.1:7979/changelog/v0.6.5</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.5</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li><strong>App</strong>: Preserve original EXIF metadata when saving images and add Filmr processing info (Software, ImageDescription, Copyright tags).</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.4 - 2026-02-07</title><link>http://127.0.0.1:7979/changelog/v0.6.4</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.4</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li><strong>App</strong>: Improve save dialog with source-based default filename (<code>{source}_FILMR.jpg</code>) and JPEG as default format.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>App</strong>: Fix <code>image::ImageOutputFormat</code> API change for image crate 0.25 compatibility.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.2 - 2026-02-06</title><link>http://127.0.0.1:7979/changelog/v0.6.2</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.2</guid><content:encoded><![CDATA[<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Controls</strong>: Fix gamma boost (contrast) not applied to preset thumbnails. Thumbnail worker now receives the modified <code>FilmStock</code> with gamma boost instead of using the original preset.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.1 - 2026-02-06</title><link>http://127.0.0.1:7979/changelog/v0.6.1</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.1</guid><content:encoded><![CDATA[<h3>✨ Features</h3>
+<ul>
+<li><strong>Settings</strong>: Add optional histogram smoothing toggle (3-tap <code>[1,2,1]/4</code> weighted average) to reduce visual jitter in shadow regions.</li>
+</ul>
+]]></content:encoded></item><item><title>0.6.0 - 2026-02-06</title><link>http://127.0.0.1:7979/changelog/v0.6.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.6.0</guid><content:encoded><![CDATA[<h3>♻️ Refactoring</h3>
+<ul>
+<li><strong>Core</strong>: Extracted spectral matrix computation into <code>FilmStock::compute_spectral_matrix()</code>, eliminating duplicated spectral integration logic across pipeline and processor modules.</li>
+</ul>
+<h3>⚡️ Performance</h3>
+<ul>
+<li><strong>Spectral</strong>: Added SIMD (<code>f32x4</code>) optimization to <code>Spectrum</code> arithmetic operators (<code>Add</code>, <code>Mul</code>), reducing per-operation cost for spectral calculations.</li>
+</ul>
+<h3>✨ Features</h3>
+<ul>
+<li><strong>GPU</strong>: Enhanced develop shader with spectral/color dual matrix pipeline, shoulder softening compression, and logistic sigmoid H-D curve (replacing erf approximation) for better CPU/GPU consistency.</li>
+<li><strong>Grain</strong>: Switched grain shader shadow noise model from inverse-distance to exponential decay (<code>exp(-2D)</code>), providing smoother shadow-to-midtone grain transitions.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Metrics</strong>: Fixed PSD slope calculation to use correct row-then-column 2D FFT instead of flattened 1D FFT.</li>
+</ul>
+]]></content:encoded></item><item><title>0.5.9 - 2026-02-04</title><link>http://127.0.0.1:7979/changelog/v0.5.9</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.5.9</guid><content:encoded><![CDATA[<h3>♻️ Refactoring</h3>
+<ul>
+<li><strong>Core</strong>: Refactored <code>Spectrum</code> struct to remove <code>Copy</code> trait, forcing explicit data flow and improving performance by avoiding expensive implicit copies.</li>
+<li><strong>Core</strong>: Improved numerical stability in <code>new_blackbody</code> and <code>integrate_product</code> functions within <code>spectral.rs</code>, ensuring physical consistency and preventing potential overflows.</li>
+<li><strong>Core</strong>: Replaced implicit amplitude scaling with <code>new_gaussian_normalized</code> to guarantee energy conservation in spectral modeling regardless of bandwidth.</li>
+</ul>
+<h3>✨ Features</h3>
+<ul>
+<li><strong>Grain</strong>: Implemented resolution-dependent grain scaling. Grain blur radius and noise amplitude now scale automatically with image resolution (reference 2K), ensuring consistent visual graininess across different image sizes.</li>
+</ul>
+]]></content:encoded></item><item><title>0.5.2 - 2026-02-02</title><link>http://127.0.0.1:7979/changelog/v0.5.2</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.5.2</guid><content:encoded><![CDATA[<h3>🚀 Features</h3>
+<ul>
+<li><strong>WASM</strong>: Implemented multi-threaded image processing using <code>rayon</code> and <code>wasm-bindgen-rayon</code> for significantly improved performance on the web.</li>
+<li><strong>WASM</strong>: Added dedicated <code>ComputeBridge</code> and Web Worker infrastructure to handle heavy computations off the main UI thread.</li>
+<li><strong>WASM</strong>: Integrated <code>console_log</code> for unified logging in the browser console.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>WASM</strong>: Fixed <code>hist_rgb</code> serialization issue by implementing <code>serde-big-array</code> wrapper, ensuring correct histogram data transfer between worker and UI.</li>
+<li><strong>WASM</strong>: Resolved "Parking not supported" panic by enabling <code>parking_lot/nightly</code> and <code>wasm-bindgen-rayon/no-bundler</code> features.</li>
+<li><strong>WASM</strong>: Fixed <code>worker.js</code> module loading errors by patching import paths and removing problematic <code>modulepreload</code> links.</li>
+<li><strong>CI</strong>: Fixed GitHub Actions workflow for WASM builds by switching to <code>nightly</code> toolchain and adding <code>rust-src</code> component (required for <code>build-std</code> and atomics).</li>
+<li><strong>Scripts</strong>: Enhanced <code>patch_dist.py</code> robustness with better regex matching and environment variable support.</li>
+</ul>
+]]></content:encoded></item><item><title>0.5.1 - 2026-01-30</title><link>http://127.0.0.1:7979/changelog/v0.5.1</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.5.1</guid><content:encoded><![CDATA[<h3>🚀 Features</h3>
+<ul>
+<li><strong>UI</strong>: Added "Save" and "Back" buttons in Studio Mode for improved workflow.</li>
+<li><strong>UI</strong>: Optimized main layout by removing the top panel and relocating the settings button for a cleaner interface.</li>
+<li><strong>UI</strong>: Improved positioning of the UX mode toggle.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Metrics</strong>: Fixed logic for retrieving and displaying film metrics.</li>
+</ul>
+<h3>♻️ Refactoring</h3>
+<ul>
+<li><strong>Core</strong>: Refactored <code>FilmStock</code> struct to embed <code>manufacturer</code> and <code>name</code> fields directly, simplifying the <code>presets</code> module and removing redundant tuple wrappers.</li>
+<li><strong>Core</strong>: Optimized <code>FilmStock</code> usage to prefer references and moves over cloning, improving performance and reducing unnecessary allocations.</li>
+</ul>
+]]></content:encoded></item><item><title>0.5.0 - 2026-01-30</title><link>http://127.0.0.1:7979/changelog/v0.5.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.5.0</guid><content:encoded><![CDATA[<h3>🚀 Features</h3>
+<ul>
+<li><strong>UI</strong>: Introduced <strong>Simple</strong> and <strong>Professional</strong> UX modes. Simple mode focuses on quick adjustments (Brightness, Contrast, Warmth, Intensity), while Professional mode offers full physics-based control.</li>
+<li><strong>UI</strong>: Added <strong>Split-Screen Comparison</strong> view in the central panel for side-by-side before/after comparison.</li>
+<li><strong>UI</strong>: Implemented async <strong>Preset Thumbnails</strong> in the controls panel for visual preview of film stocks.</li>
+<li><strong>Processor</strong>: Added <code>warmth</code> and <code>saturation</code> parameters to the simulation engine.</li>
+<li><strong>UI</strong>: Added persistency for UX mode preference in <code>config.json</code>.</li>
+<li><strong>UI</strong>: Optimized top bar layout with direct mode toggles.</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Metrics</strong>: Fixed incorrect metrics display logic and optimized metrics panel visibility for different modes.</li>
+<li><strong>UI</strong>: Fixed control panel layout issues and improved visual hierarchy with better spacing and grouping.</li>
+</ul>
+<h3>⚠ Breaking Changes</h3>
+<ul>
+<li><strong>Core</strong>: Refactored <code>FilmStock</code> struct to embed <code>manufacturer</code> and <code>name</code> fields directly, removing the need for external name management. Updated <code>get_all_stocks</code> to return <code>Vec&lt;FilmStock&gt;</code> instead of tuples.</li>
+</ul>
+]]></content:encoded></item><item><title>0.4.0 - 2026-01-29</title><link>http://127.0.0.1:7979/changelog/v0.4.0</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.4.0</guid><content:encoded><![CDATA[<h3>⚠ Breaking Changes</h3>
+<ul>
+<li><strong>Core</strong>: Refactored <code>ReciprocityFailure</code> model to be a struct with <code>beta</code> parameter, removing the <code>description</code> field. This restores <code>Copy</code> trait for <code>FilmStock</code>.</li>
+<li><strong>Core</strong>: Removed references to internal documentation IDs ("tec n") from public API comments.</li>
+</ul>
+<h3>🚀 Features</h3>
+<ul>
+<li><strong>Core</strong>: Added standard color negative spectral response model (<code>new_color_negative_standard</code>).</li>
+<li><strong>Ops</strong>: Implemented structured logging with <code>tracing</code> crate, replacing <code>println!</code> debugging.</li>
+<li><strong>Docs</strong>: Established <code>mdBook</code> knowledge base structure in <code>docs/</code>.</li>
+<li><strong>Docs</strong>: Added comprehensive Rustdoc documentation to public API (<code>FilmStock</code>, <code>PipelineStage</code>, etc.).</li>
+</ul>
+<h3>⚡️ Performance</h3>
+<ul>
+<li><strong>Bench</strong>: Added <code>criterion</code> benchmarks for image processing (1080p).</li>
+</ul>
+<h3>🐛 Fixes</h3>
+<ul>
+<li><strong>Tests</strong>: Resolved Clippy warnings and unused variables in test suites.</li>
+</ul>
+]]></content:encoded></item><item><title>v0.3.11</title><link>http://127.0.0.1:7979/changelog/v0.3.11</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.3.11</guid><content:encoded><![CDATA[]]></content:encoded></item><item><title>v0.3.10</title><link>http://127.0.0.1:7979/changelog/v0.3.10</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.3.10</guid><content:encoded><![CDATA[]]></content:encoded></item><item><title>0.3.9 - 2026-01-27</title><link>http://127.0.0.1:7979/changelog/v0.3.9</link><category domain="https://github.com/W-Mai/filmr">filmr Changelog</category><guid>http://127.0.0.1:7979/changelog/v0.3.9</guid><content:encoded><![CDATA[<h3>⚡️ Performance</h3>
+<ul>
+<li><strong>UI</strong>: Offloaded image decoding, analysis, and resize operations to a background worker thread to prevent UI blocking during file load.</li>
+</ul>
+]]></content:encoded></item></channel></rss>
