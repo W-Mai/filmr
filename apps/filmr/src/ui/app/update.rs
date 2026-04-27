@@ -151,6 +151,12 @@ impl App for FilmrApp {
         }
 
         if let Ok(result) = self.rx_res.try_recv() {
+            log::info!(
+                "[UI] Received result: is_preview={}, size={}x{}",
+                result.is_preview,
+                result.image.width(),
+                result.image.height()
+            );
             if result.is_preview {
                 // Convert to egui texture
                 let size = [result.image.width() as _, result.image.height() as _];

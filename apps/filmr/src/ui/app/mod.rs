@@ -338,24 +338,39 @@ impl FilmrApp {
 
         spawn_thread(move || {
             while let Ok(mut req) = rx_req.recv() {
+                let mut skipped = 0u32;
                 while let Ok(newer) = rx_req.try_recv() {
                     req = newer;
+                    skipped += 1;
                 }
 
                 let width = req.image.width();
                 let height = req.image.height();
                 let is_preview = req.is_preview;
-                log::info!("Native worker starting process: {}x{}", width, height);
+                log::info!(
+                    "[Worker] Starting: {}x{} preview={} skipped={}",
+                    width,
+                    height,
+                    is_preview,
+                    skipped
+                );
 
+                let t0 = std::time::Instant::now();
                 match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                     process_worker_logic(req)
                 })) {
                     Ok(res) => {
-                        log::info!("Native worker process done");
-                        let _ = tx_res.send(res);
+                        log::info!(
+                            "[Worker] Done in {:.1}ms, sending result",
+                            t0.elapsed().as_secs_f64() * 1000.0
+                        );
+                        match tx_res.send(res) {
+                            Ok(_) => log::info!("[Worker] Result sent OK"),
+                            Err(e) => log::error!("[Worker] Failed to send result: {}", e),
+                        }
                     }
                     Err(e) => {
-                        log::error!("Worker panicked: {:?}", e);
+                        log::error!("[Worker] PANICKED: {:?}", e);
                         let fallback = ProcessResult {
                             image: image::RgbImage::new(1, 1),
                             metrics: filmr::FilmMetrics::empty(),
@@ -365,7 +380,9 @@ impl FilmrApp {
                     }
                 }
                 ctx.request_repaint();
+                log::info!("[Worker] Waiting for next request...");
             }
+            log::error!("[Worker] Channel closed, worker exiting!");
         });
     }
 

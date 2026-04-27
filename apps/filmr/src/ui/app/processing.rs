@@ -60,10 +60,10 @@ impl FilmrApp {
                 motion_blur_seed: self.motion_blur_seed,
                 object_motion_amount: self.object_motion_amount,
                 auto_levels: self.auto_levels,
-                dof_amount: 0.0, // Skip heavy effects in preview
+                dof_amount: self.dof_amount,
                 dof_focus: self.dof_focus,
-                dof_swirl: 0.0,
-                rotational_blur_amount: 0.0,
+                dof_swirl: self.dof_swirl,
+                rotational_blur_amount: self.rotational_blur_amount,
             };
 
             // Send request to worker
@@ -97,6 +97,7 @@ impl FilmrApp {
                     .map(|dm| std::sync::Arc::new(dm.clone())),
             };
 
+            log::info!("[UI] Sent PREVIEW request");
             let _ = self.tx_req.send(request);
             self.is_processing = true;
         }
@@ -207,6 +208,7 @@ impl FilmrApp {
                     .map(|dm| std::sync::Arc::new(dm.clone())),
             };
 
+            log::info!("[UI] Sent DEVELOP request");
             let _ = self.tx_req.send(request);
             self.is_processing = true;
         }
