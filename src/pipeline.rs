@@ -560,7 +560,7 @@ impl PipelineStage for DepthOfFieldStage {
                 let ty = dx / dist;
 
                 // Stretch amount: proportional to defocus × distance from center × swirl
-                let stretch = swirl * defocus * (dist / cx.max(cy)) * max_radius * 0.5;
+                let stretch = swirl * defocus * (dist / cx.max(cy)) * max_radius * 2.0;
 
                 let (mut r, mut g, mut b) = (0.0f32, 0.0f32, 0.0f32);
                 for s in 0..n_samples {

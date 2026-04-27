@@ -60,16 +60,34 @@ impl FilmrApp {
                 motion_blur_seed: self.motion_blur_seed,
                 object_motion_amount: self.object_motion_amount,
                 auto_levels: self.auto_levels,
-                dof_amount: self.dof_amount,
+                dof_amount: 0.0, // Skip heavy effects in preview
                 dof_focus: self.dof_focus,
-                dof_swirl: self.dof_swirl,
-                rotational_blur_amount: self.rotational_blur_amount,
+                dof_swirl: 0.0,
+                rotational_blur_amount: 0.0,
             };
 
             // Send request to worker
-            // Direct clone of Arc, O(1)
+            // Downscale for preview to keep processing fast
+            let preview_img = {
+                let (w, h) = (img.width(), img.height());
+                let max_side = 1024u32;
+                if w > max_side || h > max_side {
+                    let scale = max_side as f32 / w.max(h) as f32;
+                    let nw = (w as f32 * scale) as u32;
+                    let nh = (h as f32 * scale) as u32;
+                    std::sync::Arc::new(image::imageops::resize(
+                        img.as_ref(),
+                        nw,
+                        nh,
+                        image::imageops::FilterType::Triangle,
+                    ))
+                } else {
+                    Arc::clone(img)
+                }
+            };
+
             let request = ProcessRequest {
-                image: Arc::clone(img),
+                image: preview_img,
                 film,
                 config,
                 is_preview: true,
