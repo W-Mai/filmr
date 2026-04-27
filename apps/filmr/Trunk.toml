@@ -1,5 +1,8 @@
 [build]
 filehash = false
+# Exclude depth feature for WASM (ort doesn't support wasm32)
+cargo_features = ["cli", "ui", "compute-gpu"]
+no_default_features = true
 
 [[hooks]]
 stage = "post_build"

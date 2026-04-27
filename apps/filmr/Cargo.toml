@@ -64,7 +64,7 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [features]
-default = ["cli", "ui", "compute-gpu"]
+default = ["cli", "ui", "compute-gpu", "depth"]
 cli = ["dep:clap"]
 ui = ["dep:eframe", "dep:egui", "dep:rfd", "dep:egui_plot", "dep:flume", "dep:rayon"]
 compute-gpu = []
