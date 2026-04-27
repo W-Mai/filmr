@@ -344,12 +344,26 @@ impl FilmrApp {
 
                 let width = req.image.width();
                 let height = req.image.height();
+                let is_preview = req.is_preview;
                 log::info!("Native worker starting process: {}x{}", width, height);
 
-                let res = process_worker_logic(req);
-
-                log::info!("Native worker process done");
-                let _ = tx_res.send(res);
+                match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    process_worker_logic(req)
+                })) {
+                    Ok(res) => {
+                        log::info!("Native worker process done");
+                        let _ = tx_res.send(res);
+                    }
+                    Err(e) => {
+                        log::error!("Worker panicked: {:?}", e);
+                        let fallback = ProcessResult {
+                            image: image::RgbImage::new(1, 1),
+                            metrics: filmr::FilmMetrics::empty(),
+                            is_preview,
+                        };
+                        let _ = tx_res.send(fallback);
+                    }
+                }
                 ctx.request_repaint();
             }
         });

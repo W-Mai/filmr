@@ -278,7 +278,7 @@ impl FilmMetrics {
         }
     }
 
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Self {
             mean_rgb: [0.0; 3],
             std_rgb: [0.0; 3],
