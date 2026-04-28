@@ -4,88 +4,171 @@ mod shutter_speed;
 mod simple;
 
 use egui::{Context, RichText};
-use egui_uix::components::toggle::Toggle;
 
 use crate::config::UxMode;
-use crate::ui::app::FilmrApp;
-
-use professional::render_professional_controls;
-use simple::render_simple_controls;
+use crate::ui::app::{FilmrApp, RightTab};
 
 pub use shutter_speed::ShutterSpeed;
 
+/// Render left panel (film list + style) and right panel (adjustment tabs).
 pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
     let mut changed = false;
-    egui::SidePanel::left("controls_panel").show(ctx, |ui| {
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.add_space(10.0);
-            ui.horizontal_top(|ui| {
-                ui.heading(RichText::new("FILMR").strong().size(24.0));
-                ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
-            });
-            ui.add_space(16.0);
 
-            if app.ux_mode == UxMode::Simple {
-                render_simple_controls(app, ui, ctx, &mut changed);
-            } else {
-                render_professional_controls(app, ui, ctx, &mut changed);
-            }
-
-            ui.add_space(20.0);
-            ui.separator();
-            ui.add_space(10.0);
-            ui.collapsing("⌨ Shortcuts & Help", |ui| {
-                ui.small("- Drag & Drop image to open");
-                ui.small("- Scroll/Pinch to Zoom");
-                ui.small("- Drag image to Pan");
-                ui.small("- Double Click to Reset View");
-                ui.small("- Ctrl+O to Open File");
+    // ── Left Panel: Film List + Style ──
+    egui::SidePanel::left("film_list_panel")
+        .default_width(224.0)
+        .show(ctx, |ui| {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.add_space(6.0);
+                simple::render_film_list(app, ui, &mut changed);
+                ui.add_space(8.0);
+                simple::render_style_selector(app, ui, &mut changed);
+                ui.add_space(8.0);
             });
         });
 
-        egui::TopBottomPanel::bottom("ux_mode_panel").show(ctx, |ui| {
-            // UX Mode Switcher
-            ui.horizontal_centered(|ui| {
-                ui.set_min_height(24.0);
+    // ── Right Panel: Adjustments ──
+    egui::SidePanel::right("adjust_panel")
+        .default_width(256.0)
+        .show(ctx, |ui| {
+            // Mode switch + tabs
+            ui.horizontal(|ui| {
                 let prev_mode = app.ux_mode;
-                let mut toggle_flag = app.ux_mode == UxMode::Professional;
-
-                ui.label("👶");
                 if ui
-                    .add(Toggle::new(&mut toggle_flag, "🚀 Professional"))
+                    .selectable_label(app.ux_mode == UxMode::Simple, "Simple")
                     .clicked()
                 {
+                    app.ux_mode = UxMode::Simple;
+                    app.right_tab = RightTab::Adjust;
+                }
+                if ui
+                    .selectable_label(app.ux_mode == UxMode::Professional, "Professional")
+                    .clicked()
+                {
+                    app.ux_mode = UxMode::Professional;
+                }
+                if prev_mode != app.ux_mode {
                     if let Some(cm) = &mut app.config_manager {
                         cm.config.ux_mode = app.ux_mode;
                         cm.save();
                     }
-                }
-
-                app.ux_mode = if toggle_flag {
-                    UxMode::Professional
-                } else {
-                    UxMode::Simple
-                };
-
-                if prev_mode != app.ux_mode {
                     changed = true;
                 }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("⚙").clicked() {
+                        app.show_settings = true;
+                    }
+                });
+            });
+            ui.separator();
 
-                ui.allocate_ui_with_layout(
-                    ui.available_size(),
-                    egui::Layout::right_to_left(egui::Align::Center),
-                    |ui| {
-                        if ui.button("🔧").clicked() {
-                            app.show_settings = true;
-                        }
-                    },
-                );
+            // Tab bar (Professional only)
+            if app.ux_mode == UxMode::Professional {
+                ui.horizontal(|ui| {
+                    ui.selectable_value(&mut app.right_tab, RightTab::Adjust, "Adjust");
+                    ui.selectable_value(&mut app.right_tab, RightTab::Effects, "Effects");
+                    ui.selectable_value(&mut app.right_tab, RightTab::Detail, "Detail");
+                });
+                ui.separator();
+            }
+
+            egui::ScrollArea::vertical().show(ui, |ui| match app.right_tab {
+                RightTab::Adjust => {
+                    render_adjust_tab(app, ui, ctx, &mut changed);
+                }
+                RightTab::Effects => {
+                    professional::render_effects_tab(app, ui, &mut changed);
+                }
+                RightTab::Detail => {
+                    professional::render_detail_tab(app, ui, &mut changed);
+                }
             });
         });
-    });
 
     if changed {
         app.process_and_update_texture(ctx);
         app.regenerate_thumbnails();
+    }
+}
+
+/// Adjust tab — shown in both Simple and Professional modes.
+fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, changed: &mut bool) {
+    // Exposure
+    ui.label(RichText::new("Exposure").strong());
+    ui.add_space(2.0);
+    if app.ux_mode == UxMode::Professional {
+        use super::controls::shutter_speed::ShutterSpeed;
+        ui.horizontal(|ui| {
+            ui.label("Exposure Time");
+            let mut shutter = ShutterSpeed(app.exposure_time as f64);
+            if shutter.ui(ui).changed() {
+                *changed = true;
+            }
+            app.exposure_time = shutter.0 as f32;
+        });
+    } else {
+        ui.horizontal(|ui| {
+            ui.label("☀ Brightness");
+        });
+        if ui
+            .add(egui::Slider::new(&mut app.exposure_time, 0.001..=30.0).logarithmic(true))
+            .changed()
+        {
+            *changed = true;
+        }
+    }
+    ui.horizontal(|ui| {
+        ui.label("◑ Contrast");
+    });
+    if ui
+        .add(egui::Slider::new(&mut app.gamma_boost, 0.5..=2.0))
+        .changed()
+    {
+        *changed = true;
+    }
+    ui.add_space(8.0);
+
+    // Color
+    ui.label(RichText::new("Color").strong());
+    ui.add_space(2.0);
+    ui.horizontal(|ui| {
+        ui.label("🔥 Warmth");
+    });
+    if ui
+        .add(egui::Slider::new(&mut app.warmth, -1.0..=1.0))
+        .changed()
+    {
+        *changed = true;
+    }
+    ui.horizontal(|ui| {
+        ui.label("🌈 Intensity");
+    });
+    if ui
+        .add(egui::Slider::new(&mut app.saturation, 0.0..=2.0))
+        .changed()
+    {
+        *changed = true;
+    }
+    ui.add_space(8.0);
+
+    // Auto
+    if ui.checkbox(&mut app.auto_levels, "🎚 Auto Levels").changed() {
+        *changed = true;
+    }
+    if ui
+        .button(RichText::new("✨ Auto Enhance").strong())
+        .clicked()
+    {
+        app.white_balance_mode = filmr::WhiteBalanceMode::Auto;
+        app.white_balance_strength = 1.0;
+        *changed = true;
+    }
+    ui.add_space(8.0);
+
+    // Professional-only: WB + Output
+    if app.ux_mode == UxMode::Professional {
+        professional::render_white_balance(app, ui, changed);
+        ui.add_space(8.0);
+        professional::render_output_mode(app, ui, changed);
     }
 }

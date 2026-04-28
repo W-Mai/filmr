@@ -3,70 +3,13 @@ use egui::{Color32, Context, Pos2, Rect, RichText, Sense, Vec2};
 
 pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
     egui::CentralPanel::default().show(ctx, |ui| {
-        // 1. Toolbar
-        render_toolbar(app, ui, ctx);
-
-        ui.separator();
-
-        // 2. Image Canvas
+        // Image Canvas
         render_image_canvas(app, ui, ctx);
 
-        // 3. Processing Overlay
+        // Processing Overlay
         if app.is_processing || app.is_loading {
             render_processing_overlay(app, ui, ctx);
         }
-    });
-}
-
-fn render_toolbar(app: &mut FilmrApp, ui: &mut egui::Ui, ctx: &Context) {
-    ui.horizontal(|ui| {
-        ui.add_space(5.0);
-
-        // Comparison Tools
-        app.show_original = ui
-            .add_sized([120.0, 32.0], egui::Button::new("👋 Hold to Compare"))
-            .is_pointer_button_down_on();
-
-        if ui
-            .add_sized(
-                [120.0, 32.0],
-                egui::Button::new("🌓 Split View").selected(app.split_view),
-            )
-            .clicked()
-        {
-            app.split_view = !app.split_view;
-        }
-
-        ui.separator();
-
-        // Actions
-        if ui
-            .add_sized([80.0, 32.0], egui::Button::new("🔬 Develop"))
-            .clicked()
-        {
-            app.develop_image(ctx);
-        }
-
-        let save_btn = egui::Button::new("📄 Save").min_size(Vec2::new(80.0, 32.0));
-        if ui
-            .add_enabled(app.developed_image.is_some(), save_btn)
-            .clicked()
-        {
-            app.save_image();
-        }
-
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui
-                .add_sized(
-                    Vec2::new(100.0, 32.0),
-                    egui::Button::new("📊 Metrics").selected(app.show_metrics),
-                )
-                .clicked()
-            {
-                app.show_metrics = !app.show_metrics;
-            }
-            ui.add_space(10.0);
-        });
     });
 }
 
@@ -114,30 +57,26 @@ fn render_image_canvas(app: &mut FilmrApp, ui: &mut egui::Ui, ctx: &Context) {
 
         if app.split_view && !app.show_original {
             if let Some(original) = &app.original_texture {
-                // Render Original (Left side of split)
                 let split_x = rect.min.x + rect.width() * app.split_pos;
 
-                // Draw Original
                 painter
                     .with_clip_rect(Rect::from_min_max(rect.min, Pos2::new(split_x, rect.max.y)))
                     .image(
                         original.id(),
                         image_rect,
                         Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                        egui::Color32::WHITE,
+                        Color32::WHITE,
                     );
 
-                // Draw Processed
                 painter
                     .with_clip_rect(Rect::from_min_max(Pos2::new(split_x, rect.min.y), rect.max))
                     .image(
                         processed.id(),
                         image_rect,
                         Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                        egui::Color32::WHITE,
+                        Color32::WHITE,
                     );
 
-                // Split Line & Interaction
                 let line_rect = Rect::from_center_size(
                     Pos2::new(split_x, rect.center().y),
                     Vec2::new(2.0, rect.height()),
@@ -170,7 +109,7 @@ fn render_image_canvas(app: &mut FilmrApp, ui: &mut egui::Ui, ctx: &Context) {
                     tex.id(),
                     image_rect,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                    egui::Color32::WHITE,
+                    Color32::WHITE,
                 );
             }
         }

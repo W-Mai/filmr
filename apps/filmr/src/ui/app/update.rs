@@ -313,29 +313,105 @@ impl App for FilmrApp {
                 });
         }
 
-        // Left Panel (Controls) - Always show, but content adapts
-        panels::controls::render_controls(self, ctx);
+        // Top Toolbar
+        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("FILMR")
+                        .strong()
+                        .size(18.0)
+                        .color(egui::Color32::from_rgb(230, 155, 50)),
+                );
+                ui.label(
+                    egui::RichText::new(format!("v{}", env!("CARGO_PKG_VERSION")))
+                        .small()
+                        .color(egui::Color32::from_gray(90)),
+                );
+                ui.separator();
 
-        // Right Panel
-        if self.mode == AppMode::StockStudio {
-            panels::studio::render_studio_panel(self, ctx);
-        }
+                self.show_original = ui
+                    .add_sized([100.0, 28.0], egui::Button::new("👋 Compare"))
+                    .is_pointer_button_down_on();
 
-        if self.show_metrics {
-            panels::metrics::render_metrics(self, ctx);
-        }
+                if ui
+                    .add_sized(
+                        [80.0, 28.0],
+                        egui::Button::new("🌓 Split").selected(self.split_view),
+                    )
+                    .clicked()
+                {
+                    self.split_view = !self.split_view;
+                }
 
-        if self.show_settings {
-            panels::settings::render_settings_window(self, ctx);
-        }
+                ui.separator();
+
+                if ui
+                    .add_sized([80.0, 28.0], egui::Button::new("🔬 Develop"))
+                    .clicked()
+                {
+                    self.develop_image(ctx);
+                }
+
+                let save_btn = egui::Button::new("💾 Save").min_size(egui::Vec2::new(60.0, 28.0));
+                if ui
+                    .add_enabled(self.developed_image.is_some(), save_btn)
+                    .clicked()
+                {
+                    self.save_image();
+                }
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui
+                        .add_sized(
+                            egui::Vec2::new(80.0, 28.0),
+                            egui::Button::new("📊 Metrics").selected(self.show_metrics),
+                        )
+                        .clicked()
+                    {
+                        self.show_metrics = !self.show_metrics;
+                    }
+                });
+            });
+        });
 
         // Status Bar
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(&self.status_msg);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let stock_name = if self.selected_stock_idx < self.stocks.len() {
+                        self.stocks[self.selected_stock_idx].full_name()
+                    } else {
+                        "—".to_string()
+                    };
+                    ui.label(
+                        egui::RichText::new(format!("{} · {}", self.film_style.name(), stock_name))
+                            .small()
+                            .color(egui::Color32::from_gray(120)),
+                    );
+                });
             });
         });
 
+        // Left + Right panels (controls)
+        panels::controls::render_controls(self, ctx);
+
+        // Studio panel (right, only in StockStudio mode)
+        if self.mode == AppMode::StockStudio {
+            panels::studio::render_studio_panel(self, ctx);
+        }
+
+        // Metrics overlay
+        if self.show_metrics {
+            panels::metrics::render_metrics(self, ctx);
+        }
+
+        // Settings window
+        if self.show_settings {
+            panels::settings::render_settings_window(self, ctx);
+        }
+
+        // Central panel (image canvas only, toolbar moved to top)
         panels::central::render_central_panel(self, ctx);
     }
 }

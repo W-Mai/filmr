@@ -7,6 +7,14 @@ pub mod workers;
 
 pub use crate::config::{AppMode, ConfigManager, UxMode};
 
+/// Right panel tab selection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RightTab {
+    Adjust,
+    Effects,
+    Detail,
+}
+
 use egui::{TextureHandle, Vec2};
 use filmr::film::FilmStockCollection;
 use filmr::{
@@ -120,6 +128,8 @@ pub struct FilmrApp {
     pub has_unsaved_changes: bool,
     pub show_exit_dialog: bool,
     pub show_settings: bool,
+
+    pub right_tab: RightTab,
 
     pub config_manager: Option<ConfigManager>,
 
@@ -259,6 +269,8 @@ impl FilmrApp {
             has_unsaved_changes: false,
             show_exit_dialog: false,
             show_settings: false,
+
+            right_tab: RightTab::Adjust,
 
             config_manager,
 

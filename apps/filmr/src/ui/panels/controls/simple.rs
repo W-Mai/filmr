@@ -1,17 +1,12 @@
-use egui::{Context, RichText};
-use filmr::{FilmStyle, WhiteBalanceMode};
+use egui::RichText;
+use filmr::FilmStyle;
 
 use crate::ui::app::FilmrApp;
 
-pub fn render_simple_controls(
-    app: &mut FilmrApp,
-    ui: &mut egui::Ui,
-    _ctx: &Context,
-    changed: &mut bool,
-) {
-    // 1. Preset Selection
+/// Render the film stock list (grouped by brand with thumbnails).
+pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     ui.label(RichText::new("🎞 Film Stock").strong());
-    ui.add_space(5.0);
+    ui.add_space(4.0);
 
     let mut preset_changed = false;
     egui::Frame::default()
@@ -21,12 +16,11 @@ pub fn render_simple_controls(
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             egui::ScrollArea::vertical()
-                .max_height(ui.available_height() - 400.0)
+                .max_height(ui.available_height() - 120.0)
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.set_min_size(ui.available_size());
 
-                        // Group stocks by brand (first word)
                         let mut groups: std::collections::BTreeMap<String, Vec<usize>> =
                             Default::default();
                         for (idx, stock) in app.stocks.iter().enumerate() {
@@ -68,7 +62,6 @@ pub fn render_simple_controls(
                                         egui::vec2(thumb_w, thumb_h),
                                     );
 
-                                    // Draw hover/active/selected background
                                     if response.hovered() || is_selected {
                                         let bg_color = if response.is_pointer_button_down_on() {
                                             ui.visuals().widgets.active.bg_fill
@@ -80,17 +73,14 @@ pub fn render_simple_controls(
                                         ui.painter().rect_filled(rect, corner_radius, bg_color);
                                     }
 
-                                    // Draw thumbnail with contain effect (fit within container, preserve aspect ratio)
                                     if let Some(thumb) = app.preset_thumbnails.get(full_name) {
                                         let img_aspect =
                                             thumb.size()[0] as f32 / thumb.size()[1] as f32;
                                         let container_aspect = thumb_w / thumb_h;
 
                                         let (w, h) = if img_aspect > container_aspect {
-                                            // Image is wider than container, fit by width
                                             (thumb_w, thumb_w / img_aspect)
                                         } else {
-                                            // Image is taller than container, fit by height
                                             (thumb_h * img_aspect, thumb_h)
                                         };
                                         let img_rect = egui::Rect::from_center_size(
@@ -113,7 +103,6 @@ pub fn render_simple_controls(
                                         );
                                     }
 
-                                    // Draw label with proper offset
                                     let text_x = rect.min.x + padding + thumb_w + padding * 2.0;
                                     let text_color = if is_selected {
                                         ui.visuals().selection.stroke.color
@@ -145,12 +134,12 @@ pub fn render_simple_controls(
         app.load_preset_values();
         *changed = true;
     }
+}
 
-    ui.add_space(15.0);
-
-    // 2. Rendering Style
+/// Render the rendering style selector.
+pub fn render_style_selector(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     ui.label(RichText::new("🎨 Rendering Style").strong());
-    ui.add_space(5.0);
+    ui.add_space(4.0);
 
     ui.group(|ui| {
         ui.set_min_width(ui.available_width());
@@ -168,76 +157,4 @@ pub fn render_simple_controls(
 
         ui.small(app.film_style.short_description());
     });
-
-    ui.add_space(15.0);
-
-    // 3. Basic Adjustments
-    ui.label(RichText::new("🎨 Quick Adjust").strong());
-    ui.add_space(5.0);
-
-    ui.group(|ui| {
-        ui.set_min_width(ui.available_width());
-
-        egui::Grid::new("quick_adjust_grid")
-            .num_columns(2)
-            .spacing(egui::vec2(10.0, 5.0))
-            .show(ui, |ui| {
-                // Exposure -> Brightness
-                ui.label("☀ Brightness");
-                if ui
-                    .add(egui::Slider::new(&mut app.exposure_time, 0.001..=30.0).logarithmic(true))
-                    .changed()
-                {
-                    *changed = true;
-                }
-                ui.end_row();
-
-                // Gamma -> Contrast
-                ui.label("◑ Contrast");
-                if ui
-                    .add(egui::Slider::new(&mut app.gamma_boost, 0.5..=1.5))
-                    .changed()
-                {
-                    *changed = true;
-                }
-
-                ui.end_row();
-
-                // Warmth
-                ui.label("🔥 Warmth");
-                if ui
-                    .add(egui::Slider::new(&mut app.warmth, -1.0..=1.0))
-                    .changed()
-                {
-                    *changed = true;
-                }
-                ui.end_row();
-
-                // Saturation
-                ui.label("🌈 Intensity");
-                if ui
-                    .add(egui::Slider::new(&mut app.saturation, 0.0..=2.0))
-                    .changed()
-                {
-                    *changed = true;
-                }
-
-                ui.end_row();
-            });
-    });
-
-    ui.add_space(15.0);
-    if ui.checkbox(&mut app.auto_levels, "🎚 Auto Levels").changed() {
-        *changed = true;
-    }
-
-    ui.add_space(5.0);
-    if ui
-        .button(RichText::new("✨ Auto Enhance").strong())
-        .clicked()
-    {
-        app.white_balance_mode = WhiteBalanceMode::Auto;
-        app.white_balance_strength = 1.0;
-        *changed = true;
-    }
 }
