@@ -36,35 +36,46 @@ impl App for FilmrApp {
 
         // Model download prompt (shown once if model missing and not dismissed)
         #[cfg(feature = "depth")]
-        if !filmr::depth::is_model_available()
-            && !self.model_prompt_dismissed
-            && self.model_download_progress.is_none()
         {
-            egui::Window::new("📦 Depth Model Required")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                .show(ctx, |ui| {
-                    ui.label("Depth estimation requires a model file (~95MB).");
-                    ui.label("This enables DOF, object motion, and depth preview.");
-                    ui.add_space(8.0);
-                    if let Some(ref err) = self.model_download_error {
-                        ui.colored_label(egui::Color32::RED, format!("Error: {}", err));
-                        ui.add_space(4.0);
-                    }
-                    ui.horizontal(|ui| {
-                        if ui.button("⬇ Download Now").clicked() {
-                            self.start_model_download();
+            let suppressed = self
+                .config_manager
+                .as_ref()
+                .map(|cm| cm.config.suppress_model_prompt)
+                .unwrap_or(false);
+            if !filmr::depth::is_model_available()
+                && !self.model_prompt_dismissed
+                && !suppressed
+                && self.model_download_progress.is_none()
+            {
+                egui::Window::new("📦 Depth Model Required")
+                    .collapsible(false)
+                    .resizable(false)
+                    .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                    .show(ctx, |ui| {
+                        ui.label("Depth estimation requires a model file (~95MB).");
+                        ui.label("This enables DOF, object motion, and depth preview.");
+                        ui.add_space(8.0);
+                        if let Some(ref err) = self.model_download_error {
+                            ui.colored_label(egui::Color32::RED, format!("Error: {}", err));
+                            ui.add_space(4.0);
                         }
-                        if ui.button("Later").clicked() {
-                            self.model_prompt_dismissed = true;
-                        }
-                        if ui.button("Don't ask again").clicked() {
-                            self.model_prompt_dismissed = true;
-                            // TODO: persist to config
-                        }
+                        ui.horizontal(|ui| {
+                            if ui.button("⬇ Download Now").clicked() {
+                                self.start_model_download();
+                            }
+                            if ui.button("Later").clicked() {
+                                self.model_prompt_dismissed = true;
+                            }
+                            if ui.button("Don't ask again").clicked() {
+                                self.model_prompt_dismissed = true;
+                                if let Some(cm) = &mut self.config_manager {
+                                    cm.config.suppress_model_prompt = true;
+                                    cm.save();
+                                }
+                            }
+                        });
                     });
-                });
+            }
         }
 
         // Show download progress bar

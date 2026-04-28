@@ -21,6 +21,8 @@ pub struct FilmrConfig {
     pub custom_stocks_path: PathBuf,
     #[serde(default = "default_ux_mode")]
     pub ux_mode: UxMode,
+    #[serde(default)]
+    pub suppress_model_prompt: bool,
 }
 
 fn default_ux_mode() -> UxMode {
@@ -59,17 +61,20 @@ impl ConfigManager {
                 serde_json::from_str(&content).unwrap_or_else(|_| FilmrConfig {
                     custom_stocks_path: default_stocks_path.clone(),
                     ux_mode: UxMode::Professional,
+                    suppress_model_prompt: false,
                 })
             } else {
                 FilmrConfig {
                     custom_stocks_path: default_stocks_path.clone(),
                     ux_mode: UxMode::Professional,
+                    suppress_model_prompt: false,
                 }
             }
         } else {
             let config = FilmrConfig {
                 custom_stocks_path: default_stocks_path.clone(),
                 ux_mode: UxMode::Professional,
+                suppress_model_prompt: false,
             };
             if let Ok(json) = serde_json::to_string_pretty(&config) {
                 let _ = fs::write(&config_path, json);
