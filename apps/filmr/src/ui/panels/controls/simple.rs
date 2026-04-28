@@ -1,12 +1,12 @@
-use egui::RichText;
 use filmr::FilmStyle;
 
 use crate::ui::app::FilmrApp;
 
+use super::section_header;
+
 /// Render the film stock list (grouped by brand with thumbnails).
 pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
-    ui.label(RichText::new("🎞 Film Stock").strong());
-    ui.add_space(4.0);
+    section_header(ui, "🎞 FILM STOCK");
 
     let mut preset_changed = false;
     egui::Frame::default()
@@ -35,7 +35,10 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
 
                         for (brand, indices) in groups {
                             egui::CollapsingHeader::new(
-                                egui::RichText::new(brand).monospace().size(14.0),
+                                egui::RichText::new(brand.to_uppercase())
+                                    .strong()
+                                    .size(12.0)
+                                    .color(egui::Color32::from_rgb(90, 90, 100)),
                             )
                             .default_open(true)
                             .show(ui, |ui| {
@@ -46,10 +49,10 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
                                     let is_selected = app.selected_stock_idx == idx;
 
                                     let padding = 4.0f32;
-                                    let thumb_w = 56.0f32;
+                                    let thumb_w = 48.0f32;
                                     let thumb_h = thumb_w / 3.0 * 2.0;
                                     let row_height = thumb_h + padding * 2.0;
-                                    let corner_radius = 8.0f32;
+                                    let corner_radius = 6.0f32;
                                     let inner_radius = corner_radius - padding;
 
                                     let (rect, response) = ui.allocate_exact_size(
@@ -105,15 +108,15 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
 
                                     let text_x = rect.min.x + padding + thumb_w + padding * 2.0;
                                     let text_color = if is_selected {
-                                        ui.visuals().selection.stroke.color
+                                        egui::Color32::from_rgb(230, 155, 50) // accent
                                     } else {
-                                        ui.visuals().text_color()
+                                        egui::Color32::from_rgb(150, 150, 160) // secondary
                                     };
                                     ui.painter().text(
                                         egui::pos2(text_x, rect.center().y),
                                         egui::Align2::LEFT_CENTER,
                                         name,
-                                        egui::FontId::monospace(14.0),
+                                        egui::FontId::monospace(12.0),
                                         text_color,
                                     );
 
@@ -138,23 +141,36 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
 
 /// Render the rendering style selector.
 pub fn render_style_selector(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
-    ui.label(RichText::new("🎨 Rendering Style").strong());
-    ui.add_space(4.0);
+    section_header(ui, "🎨 STYLE");
 
-    ui.group(|ui| {
-        ui.set_min_width(ui.available_width());
+    let accent = egui::Color32::from_rgb(230, 155, 50);
+    let bg_medium = egui::Color32::from_rgb(42, 42, 48);
+    let text_dark = egui::Color32::from_rgb(24, 24, 28);
+    let text_secondary = egui::Color32::from_rgb(150, 150, 160);
 
-        let prev_style = app.film_style;
-        ui.horizontal_wrapped(|ui| {
-            for style in FilmStyle::all() {
-                ui.selectable_value(&mut app.film_style, style, style.name());
+    let prev_style = app.film_style;
+    ui.horizontal_wrapped(|ui| {
+        for style in FilmStyle::all() {
+            let is_selected = app.film_style == style;
+            let btn =
+                egui::Button::new(egui::RichText::new(style.name()).size(10.0).strong().color(
+                    if is_selected {
+                        text_dark
+                    } else {
+                        text_secondary
+                    },
+                ))
+                .fill(if is_selected { accent } else { bg_medium })
+                .corner_radius(4.0);
+            if ui.add(btn).clicked() {
+                app.film_style = style;
             }
-        });
-
-        if app.film_style != prev_style {
-            *changed = true;
         }
-
-        ui.small(app.film_style.short_description());
     });
+
+    if app.film_style != prev_style {
+        *changed = true;
+    }
+
+    ui.small(app.film_style.short_description());
 }

@@ -2,7 +2,8 @@ use crate::ui::app::FilmrApp;
 use egui::{Color32, Context, Pos2, Rect, RichText, Sense, Vec2};
 
 pub fn render_central_panel(app: &mut FilmrApp, ctx: &Context) {
-    egui::CentralPanel::default().show(ctx, |ui| {
+    let frame = egui::Frame::central_panel(&ctx.style()).fill(Color32::from_rgb(24, 24, 28));
+    egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
         // Image Canvas
         render_image_canvas(app, ui, ctx);
 

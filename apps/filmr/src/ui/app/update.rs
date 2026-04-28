@@ -313,66 +313,89 @@ impl App for FilmrApp {
                 });
         }
 
-        // Top Toolbar
-        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new("FILMR")
-                        .strong()
-                        .size(18.0)
-                        .color(egui::Color32::from_rgb(230, 155, 50)),
-                );
-                ui.label(
-                    egui::RichText::new(format!("v{}", env!("CARGO_PKG_VERSION")))
-                        .small()
-                        .color(egui::Color32::from_gray(90)),
-                );
-                ui.separator();
+        // Top Toolbar — mockup: left=FILMR+ver, right=buttons with separators
+        let accent = egui::Color32::from_rgb(230, 155, 50);
+        let sep_color = egui::Color32::from_rgb(55, 55, 65);
+        egui::TopBottomPanel::top("toolbar")
+            .frame(
+                egui::Frame::side_top_panel(&ctx.style())
+                    .inner_margin(egui::Margin::symmetric(8, 4)),
+            )
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    // Left: logo + version
+                    ui.label(
+                        egui::RichText::new("FILMR")
+                            .strong()
+                            .size(18.0)
+                            .color(accent),
+                    );
+                    ui.label(
+                        egui::RichText::new(format!("v{}", env!("CARGO_PKG_VERSION")))
+                            .small()
+                            .color(egui::Color32::from_gray(90)),
+                    );
 
-                self.show_original = ui
-                    .add_sized([100.0, 28.0], egui::Button::new("👋 Compare"))
-                    .is_pointer_button_down_on();
+                    // Right: all buttons
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // Settings
+                        if ui.button("⚙").clicked() {
+                            self.show_settings = true;
+                        }
 
-                if ui
-                    .add_sized(
-                        [80.0, 28.0],
-                        egui::Button::new("🌓 Split").selected(self.split_view),
-                    )
-                    .clicked()
-                {
-                    self.split_view = !self.split_view;
-                }
+                        // Metrics
+                        if ui
+                            .add(egui::Button::new("📊 Metrics").selected(self.show_metrics))
+                            .clicked()
+                        {
+                            self.show_metrics = !self.show_metrics;
+                        }
 
-                ui.separator();
+                        // Separator
+                        let (sep_rect, _) =
+                            ui.allocate_exact_size(egui::vec2(1.0, 16.0), egui::Sense::hover());
+                        ui.painter().rect_filled(sep_rect, 0.0, sep_color);
 
-                if ui
-                    .add_sized([80.0, 28.0], egui::Button::new("🔬 Develop"))
-                    .clicked()
-                {
-                    self.develop_image(ctx);
-                }
+                        // Save
+                        if ui
+                            .add_enabled(
+                                self.developed_image.is_some(),
+                                egui::Button::new("💾 Save"),
+                            )
+                            .clicked()
+                        {
+                            self.save_image();
+                        }
 
-                let save_btn = egui::Button::new("💾 Save").min_size(egui::Vec2::new(60.0, 28.0));
-                if ui
-                    .add_enabled(self.developed_image.is_some(), save_btn)
-                    .clicked()
-                {
-                    self.save_image();
-                }
-
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui
-                        .add_sized(
-                            egui::Vec2::new(80.0, 28.0),
-                            egui::Button::new("📊 Metrics").selected(self.show_metrics),
+                        // Develop — accent colored
+                        let develop_btn = egui::Button::new(
+                            egui::RichText::new("🔬 Develop")
+                                .strong()
+                                .color(egui::Color32::from_rgb(24, 24, 28)),
                         )
-                        .clicked()
-                    {
-                        self.show_metrics = !self.show_metrics;
-                    }
+                        .fill(accent);
+                        if ui.add(develop_btn).clicked() {
+                            self.develop_image(ctx);
+                        }
+
+                        // Separator
+                        let (sep_rect, _) =
+                            ui.allocate_exact_size(egui::vec2(1.0, 16.0), egui::Sense::hover());
+                        ui.painter().rect_filled(sep_rect, 0.0, sep_color);
+
+                        // Split
+                        if ui
+                            .add(egui::Button::new("🌓 Split").selected(self.split_view))
+                            .clicked()
+                        {
+                            self.split_view = !self.split_view;
+                        }
+
+                        // Compare
+                        self.show_original = ui.button("👋 Compare").is_pointer_button_down_on();
+                    });
                 });
             });
-        });
 
         // Status Bar
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {

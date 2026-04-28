@@ -1,4 +1,3 @@
-use egui::RichText;
 use filmr::light_leak::{LightLeak, LightLeakShape};
 use filmr::{OutputMode, WhiteBalanceMode};
 
@@ -7,6 +6,7 @@ use crate::ui::app::{AppMode, FilmrApp};
 use super::preset_io::create_custom_stock;
 #[cfg(not(target_arch = "wasm32"))]
 use super::preset_io::{export_preset, import_preset};
+use super::section_header;
 
 /// Effects tab: Lens + Light Leaks + Halation + Preset Management.
 pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
@@ -41,9 +41,7 @@ pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
         ui.add_space(8.0);
     }
 
-    // Lens
-    ui.label(RichText::new("🔬 Lens").strong());
-    ui.add_space(2.0);
+    section_header(ui, "LENS");
     if ui
         .add(egui::Slider::new(&mut app.motion_blur_amount, 0.0..=3.0).text("Motion Blur"))
         .changed()
@@ -89,8 +87,7 @@ pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
     ui.add_space(8.0);
 
     // Halation
-    ui.label(RichText::new("🏮 Halation").strong());
-    ui.add_space(2.0);
+    section_header(ui, "HALATION");
     if ui
         .add(egui::Slider::new(&mut app.halation_strength, 0.0..=2.0).text("Strength"))
         .changed()
@@ -114,8 +111,7 @@ pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
 /// Detail tab: Grain + Depth Map + Motion Trajectory.
 pub fn render_detail_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     // Grain
-    ui.label(RichText::new("🌾 Grain").strong());
-    ui.add_space(2.0);
+    section_header(ui, "GRAIN");
     if ui
         .add(egui::Slider::new(&mut app.grain_alpha, 0.0..=0.05).text("Alpha"))
         .changed()
@@ -144,8 +140,7 @@ pub fn render_detail_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
 
     // Depth Map Preview
     if app.object_motion_amount > 0.0 || app.dof_amount > 0.0 {
-        ui.label(RichText::new("🗺 Depth Map").strong());
-        ui.add_space(2.0);
+        section_header(ui, "DEPTH MAP");
         if let Some(ref dm) = app.depth_map {
             ui.label("✅ Depth map ready");
             let preview_w = 160u32;
@@ -177,8 +172,7 @@ pub fn render_detail_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
 
     // Motion Trajectory
     if app.motion_blur_amount > 0.0 {
-        ui.label(RichText::new("🎯 Motion Trajectory").strong());
-        ui.add_space(2.0);
+        section_header(ui, "MOTION TRAJECTORY");
         ui.horizontal(|ui| {
             if ui.button("🎲").on_hover_text("New trajectory").clicked() {
                 app.motion_blur_seed = std::time::SystemTime::now()
@@ -205,19 +199,35 @@ pub fn render_detail_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
 
 /// White Balance section (Professional Adjust tab).
 pub fn render_white_balance(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
-    ui.label(RichText::new("⚖ White Balance").strong());
-    ui.add_space(2.0);
+    section_header(ui, "WHITE BALANCE");
+
+    let accent = egui::Color32::from_rgb(230, 155, 50);
+    let bg_medium = egui::Color32::from_rgb(42, 42, 48);
+    let text_dark = egui::Color32::from_rgb(24, 24, 28);
+    let text_secondary = egui::Color32::from_rgb(150, 150, 160);
 
     let pre_wb = app.white_balance_mode;
     ui.horizontal(|ui| {
-        ui.selectable_value(&mut app.white_balance_mode, WhiteBalanceMode::Auto, "Auto");
-        ui.selectable_value(&mut app.white_balance_mode, WhiteBalanceMode::Gray, "Gray");
-        ui.selectable_value(
-            &mut app.white_balance_mode,
-            WhiteBalanceMode::White,
-            "White",
-        );
-        ui.selectable_value(&mut app.white_balance_mode, WhiteBalanceMode::Off, "Off");
+        for (mode, label) in [
+            (WhiteBalanceMode::Auto, "Auto"),
+            (WhiteBalanceMode::Gray, "Gray"),
+            (WhiteBalanceMode::White, "White"),
+            (WhiteBalanceMode::Off, "Off"),
+        ] {
+            let is_sel = app.white_balance_mode == mode;
+            let btn = egui::Button::new(
+                egui::RichText::new(label)
+                    .size(10.0)
+                    .strong()
+                    .color(if is_sel { text_dark } else { text_secondary }),
+            )
+            .fill(if is_sel { accent } else { bg_medium })
+            .stroke(egui::Stroke::NONE)
+            .corner_radius(4.0);
+            if ui.add(btn).clicked() {
+                app.white_balance_mode = mode;
+            }
+        }
     });
 
     if app.white_balance_mode != WhiteBalanceMode::Off
@@ -235,8 +245,7 @@ pub fn render_white_balance(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut
 
 /// Output mode section (Professional Adjust tab).
 pub fn render_output_mode(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
-    ui.label(RichText::new("📤 Output").strong());
-    ui.add_space(2.0);
+    section_header(ui, "OUTPUT");
     let pre_om = app.output_mode;
     ui.horizontal(|ui| {
         ui.radio_value(&mut app.output_mode, OutputMode::Positive, "Positive");
@@ -248,8 +257,7 @@ pub fn render_output_mode(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
 }
 
 fn render_light_leaks(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
-    ui.label(RichText::new("🔦 Light Leaks").strong());
-    ui.add_space(2.0);
+    section_header(ui, "LIGHT LEAKS");
 
     if ui
         .checkbox(&mut app.light_leak_config.enabled, "Enable")

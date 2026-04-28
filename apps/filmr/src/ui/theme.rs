@@ -16,68 +16,107 @@ pub fn apply_dark_pro_theme(ctx: &egui::Context) {
     let accent = Color32::from_rgb(230, 155, 50);
 
     let border = Color32::from_rgb(55, 55, 65);
-    let border_hover = Color32::from_rgb(80, 80, 95);
 
     let mut visuals = Visuals::dark();
 
+    // Panel backgrounds: side panels use bg_dark, central uses bg_darkest
     visuals.window_fill = bg_dark;
     visuals.window_stroke = Stroke::new(1.0, border);
-    visuals.panel_fill = bg_darkest;
-    visuals.faint_bg_color = bg_medium;
-    visuals.extreme_bg_color = Color32::from_rgb(16, 16, 20);
+    visuals.panel_fill = bg_dark;
+    visuals.faint_bg_color = Color32::from_rgb(28, 28, 32);
+    visuals.extreme_bg_color = bg_darkest;
 
-    // Noninteractive
+    // Noninteractive (labels, separators)
     visuals.widgets.noninteractive.bg_fill = bg_medium;
     visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, text_secondary);
     visuals.widgets.noninteractive.bg_stroke = Stroke::new(0.5, border);
+    visuals.widgets.noninteractive.corner_radius = 4.0.into();
 
-    // Inactive
+    // Inactive (buttons, sliders at rest)
     visuals.widgets.inactive.bg_fill = bg_medium;
     visuals.widgets.inactive.fg_stroke = Stroke::new(1.0, text_primary);
-    visuals.widgets.inactive.bg_stroke = Stroke::new(0.5, border);
+    visuals.widgets.inactive.bg_stroke = Stroke::NONE;
+    visuals.widgets.inactive.corner_radius = 4.0.into();
+    visuals.widgets.inactive.expansion = 0.0;
 
     // Hovered
     visuals.widgets.hovered.bg_fill = bg_hover;
     visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, text_primary);
-    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, border_hover);
+    visuals.widgets.hovered.bg_stroke = Stroke::NONE;
+    visuals.widgets.hovered.corner_radius = 4.0.into();
+    visuals.widgets.hovered.expansion = 1.0;
 
-    // Active
+    // Active (pressed)
     visuals.widgets.active.bg_fill = bg_active;
     visuals.widgets.active.fg_stroke = Stroke::new(1.0, Color32::WHITE);
     visuals.widgets.active.bg_stroke = Stroke::new(1.0, accent);
+    visuals.widgets.active.corner_radius = 4.0.into();
+    visuals.widgets.active.expansion = 0.0;
 
-    // Selection
-    visuals.selection.bg_fill = accent.linear_multiply(0.3);
-    visuals.selection.stroke = Stroke::new(1.0, accent);
+    // Open (expanded combo boxes, etc.)
+    visuals.widgets.open.bg_fill = bg_hover;
+    visuals.widgets.open.fg_stroke = Stroke::new(1.0, text_primary);
+    visuals.widgets.open.bg_stroke = Stroke::new(1.0, accent);
+    visuals.widgets.open.corner_radius = 4.0.into();
+
+    // Selection (selected items, slider fill)
+    visuals.selection.bg_fill = accent.linear_multiply(0.25);
+    visuals.selection.stroke = Stroke::new(1.5, accent);
 
     visuals.hyperlink_color = accent;
     visuals.override_text_color = Some(text_primary);
     visuals.warn_fg_color = Color32::from_rgb(255, 180, 50);
     visuals.error_fg_color = Color32::from_rgb(255, 80, 80);
 
+    // Separator
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(0.5, border);
+
+    // Slider handle — circle, accent colored
+    visuals.handle_shape = egui::style::HandleShape::Circle;
+
+    // Popup shadow
+    visuals.popup_shadow = egui::epaint::Shadow {
+        offset: [0, 4],
+        blur: 12,
+        spread: 0,
+        color: Color32::from_black_alpha(100),
+    };
+
+    // Window shadow
+    visuals.window_shadow = egui::epaint::Shadow {
+        offset: [0, 4],
+        blur: 16,
+        spread: 0,
+        color: Color32::from_black_alpha(120),
+    };
+
     style.visuals = visuals;
 
-    // Spacing
-    style.spacing.item_spacing = egui::vec2(6.0, 4.0);
-    style.spacing.window_margin = egui::Margin::same(12);
-    style.spacing.button_padding = egui::vec2(8.0, 4.0);
-    style.spacing.slider_width = 180.0;
-    style.spacing.scroll.bar_width = 6.0;
+    // Spacing — tight, professional
+    style.spacing.item_spacing = egui::vec2(4.0, 4.0);
+    style.spacing.window_margin = egui::Margin::same(8);
+    style.spacing.button_padding = egui::vec2(6.0, 2.0);
+    style.spacing.slider_width = 120.0;
+    style.spacing.slider_rail_height = 3.0;
+    style.spacing.scroll.bar_width = 5.0;
+    style.spacing.scroll.bar_inner_margin = 2.0;
+    style.spacing.indent = 16.0;
+    style.spacing.interact_size = egui::vec2(32.0, 16.0); // smaller interactive area
 
-    // Text styles
+    // Text styles — ark-pixel 12px base
     use egui::{FontId, TextStyle};
     style
         .text_styles
-        .insert(TextStyle::Small, FontId::proportional(11.0));
+        .insert(TextStyle::Small, FontId::proportional(10.0));
     style
         .text_styles
-        .insert(TextStyle::Body, FontId::proportional(13.0));
+        .insert(TextStyle::Body, FontId::proportional(12.0));
     style
         .text_styles
-        .insert(TextStyle::Button, FontId::proportional(13.0));
+        .insert(TextStyle::Button, FontId::proportional(12.0));
     style
         .text_styles
-        .insert(TextStyle::Heading, FontId::proportional(16.0));
+        .insert(TextStyle::Heading, FontId::proportional(14.0));
     style
         .text_styles
         .insert(TextStyle::Monospace, FontId::monospace(12.0));
