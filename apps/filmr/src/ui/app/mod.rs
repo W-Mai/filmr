@@ -305,6 +305,7 @@ impl FilmrApp {
             .or_default()
             .insert(0, "ark-pixel".to_owned());
         cc.egui_ctx.set_fonts(fonts);
+        crate::ui::theme::apply_dark_pro_theme(&cc.egui_ctx);
     }
 
     fn load_custom_stocks(

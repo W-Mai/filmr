@@ -1,5 +1,6 @@
 pub mod app;
 pub mod panels;
+pub mod theme;
 
 #[cfg(not(target_arch = "wasm32"))]
 use app::FilmrApp;
