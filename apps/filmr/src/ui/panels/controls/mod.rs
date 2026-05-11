@@ -45,7 +45,14 @@ pub(super) fn section_header(ui: &mut egui::Ui, label: &str) {
             .size(12.0)
             .color(egui::Color32::from_rgb(90, 90, 100)),
     );
-    ui.add_space(12.0);
+    ui.add_space(8.0);
+}
+
+/// Spacious divider between sections.
+pub(super) fn section_divider(ui: &mut egui::Ui) {
+    ui.add_space(8.0);
+    ui.separator();
+    ui.add_space(8.0);
 }
 
 /// Custom slider: label+value on top row (justify-between), slider full-width below.
@@ -285,7 +292,7 @@ fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, chan
     if labeled_slider(ui, "◑ Contrast", &mut app.gamma_boost, 0.5..=2.0, false) {
         *changed = true;
     }
-    ui.separator();
+    section_divider(ui);
 
     // Color
     section_header(ui, "COLOR");
@@ -295,7 +302,7 @@ fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, chan
     if labeled_slider(ui, "🌈 Intensity", &mut app.saturation, 0.0..=2.0, false) {
         *changed = true;
     }
-    ui.separator();
+    section_divider(ui);
 
     // Auto — same row
     ui.horizontal(|ui| {
@@ -320,12 +327,12 @@ fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, chan
             *changed = true;
         }
     });
-    ui.separator();
+    section_divider(ui);
 
     // Professional-only: WB + Output
     if app.ux_mode == UxMode::Professional {
         professional::render_white_balance(app, ui, changed);
-        ui.separator();
+        section_divider(ui);
         professional::render_output_mode(app, ui, changed);
     }
 }

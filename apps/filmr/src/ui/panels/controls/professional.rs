@@ -6,7 +6,7 @@ use crate::ui::app::{AppMode, FilmrApp};
 use super::preset_io::create_custom_stock;
 #[cfg(not(target_arch = "wasm32"))]
 use super::preset_io::{export_preset, import_preset};
-use super::{labeled_slider, section_header};
+use super::{labeled_slider, section_divider, section_header};
 
 /// Effects tab: Lens + Light Leaks + Halation + Preset Management.
 pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
@@ -127,11 +127,11 @@ pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
     ) {
         *changed = true;
     }
-    ui.separator();
+    section_divider(ui);
 
     // Light Leaks
     render_light_leaks(app, ui, changed);
-    ui.separator();
+    section_divider(ui);
 
     // Halation
     section_header(ui, "HALATION");
@@ -168,7 +168,7 @@ pub fn render_detail_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bo
     if labeled_slider(ui, "Blur", &mut app.grain_blur_radius, 0.0..=2.0, false) {
         *changed = true;
     }
-    ui.separator();
+    section_divider(ui);
 
     // Depth Map Preview
     if app.object_motion_amount > 0.0 || app.dof_amount > 0.0 {
