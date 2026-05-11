@@ -343,14 +343,29 @@ impl App for FilmrApp {
 
                     // Right: all buttons
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let tb_color = egui::Color32::from_rgb(150, 150, 160);
                         // Settings
-                        if ui.button("⚙").clicked() {
+                        if ui
+                            .add(
+                                egui::Button::new(
+                                    egui::RichText::new("⚙").size(12.0).color(tb_color),
+                                )
+                                .stroke(egui::Stroke::NONE),
+                            )
+                            .clicked()
+                        {
                             self.show_settings = true;
                         }
 
                         // Metrics
                         if ui
-                            .add(egui::Button::new("📊 Metrics").selected(self.show_metrics))
+                            .add(
+                                egui::Button::new(
+                                    egui::RichText::new("📊 Metrics").size(12.0).color(tb_color),
+                                )
+                                .stroke(egui::Stroke::NONE)
+                                .selected(self.show_metrics),
+                            )
                             .clicked()
                         {
                             self.show_metrics = !self.show_metrics;
@@ -362,10 +377,14 @@ impl App for FilmrApp {
                         ui.painter().rect_filled(sep_rect, 0.0, sep_color);
 
                         // Save
+                        let secondary = egui::Color32::from_rgb(150, 150, 160);
                         if ui
                             .add_enabled(
                                 self.developed_image.is_some(),
-                                egui::Button::new("💾 Save"),
+                                egui::Button::new(
+                                    egui::RichText::new("💾 Save").size(12.0).color(secondary),
+                                )
+                                .stroke(egui::Stroke::NONE),
                             )
                             .clicked()
                         {
@@ -390,14 +409,31 @@ impl App for FilmrApp {
 
                         // Split
                         if ui
-                            .add(egui::Button::new("🌓 Split").selected(self.split_view))
+                            .add(
+                                egui::Button::new(
+                                    egui::RichText::new("🌓 Split")
+                                        .size(12.0)
+                                        .color(sep_color.linear_multiply(2.5)),
+                                )
+                                .stroke(egui::Stroke::NONE)
+                                .selected(self.split_view),
+                            )
                             .clicked()
                         {
                             self.split_view = !self.split_view;
                         }
 
                         // Compare
-                        self.show_original = ui.button("👋 Compare").is_pointer_button_down_on();
+                        self.show_original = ui
+                            .add(
+                                egui::Button::new(
+                                    egui::RichText::new("👋 Compare")
+                                        .size(12.0)
+                                        .color(egui::Color32::from_rgb(150, 150, 160)),
+                                )
+                                .stroke(egui::Stroke::NONE),
+                            )
+                            .is_pointer_button_down_on();
                     });
                 });
             });

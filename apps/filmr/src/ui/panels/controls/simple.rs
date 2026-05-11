@@ -49,12 +49,12 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
                                     let name = &stock.name;
                                     let is_selected = app.selected_stock_idx == idx;
 
-                                    let padding = 4.0f32;
-                                    let thumb_w = 48.0f32;
-                                    let thumb_h = thumb_w / 3.0 * 2.0;
+                                    let padding = 6.0f32;
+                                    let thumb_w = 32.0f32;
+                                    let thumb_h = 24.0f32;
                                     let row_height = thumb_h + padding * 2.0;
-                                    let corner_radius = 6.0f32;
-                                    let inner_radius = corner_radius - padding;
+                                    let corner_radius = 4.0f32;
+                                    let inner_radius = 3.0f32;
 
                                     let (rect, response) = ui.allocate_exact_size(
                                         egui::vec2(ui.available_width(), row_height),

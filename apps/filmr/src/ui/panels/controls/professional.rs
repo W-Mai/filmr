@@ -6,7 +6,7 @@ use crate::ui::app::{AppMode, FilmrApp};
 use super::preset_io::create_custom_stock;
 #[cfg(not(target_arch = "wasm32"))]
 use super::preset_io::{export_preset, import_preset};
-use super::section_header;
+use super::{labeled_slider, section_header};
 
 /// Effects tab: Lens + Light Leaks + Halation + Preset Management.
 pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
@@ -42,68 +42,65 @@ pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
     }
 
     section_header(ui, "LENS");
-    if ui
-        .add(egui::Slider::new(&mut app.motion_blur_amount, 0.0..=3.0).text("Motion Blur"))
-        .changed()
-    {
+    if labeled_slider(
+        ui,
+        "Motion Blur",
+        &mut app.motion_blur_amount,
+        0.0..=3.0,
+        false,
+    ) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.object_motion_amount, 0.0..=2.0).text("Object Motion"))
-        .changed()
-    {
+    if labeled_slider(
+        ui,
+        "Object Motion",
+        &mut app.object_motion_amount,
+        0.0..=2.0,
+        false,
+    ) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.dof_amount, 0.0..=2.0).text("DOF Amount"))
-        .changed()
-    {
+    if labeled_slider(ui, "DOF Amount", &mut app.dof_amount, 0.0..=2.0, false) {
         *changed = true;
     }
     if app.dof_amount > 0.0 {
-        if ui
-            .add(egui::Slider::new(&mut app.dof_focus, 0.0..=1.0).text("Focus Depth"))
-            .changed()
-        {
+        if labeled_slider(ui, "Focus Depth", &mut app.dof_focus, 0.0..=1.0, false) {
             *changed = true;
         }
-        if ui
-            .add(egui::Slider::new(&mut app.dof_swirl, 0.0..=2.0).text("Swirly Bokeh"))
-            .changed()
-        {
+        if labeled_slider(ui, "Swirly Bokeh", &mut app.dof_swirl, 0.0..=2.0, false) {
             *changed = true;
         }
     }
-    if ui
-        .add(egui::Slider::new(&mut app.rotational_blur_amount, 0.0..=2.0).text("Rotational Blur"))
-        .changed()
-    {
+    if labeled_slider(
+        ui,
+        "Rotational Blur",
+        &mut app.rotational_blur_amount,
+        0.0..=2.0,
+        false,
+    ) {
         *changed = true;
     }
-    ui.add_space(8.0);
+    ui.separator();
 
     // Light Leaks
     render_light_leaks(app, ui, changed);
-    ui.add_space(8.0);
+    ui.separator();
 
     // Halation
     section_header(ui, "HALATION");
-    if ui
-        .add(egui::Slider::new(&mut app.halation_strength, 0.0..=2.0).text("Strength"))
-        .changed()
-    {
+    if labeled_slider(ui, "Strength", &mut app.halation_strength, 0.0..=2.0, false) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.halation_threshold, 0.0..=1.0).text("Threshold"))
-        .changed()
-    {
+    if labeled_slider(
+        ui,
+        "Threshold",
+        &mut app.halation_threshold,
+        0.0..=1.0,
+        false,
+    ) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.halation_sigma, 0.0..=0.1).text("Spread"))
-        .changed()
-    {
+    if labeled_slider(ui, "Spread", &mut app.halation_sigma, 0.0..=0.1, false) {
         *changed = true;
     }
 }
@@ -112,31 +109,19 @@ pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut b
 pub fn render_detail_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     // Grain
     section_header(ui, "GRAIN");
-    if ui
-        .add(egui::Slider::new(&mut app.grain_alpha, 0.0..=0.05).text("Alpha"))
-        .changed()
-    {
+    if labeled_slider(ui, "Alpha", &mut app.grain_alpha, 0.0..=0.05, false) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.grain_sigma, 0.0..=0.05).text("Sigma"))
-        .changed()
-    {
+    if labeled_slider(ui, "Sigma", &mut app.grain_sigma, 0.0..=0.05, false) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.grain_roughness, 0.0..=1.0).text("Roughness"))
-        .changed()
-    {
+    if labeled_slider(ui, "Roughness", &mut app.grain_roughness, 0.0..=1.0, false) {
         *changed = true;
     }
-    if ui
-        .add(egui::Slider::new(&mut app.grain_blur_radius, 0.0..=2.0).text("Blur"))
-        .changed()
-    {
+    if labeled_slider(ui, "Blur", &mut app.grain_blur_radius, 0.0..=2.0, false) {
         *changed = true;
     }
-    ui.add_space(8.0);
+    ui.separator();
 
     // Depth Map Preview
     if app.object_motion_amount > 0.0 || app.dof_amount > 0.0 {
@@ -231,9 +216,13 @@ pub fn render_white_balance(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut
     });
 
     if app.white_balance_mode != WhiteBalanceMode::Off
-        && ui
-            .add(egui::Slider::new(&mut app.white_balance_strength, 0.0..=1.0).text("Strength"))
-            .changed()
+        && labeled_slider(
+            ui,
+            "Strength",
+            &mut app.white_balance_strength,
+            0.0..=1.0,
+            false,
+        )
     {
         *changed = true;
     }
