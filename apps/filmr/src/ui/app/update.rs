@@ -341,98 +341,73 @@ impl App for FilmrApp {
                             .color(egui::Color32::from_gray(90)),
                     );
 
-                    // Right: all buttons
+                    // Right: buttons grouped by function
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let tb_color = egui::Color32::from_rgb(150, 150, 160);
-                        // Settings
-                        if ui
-                            .add(
-                                egui::Button::new(
-                                    egui::RichText::new("⚙").size(12.0).color(tb_color),
-                                )
-                                .stroke(egui::Stroke::NONE),
-                            )
-                            .clicked()
-                        {
+                        let tb_text = egui::Color32::from_rgb(150, 150, 160);
+                        let bg_btn = egui::Color32::from_rgb(42, 42, 48);
+
+                        // Helper: toolbar button
+                        let tb_btn = |label: &str, selected: bool| {
+                            let text = egui::RichText::new(label).size(13.0).color(tb_text);
+                            egui::Button::new(text)
+                                .fill(bg_btn)
+                                .stroke(egui::Stroke::NONE)
+                                .corner_radius(6.0)
+                                .min_size(egui::vec2(0.0, 28.0))
+                                .selected(selected)
+                        };
+
+                        // ── Panel group: Settings, Metrics ──
+                        if ui.add(tb_btn("⚙", false)).clicked() {
                             self.show_settings = true;
                         }
-
-                        // Metrics
-                        if ui
-                            .add(
-                                egui::Button::new(
-                                    egui::RichText::new("📊 Metrics").size(12.0).color(tb_color),
-                                )
-                                .stroke(egui::Stroke::NONE)
-                                .selected(self.show_metrics),
-                            )
-                            .clicked()
-                        {
+                        if ui.add(tb_btn("📊 Metrics", self.show_metrics)).clicked() {
                             self.show_metrics = !self.show_metrics;
                         }
 
                         // Separator
-                        let (sep_rect, _) =
-                            ui.allocate_exact_size(egui::vec2(1.0, 16.0), egui::Sense::hover());
-                        ui.painter().rect_filled(sep_rect, 0.0, sep_color);
+                        ui.add_space(6.0);
+                        let (r, _) =
+                            ui.allocate_exact_size(egui::vec2(1.0, 18.0), egui::Sense::hover());
+                        ui.painter().rect_filled(r, 0.0, sep_color);
+                        ui.add_space(6.0);
 
-                        // Save
-                        let secondary = egui::Color32::from_rgb(150, 150, 160);
+                        // ── Action group: Save, Develop ──
                         if ui
-                            .add_enabled(
-                                self.developed_image.is_some(),
-                                egui::Button::new(
-                                    egui::RichText::new("💾 Save").size(12.0).color(secondary),
-                                )
-                                .stroke(egui::Stroke::NONE),
-                            )
+                            .add_enabled(self.developed_image.is_some(), tb_btn("💾 Save", false))
                             .clicked()
                         {
                             self.save_image();
                         }
 
-                        // Develop — accent colored
-                        let develop_btn = egui::Button::new(
+                        // Develop — primary action, accent fill
+                        let dev_btn = egui::Button::new(
                             egui::RichText::new("🔬 Develop")
+                                .size(13.0)
                                 .strong()
                                 .color(egui::Color32::from_rgb(24, 24, 28)),
                         )
-                        .fill(accent);
-                        if ui.add(develop_btn).clicked() {
+                        .fill(accent)
+                        .stroke(egui::Stroke::NONE)
+                        .corner_radius(6.0)
+                        .min_size(egui::vec2(0.0, 28.0));
+                        if ui.add(dev_btn).clicked() {
                             self.develop_image(ctx);
                         }
 
                         // Separator
-                        let (sep_rect, _) =
-                            ui.allocate_exact_size(egui::vec2(1.0, 16.0), egui::Sense::hover());
-                        ui.painter().rect_filled(sep_rect, 0.0, sep_color);
+                        ui.add_space(6.0);
+                        let (r, _) =
+                            ui.allocate_exact_size(egui::vec2(1.0, 18.0), egui::Sense::hover());
+                        ui.painter().rect_filled(r, 0.0, sep_color);
+                        ui.add_space(6.0);
 
-                        // Split
-                        if ui
-                            .add(
-                                egui::Button::new(
-                                    egui::RichText::new("🌓 Split")
-                                        .size(12.0)
-                                        .color(sep_color.linear_multiply(2.5)),
-                                )
-                                .stroke(egui::Stroke::NONE)
-                                .selected(self.split_view),
-                            )
-                            .clicked()
-                        {
+                        // ── View group: Split, Compare ──
+                        if ui.add(tb_btn("🌓 Split", self.split_view)).clicked() {
                             self.split_view = !self.split_view;
                         }
-
-                        // Compare
                         self.show_original = ui
-                            .add(
-                                egui::Button::new(
-                                    egui::RichText::new("👋 Compare")
-                                        .size(12.0)
-                                        .color(egui::Color32::from_rgb(150, 150, 160)),
-                                )
-                                .stroke(egui::Stroke::NONE),
-                            )
+                            .add(tb_btn("👋 Compare", false))
                             .is_pointer_button_down_on();
                     });
                 });
