@@ -7,6 +7,7 @@ use super::section_header;
 /// Render the film stock list (grouped by brand with thumbnails).
 pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     section_header(ui, "🎞 FILM STOCK");
+    ui.separator();
 
     let mut preset_changed = false;
     egui::Frame::default()

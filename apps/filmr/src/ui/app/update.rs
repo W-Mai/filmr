@@ -15,6 +15,11 @@ use image::DynamicImage;
 impl App for FilmrApp {
     #[allow(deprecated)]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
+        // Enable multipass rendering for egui_taffy layout convergence
+        ctx.options_mut(|opts| {
+            opts.max_passes = std::num::NonZeroUsize::new(3).unwrap();
+        });
+
         // Poll model download progress
         #[cfg(feature = "depth")]
         while let Ok(msg) = self.rx_model_dl.try_recv() {

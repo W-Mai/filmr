@@ -4,13 +4,38 @@ mod shutter_speed;
 mod simple;
 
 use egui::{Context, RichText};
+use egui_taffy::{taffy, tui, TuiBuilderLogic};
 
 use crate::config::UxMode;
 use crate::ui::app::{FilmrApp, RightTab};
 
 pub use shutter_speed::ShutterSpeed;
 
-/// Section header — uppercase, small, muted color (matches mockup).
+/// Center arbitrary widgets horizontally using taffy flexbox.
+fn centered_horizontal(ui: &mut egui::Ui, id_salt: &str, add_contents: impl FnOnce(&mut egui::Ui)) {
+    use taffy::prelude::*;
+    tui(ui, ui.id().with(id_salt))
+        .reserve_available_width()
+        .style(taffy::Style {
+            display: taffy::Display::Flex,
+            flex_direction: taffy::FlexDirection::Row,
+            justify_content: Some(taffy::JustifyContent::Center),
+            align_items: Some(taffy::AlignItems::Center),
+            gap: length(8.0),
+            padding: length(6.0),
+            size: taffy::Size {
+                width: percent(1.0),
+                height: auto(),
+            },
+            ..Default::default()
+        })
+        .show(|tui| {
+            tui.egui_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .ui(|ui| {
+                    add_contents(ui);
+                });
+        });
+}
 pub(super) fn section_header(ui: &mut egui::Ui, label: &str) {
     ui.label(
         RichText::new(label)
@@ -53,97 +78,105 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
         .min_width(260.0)
         .max_width(360.0)
         .show(ctx, |ui| {
-            // Mode switch — mockup: selected=accent bg + dark text, unselected=medium bg + secondary text
+            // Mode switch — two centered buttons
             let accent = egui::Color32::from_rgb(230, 155, 50);
             let bg_medium = egui::Color32::from_rgb(42, 42, 48);
             let text_dark = egui::Color32::from_rgb(24, 24, 28);
             let text_secondary = egui::Color32::from_rgb(150, 150, 160);
 
-            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                ui.horizontal(|ui| {
-                    let prev_mode = app.ux_mode;
-                    let is_simple = app.ux_mode == UxMode::Simple;
-                    let simple_btn = egui::Button::new(
-                        egui::RichText::new("Simple")
+            {
+                let prev_mode = app.ux_mode;
+                let is_simple = app.ux_mode == UxMode::Simple;
+                let btn = |selected, label| {
+                    egui::Button::new(
+                        egui::RichText::new(label)
                             .size(12.0)
                             .strong()
-                            .color(if is_simple { text_dark } else { text_secondary }),
+                            .color(if selected { text_dark } else { text_secondary }),
                     )
-                    .fill(if is_simple { accent } else { bg_medium })
+                    .fill(if selected { accent } else { bg_medium })
                     .stroke(egui::Stroke::NONE)
-                    .corner_radius(4.0);
-                    if ui.add(simple_btn).clicked() {
+                    .corner_radius(4.0)
+                };
+                centered_horizontal(ui, "mode_switch", |ui| {
+                    if ui.add(btn(is_simple, "Simple")).clicked() {
                         app.ux_mode = UxMode::Simple;
                         app.right_tab = RightTab::Adjust;
                     }
-
-                    let pro_btn = egui::Button::new(
-                        egui::RichText::new("Professional")
-                            .size(12.0)
-                            .strong()
-                            .color(if !is_simple {
-                                text_dark
-                            } else {
-                                text_secondary
-                            }),
-                    )
-                    .fill(if !is_simple { accent } else { bg_medium })
-                    .stroke(egui::Stroke::NONE)
-                    .corner_radius(4.0);
-                    if ui.add(pro_btn).clicked() {
+                    if ui.add(btn(!is_simple, "Professional")).clicked() {
                         app.ux_mode = UxMode::Professional;
                     }
-
-                    if prev_mode != app.ux_mode {
-                        if let Some(cm) = &mut app.config_manager {
-                            cm.config.ux_mode = app.ux_mode;
-                            cm.save();
-                        }
-                        changed = true;
-                    }
                 });
-            });
+                if prev_mode != app.ux_mode {
+                    if let Some(cm) = &mut app.config_manager {
+                        cm.config.ux_mode = app.ux_mode;
+                        cm.save();
+                    }
+                    changed = true;
+                }
+            }
             ui.separator();
 
-            // Tab bar (Professional only) — each tab fills equal width
+            // Tab bar (Professional only) — flex-1 equal width tabs
             if app.ux_mode == UxMode::Professional {
-                let accent = egui::Color32::from_rgb(230, 155, 50);
-                let text_secondary = egui::Color32::from_rgb(150, 150, 160);
-                let tab_width = (ui.available_width() / 3.0).min(100.0);
-                ui.horizontal(|ui| {
-                    for (tab, label) in [
-                        (RightTab::Adjust, "Adjust"),
-                        (RightTab::Effects, "Effects"),
-                        (RightTab::Detail, "Detail"),
-                    ] {
-                        let is_active = app.right_tab == tab;
-                        let text = egui::RichText::new(label).size(12.0).color(if is_active {
-                            accent
-                        } else {
-                            text_secondary
-                        });
-                        let text = if is_active { text.strong() } else { text };
-                        let btn = egui::Button::new(text)
-                            .fill(egui::Color32::TRANSPARENT)
-                            .stroke(egui::Stroke::NONE)
-                            .min_size(egui::vec2(tab_width, 0.0));
-                        let response = ui.add(btn);
-                        if is_active {
-                            let rect = response.rect;
-                            ui.painter().rect_filled(
-                                egui::Rect::from_min_size(
-                                    egui::pos2(rect.left(), rect.bottom() - 2.0),
-                                    egui::vec2(rect.width(), 2.0),
-                                ),
-                                0.0,
-                                accent,
-                            );
+                use taffy::prelude::*;
+                let accent_c = egui::Color32::from_rgb(230, 155, 50);
+                let text_secondary_c = egui::Color32::from_rgb(150, 150, 160);
+                let tabs = [
+                    (RightTab::Adjust, "Adjust"),
+                    (RightTab::Effects, "Effects"),
+                    (RightTab::Detail, "Detail"),
+                ];
+                tui(ui, ui.id().with("tab_bar"))
+                    .reserve_available_width()
+                    .style(taffy::Style {
+                        display: taffy::Display::Flex,
+                        flex_direction: taffy::FlexDirection::Row,
+                        size: taffy::Size {
+                            width: percent(1.0),
+                            height: auto(),
+                        },
+                        ..Default::default()
+                    })
+                    .show(|tui| {
+                        for (tab, label) in tabs {
+                            let is_active = app.right_tab == tab;
+                            tui.style(taffy::Style {
+                                flex_grow: 1.0,
+                                justify_content: Some(taffy::JustifyContent::Center),
+                                align_items: Some(taffy::AlignItems::Center),
+                                padding: length(6.0),
+                                ..Default::default()
+                            })
+                            .ui(|ui| {
+                                let text =
+                                    egui::RichText::new(label).size(12.0).color(if is_active {
+                                        accent_c
+                                    } else {
+                                        text_secondary_c
+                                    });
+                                let text = if is_active { text.strong() } else { text };
+                                let btn = egui::Button::new(text)
+                                    .fill(egui::Color32::TRANSPARENT)
+                                    .stroke(egui::Stroke::NONE);
+                                let response = ui.add(btn);
+                                if is_active {
+                                    let rect = response.rect;
+                                    ui.painter().rect_filled(
+                                        egui::Rect::from_min_size(
+                                            egui::pos2(rect.left(), rect.bottom() - 2.0),
+                                            egui::vec2(rect.width(), 2.0),
+                                        ),
+                                        0.0,
+                                        accent_c,
+                                    );
+                                }
+                                if response.clicked() {
+                                    app.right_tab = tab;
+                                }
+                            });
                         }
-                        if response.clicked() {
-                            app.right_tab = tab;
-                        }
-                    }
-                });
+                    });
                 ui.separator();
             }
 

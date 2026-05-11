@@ -4,7 +4,6 @@ use egui::{Color32, Stroke, Style, Visuals};
 pub fn apply_dark_pro_theme(ctx: &egui::Context) {
     let mut style = Style::default();
 
-    let bg_darkest = Color32::from_rgb(24, 24, 28);
     let bg_dark = Color32::from_rgb(32, 32, 36);
     let bg_medium = Color32::from_rgb(42, 42, 48);
     let bg_hover = Color32::from_rgb(52, 52, 60);
@@ -24,7 +23,8 @@ pub fn apply_dark_pro_theme(ctx: &egui::Context) {
     visuals.window_stroke = Stroke::new(1.0, border);
     visuals.panel_fill = bg_dark;
     visuals.faint_bg_color = Color32::from_rgb(28, 28, 32);
-    visuals.extreme_bg_color = bg_darkest;
+    // DragValue/text edit bg matches panel — looks like plain text
+    visuals.extreme_bg_color = bg_dark;
 
     // Noninteractive (labels, separators)
     visuals.widgets.noninteractive.bg_fill = bg_medium;
@@ -60,7 +60,7 @@ pub fn apply_dark_pro_theme(ctx: &egui::Context) {
     visuals.widgets.open.corner_radius = 4.0.into();
 
     // Selection (selected items, slider fill)
-    visuals.selection.bg_fill = accent.linear_multiply(0.25);
+    visuals.selection.bg_fill = accent.linear_multiply(0.5);
     visuals.selection.stroke = Stroke::new(1.5, accent);
 
     visuals.hyperlink_color = accent;
