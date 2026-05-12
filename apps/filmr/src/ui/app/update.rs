@@ -20,6 +20,11 @@ impl App for FilmrApp {
             opts.max_passes = std::num::NonZeroUsize::new(3).unwrap();
         });
 
+        // Force dark theme every frame (macOS may override on system theme change)
+        if !ctx.style().visuals.dark_mode {
+            crate::ui::theme::apply_dark_pro_theme(ctx);
+        }
+
         // Poll model download progress
         #[cfg(feature = "depth")]
         while let Ok(msg) = self.rx_model_dl.try_recv() {

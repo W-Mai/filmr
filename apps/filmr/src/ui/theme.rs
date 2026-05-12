@@ -2,6 +2,9 @@
 use egui::{Color32, Stroke, Style, Visuals};
 
 pub fn apply_dark_pro_theme(ctx: &egui::Context) {
+    // Force dark mode, ignore system theme
+    ctx.set_visuals(egui::Visuals::dark());
+
     let mut style = Style::default();
 
     let bg_dark = Color32::from_rgb(32, 32, 36);
