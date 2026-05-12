@@ -116,133 +116,135 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             });
         });
 
-    // ── Right Panel: Adjustments ──
-    egui::SidePanel::right("adjust_panel")
-        .default_width(280.0)
-        .min_width(260.0)
-        .max_width(360.0)
-        .show(ctx, |ui| {
-            // Mode switch — two centered buttons
-            let accent = egui::Color32::from_rgb(230, 155, 50);
-            let bg_medium = egui::Color32::from_rgb(42, 42, 48);
-            let text_dark = egui::Color32::from_rgb(24, 24, 28);
-            let text_secondary = egui::Color32::from_rgb(150, 150, 160);
+    // ── Right Panel: Adjustments (skip in StockStudio mode — studio panel takes over) ──
+    if app.mode != crate::config::AppMode::StockStudio {
+        egui::SidePanel::right("adjust_panel")
+            .default_width(280.0)
+            .min_width(260.0)
+            .max_width(360.0)
+            .show(ctx, |ui| {
+                // Mode switch — two centered buttons
+                let accent = egui::Color32::from_rgb(230, 155, 50);
+                let bg_medium = egui::Color32::from_rgb(42, 42, 48);
+                let text_dark = egui::Color32::from_rgb(24, 24, 28);
+                let text_secondary = egui::Color32::from_rgb(150, 150, 160);
 
-            {
-                let prev_mode = app.ux_mode;
-                let is_simple = app.ux_mode == UxMode::Simple;
-                let btn = |selected, label| {
-                    egui::Button::new(
-                        egui::RichText::new(label)
-                            .size(12.0)
-                            .strong()
-                            .color(if selected { text_dark } else { text_secondary }),
-                    )
-                    .fill(if selected { accent } else { bg_medium })
-                    .stroke(egui::Stroke::NONE)
-                    .corner_radius(12.0)
-                    .min_size(egui::vec2(0.0, 24.0))
-                };
-                centered_horizontal(ui, "mode_switch", |ui| {
-                    if ui.add(btn(is_simple, "Simple")).clicked() {
-                        app.ux_mode = UxMode::Simple;
-                        app.right_tab = RightTab::Adjust;
+                {
+                    let prev_mode = app.ux_mode;
+                    let is_simple = app.ux_mode == UxMode::Simple;
+                    let btn = |selected, label| {
+                        egui::Button::new(
+                            egui::RichText::new(label)
+                                .size(12.0)
+                                .strong()
+                                .color(if selected { text_dark } else { text_secondary }),
+                        )
+                        .fill(if selected { accent } else { bg_medium })
+                        .stroke(egui::Stroke::NONE)
+                        .corner_radius(12.0)
+                        .min_size(egui::vec2(0.0, 24.0))
+                    };
+                    centered_horizontal(ui, "mode_switch", |ui| {
+                        if ui.add(btn(is_simple, "Simple")).clicked() {
+                            app.ux_mode = UxMode::Simple;
+                            app.right_tab = RightTab::Adjust;
+                        }
+                        if ui.add(btn(!is_simple, "Professional")).clicked() {
+                            app.ux_mode = UxMode::Professional;
+                        }
+                    });
+                    if prev_mode != app.ux_mode {
+                        if let Some(cm) = &mut app.config_manager {
+                            cm.config.ux_mode = app.ux_mode;
+                            cm.save();
+                        }
+                        changed = true;
                     }
-                    if ui.add(btn(!is_simple, "Professional")).clicked() {
-                        app.ux_mode = UxMode::Professional;
-                    }
-                });
-                if prev_mode != app.ux_mode {
-                    if let Some(cm) = &mut app.config_manager {
-                        cm.config.ux_mode = app.ux_mode;
-                        cm.save();
-                    }
-                    changed = true;
                 }
-            }
-            ui.separator();
-
-            // Tab bar (Professional only) — flex-1 equal width tabs
-            if app.ux_mode == UxMode::Professional {
-                use taffy::prelude::*;
-                let accent_c = egui::Color32::from_rgb(230, 155, 50);
-                let text_secondary_c = egui::Color32::from_rgb(150, 150, 160);
-                let tabs = [
-                    (RightTab::Adjust, "Adjust"),
-                    (RightTab::Effects, "Effects"),
-                    (RightTab::Detail, "Detail"),
-                ];
-                tui(ui, ui.id().with("tab_bar"))
-                    .reserve_available_width()
-                    .style(taffy::Style {
-                        display: taffy::Display::Flex,
-                        flex_direction: taffy::FlexDirection::Row,
-                        size: taffy::Size {
-                            width: percent(1.0),
-                            height: auto(),
-                        },
-                        ..Default::default()
-                    })
-                    .show(|tui| {
-                        for (tab, label) in tabs {
-                            let is_active = app.right_tab == tab;
-                            tui.style(taffy::Style {
-                                flex_grow: 1.0,
-                                justify_content: Some(taffy::JustifyContent::Center),
-                                align_items: Some(taffy::AlignItems::Center),
-                                padding: length(8.0),
-                                ..Default::default()
-                            })
-                            .ui(|ui| {
-                                let text =
-                                    egui::RichText::new(label).size(13.0).color(if is_active {
-                                        accent_c
-                                    } else {
-                                        text_secondary_c
-                                    });
-                                let text = if is_active { text.strong() } else { text };
-                                let btn = egui::Button::new(text)
-                                    .fill(egui::Color32::TRANSPARENT)
-                                    .stroke(egui::Stroke::NONE)
-                                    .min_size(egui::vec2(0.0, 24.0));
-                                let response = ui.add(btn);
-                                if is_active {
-                                    let rect = response.rect;
-                                    ui.painter().rect_filled(
-                                        egui::Rect::from_min_size(
-                                            egui::pos2(rect.left(), rect.bottom() - 2.0),
-                                            egui::vec2(rect.width(), 2.0),
-                                        ),
-                                        0.0,
-                                        accent_c,
-                                    );
-                                }
-                                if response.clicked() {
-                                    app.right_tab = tab;
-                                }
-                            });
-                        }
-                    });
                 ui.separator();
-            }
 
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.add_space(4.0);
-                egui::Frame::NONE
-                    .inner_margin(egui::Margin::symmetric(12, 0))
-                    .show(ui, |ui| match app.right_tab {
-                        RightTab::Adjust => {
-                            render_adjust_tab(app, ui, ctx, &mut changed);
-                        }
-                        RightTab::Effects => {
-                            professional::render_effects_tab(app, ui, &mut changed);
-                        }
-                        RightTab::Detail => {
-                            professional::render_detail_tab(app, ui, &mut changed);
-                        }
-                    });
+                // Tab bar (Professional only) — flex-1 equal width tabs
+                if app.ux_mode == UxMode::Professional {
+                    use taffy::prelude::*;
+                    let accent_c = egui::Color32::from_rgb(230, 155, 50);
+                    let text_secondary_c = egui::Color32::from_rgb(150, 150, 160);
+                    let tabs = [
+                        (RightTab::Adjust, "Adjust"),
+                        (RightTab::Effects, "Effects"),
+                        (RightTab::Detail, "Detail"),
+                    ];
+                    tui(ui, ui.id().with("tab_bar"))
+                        .reserve_available_width()
+                        .style(taffy::Style {
+                            display: taffy::Display::Flex,
+                            flex_direction: taffy::FlexDirection::Row,
+                            size: taffy::Size {
+                                width: percent(1.0),
+                                height: auto(),
+                            },
+                            ..Default::default()
+                        })
+                        .show(|tui| {
+                            for (tab, label) in tabs {
+                                let is_active = app.right_tab == tab;
+                                tui.style(taffy::Style {
+                                    flex_grow: 1.0,
+                                    justify_content: Some(taffy::JustifyContent::Center),
+                                    align_items: Some(taffy::AlignItems::Center),
+                                    padding: length(8.0),
+                                    ..Default::default()
+                                })
+                                .ui(|ui| {
+                                    let text =
+                                        egui::RichText::new(label).size(13.0).color(if is_active {
+                                            accent_c
+                                        } else {
+                                            text_secondary_c
+                                        });
+                                    let text = if is_active { text.strong() } else { text };
+                                    let btn = egui::Button::new(text)
+                                        .fill(egui::Color32::TRANSPARENT)
+                                        .stroke(egui::Stroke::NONE)
+                                        .min_size(egui::vec2(0.0, 24.0));
+                                    let response = ui.add(btn);
+                                    if is_active {
+                                        let rect = response.rect;
+                                        ui.painter().rect_filled(
+                                            egui::Rect::from_min_size(
+                                                egui::pos2(rect.left(), rect.bottom() - 2.0),
+                                                egui::vec2(rect.width(), 2.0),
+                                            ),
+                                            0.0,
+                                            accent_c,
+                                        );
+                                    }
+                                    if response.clicked() {
+                                        app.right_tab = tab;
+                                    }
+                                });
+                            }
+                        });
+                    ui.separator();
+                }
+
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.add_space(4.0);
+                    egui::Frame::NONE
+                        .inner_margin(egui::Margin::symmetric(12, 0))
+                        .show(ui, |ui| match app.right_tab {
+                            RightTab::Adjust => {
+                                render_adjust_tab(app, ui, ctx, &mut changed);
+                            }
+                            RightTab::Effects => {
+                                professional::render_effects_tab(app, ui, &mut changed);
+                            }
+                            RightTab::Detail => {
+                                professional::render_detail_tab(app, ui, &mut changed);
+                            }
+                        });
+                });
             });
-        });
+    } // end if not StockStudio
 
     if changed {
         app.process_and_update_texture(ctx);
