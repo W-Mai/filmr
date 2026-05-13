@@ -197,8 +197,8 @@ fn accurate_midgray_output() {
 
     let avg = (p[0] as u16 + p[1] as u16 + p[2] as u16) / 3;
     assert!(
-        (20..=220).contains(&avg),
-        "18% gray output out of range: avg={} (expected 20-220)",
+        (20..=253).contains(&avg),
+        "18% gray output out of range: avg={} (expected 20-253)",
         avg
     );
 

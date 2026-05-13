@@ -207,18 +207,23 @@ pub fn estimate_exposure_time_for_mode(
         let net_r = (densities[0] - film.r_curve.d_min).max(0.0);
         let net_g = (densities[1] - film.g_curve.d_min).max(0.0);
         let net_b = (densities[2] - film.b_curve.d_min).max(0.0);
-        // Density linear mapping (same as create_output_image Positive path)
-        let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01);
-        let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01);
-        let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01);
-        let tone_gamma = 2.47f32;
+        // Filmic tone curve (same as pipeline Positive path)
+        use crate::filmic_curve::FilmicCurve;
+        let range_scale = 0.85;
+        let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01) * range_scale;
+        let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01) * range_scale;
+        let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01) * range_scale;
+        let curve = match film.film_type {
+            crate::film::FilmType::ColorSlide => FilmicCurve::slide(),
+            _ => FilmicCurve::negative(),
+        };
         (
-            (net_r / range_r).clamp(0.0, 1.0).powf(tone_gamma),
-            (net_g / range_g).clamp(0.0, 1.0).powf(tone_gamma),
-            (net_b / range_b).clamp(0.0, 1.0).powf(tone_gamma),
+            curve.map(net_r / range_r),
+            curve.map(net_g / range_g),
+            curve.map(net_b / range_b),
         )
     };
-    let target_mid: f32 = 0.18;
+    let target_mid: f32 = 0.18; // output pixel target for 18% gray
     let target_hi: f32 = 0.70;
     let target_lo: f32 = 0.05;
     let mut t_min: f32 = (t_base / 64.0).max(1.0e-4);
@@ -414,13 +419,18 @@ impl PipelineStage for AccurateDevelopStage {
             let net_r = (d[0] - film.r_curve.d_min).max(0.0);
             let net_g = (d[1] - film.g_curve.d_min).max(0.0);
             let net_b = (d[2] - film.b_curve.d_min).max(0.0);
-            let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01);
-            let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01);
-            let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01);
-            let tone_gamma = 2.47f32;
-            let r = (net_r / range_r).clamp(0.0, 1.0).powf(tone_gamma);
-            let g = (net_g / range_g).clamp(0.0, 1.0).powf(tone_gamma);
-            let b = (net_b / range_b).clamp(0.0, 1.0).powf(tone_gamma);
+            let range_scale = 0.85;
+            let range_r = (film.r_curve.d_max - film.r_curve.d_min).max(0.01) * range_scale;
+            let range_g = (film.g_curve.d_max - film.g_curve.d_min).max(0.01) * range_scale;
+            let range_b = (film.b_curve.d_max - film.b_curve.d_min).max(0.01) * range_scale;
+            use crate::filmic_curve::FilmicCurve;
+            let curve = match film.film_type {
+                crate::film::FilmType::ColorSlide => FilmicCurve::slide(),
+                _ => FilmicCurve::negative(),
+            };
+            let r = curve.map(net_r / range_r);
+            let g = curve.map(net_g / range_g);
+            let b = curve.map(net_b / range_b);
             0.2126 * r + 0.7152 * g + 0.0722 * b
         };
 

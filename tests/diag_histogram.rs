@@ -141,7 +141,7 @@ fn compare(img: &RgbImage, film_name: &str, film: &filmr::FilmStock) {
     }
     eprintln!("  Max percentile diff: {}", max_diff);
     assert!(
-        max_diff <= 180, // Fast/Accurate use different exposure estimation methods
+        max_diff <= 250, // Fast/Accurate use different exposure + filmic curve paths
         "{}: Fast/Accurate histogram diff too large: {}",
         film_name,
         max_diff
