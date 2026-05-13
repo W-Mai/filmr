@@ -3,7 +3,8 @@ use filmr::FilmStyle;
 use crate::ui::app::FilmrApp;
 
 use crate::ui::components::{
-    pill_selector_rows, section_header, ACCENT, TEXT_DISABLED, TEXT_PRIMARY, TEXT_SECONDARY,
+    collapsing_section, pill_selector_rows, section_header, ACCENT, TEXT_DISABLED, TEXT_PRIMARY,
+    TEXT_SECONDARY,
 };
 
 /// Render the film stock list (grouped by brand with thumbnails).
@@ -33,14 +34,7 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
                 }
 
                 for (brand, indices) in groups {
-                    egui::CollapsingHeader::new(
-                        egui::RichText::new(brand.to_uppercase())
-                            .strong()
-                            .size(12.0)
-                            .color(TEXT_DISABLED),
-                    )
-                    .default_open(true)
-                    .show(ui, |ui| {
+                    collapsing_section(ui, &brand.to_uppercase(), true, |ui| {
                         for idx in indices {
                             let stock = &app.stocks[idx];
                             let full_name = &stock.full_name();

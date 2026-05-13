@@ -7,14 +7,15 @@ use super::preset_io::create_custom_stock;
 #[cfg(not(target_arch = "wasm32"))]
 use super::preset_io::{export_preset, import_preset};
 use crate::ui::components::{
-    action_button, labeled_slider, pill_selector, section_divider, section_header,
+    action_button, collapsing_section, labeled_slider, pill_selector, section_divider,
+    section_header,
 };
 
 /// Effects tab: Lens + Light Leaks + Halation + Preset Management.
 pub fn render_effects_tab(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     // Preset Management
     if app.mode == AppMode::Develop {
-        ui.collapsing("📦 Preset Management", |ui| {
+        collapsing_section(ui, "📦 Preset Management", false, |ui| {
             ui.horizontal(|ui| {
                 if ui.add(action_button("Import")).clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
@@ -256,7 +257,7 @@ fn render_light_leaks(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool)
 
         let mut leaks_to_remove = Vec::new();
         for (i, leak) in app.light_leak_config.leaks.iter_mut().enumerate() {
-            ui.collapsing(format!("Leak #{}", i + 1), |ui| {
+            collapsing_section(ui, &format!("Leak #{}", i + 1), false, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("Pos:");
                     if ui

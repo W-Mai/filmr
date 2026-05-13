@@ -103,7 +103,7 @@ pub fn apply_dark_pro_theme(ctx: &egui::Context) {
     style.spacing.slider_rail_height = 4.0;
     style.spacing.scroll.bar_width = 5.0;
     style.spacing.scroll.bar_inner_margin = 2.0;
-    style.spacing.indent = 16.0;
+    style.spacing.indent = 12.0;
     style.spacing.interact_size = egui::vec2(40.0, 20.0); // comfortable click targets
 
     // Text styles — ark-pixel 12px base

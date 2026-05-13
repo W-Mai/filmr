@@ -56,3 +56,53 @@ pub fn section_divider(ui: &mut egui::Ui) {
     ui.separator();
     ui.add_space(8.0);
 }
+
+/// Custom collapsing section — PS layer-panel style.
+/// Full-width clickable header with subtle background, no indent on content.
+pub fn collapsing_section(
+    ui: &mut egui::Ui,
+    label: &str,
+    default_open: bool,
+    add_contents: impl FnOnce(&mut egui::Ui),
+) {
+    let id = ui.id().with(label);
+    let mut open = ui.memory_mut(|mem| *mem.data.get_temp_mut_or_insert_with(id, || default_open));
+
+    // Header row — full width, subtle bg
+    let desired_size = egui::vec2(ui.available_width(), 22.0);
+    let (rect, resp) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+
+    // Background
+    let bg = if resp.hovered() { BG_HOVER } else { BG_MEDIUM };
+    ui.painter().rect_filled(rect, 2.0, bg);
+
+    // Chevron + label
+    let chevron = if open { "▾" } else { "▸" };
+    let text_color = TEXT_SECONDARY;
+    ui.painter().text(
+        egui::pos2(rect.left() + 8.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        chevron,
+        egui::FontId::proportional(10.0),
+        text_color,
+    );
+    ui.painter().text(
+        egui::pos2(rect.left() + 22.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        label,
+        egui::FontId::proportional(BODY_FONT_SIZE),
+        text_color,
+    );
+
+    if resp.clicked() {
+        open = !open;
+        ui.memory_mut(|mem| mem.data.insert_temp(id, open));
+    }
+
+    // Content — no indent, just vertical space
+    if open {
+        ui.add_space(4.0);
+        add_contents(ui);
+        ui.add_space(4.0);
+    }
+}
