@@ -1,33 +1,7 @@
 use crate::ui::app::FilmrApp;
+use crate::ui::components::{labeled_slider, ACCENT, TEXT_DARK, TEXT_DISABLED};
 use egui::{Color32, Ui};
 use filmr::film::{FilmType, SegmentedCurve};
-
-/// Styled slider with label and value display for the studio panel.
-fn studio_slider(
-    ui: &mut egui::Ui,
-    label: &str,
-    value: &mut f32,
-    range: std::ops::RangeInclusive<f32>,
-) -> bool {
-    let secondary = egui::Color32::from_rgb(150, 150, 160);
-    let primary = egui::Color32::from_rgb(220, 220, 225);
-    ui.horizontal(|ui| {
-        ui.label(egui::RichText::new(label).size(12.0).color(secondary));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.label(
-                egui::RichText::new(format!("{:.2}", *value))
-                    .size(12.0)
-                    .color(primary),
-            );
-        });
-    });
-    ui.spacing_mut().slider_width = ui.available_width();
-    let changed = ui
-        .add(egui::Slider::new(value, range).show_value(false))
-        .changed();
-    ui.add_space(4.0);
-    changed
-}
 
 pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
     egui::SidePanel::right("studio_panel")
@@ -41,7 +15,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("STOCK STUDIO")
                         .strong()
                         .size(14.0)
-                        .color(egui::Color32::from_rgb(230, 155, 50)),
+                        .color(ACCENT),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui
@@ -50,9 +24,9 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                                 egui::RichText::new("✓ Done")
                                     .size(12.0)
                                     .strong()
-                                    .color(egui::Color32::from_rgb(24, 24, 28)),
+                                    .color(TEXT_DARK),
                             )
-                            .fill(egui::Color32::from_rgb(230, 155, 50))
+                            .fill(ACCENT)
                             .stroke(egui::Stroke::NONE)
                             .corner_radius(4.0),
                         )
@@ -73,7 +47,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("Basic Properties")
                         .strong()
                         .size(12.0)
-                        .color(egui::Color32::from_rgb(90, 90, 100)),
+                        .color(TEXT_DISABLED),
                 )
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
@@ -104,22 +78,24 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                             });
                     });
 
-                    if studio_slider(ui, "ISO", &mut app.studio_stock.iso, 6.0..=3200.0) {
+                    if labeled_slider(ui, "ISO", &mut app.studio_stock.iso, 6.0..=3200.0, false) {
                         changed = true;
                     }
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Resolution (lp/mm)",
                         &mut app.studio_stock.resolution_lp_mm,
                         10.0..=200.0,
+                        false,
                     ) {
                         changed = true;
                     }
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Reciprocity Beta",
                         &mut app.studio_stock.reciprocity.beta,
                         0.5..=1.5,
+                        false,
                     ) {
                         changed = true;
                     }
@@ -133,7 +109,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("Characteristic Curves")
                         .strong()
                         .size(12.0)
-                        .color(egui::Color32::from_rgb(90, 90, 100)),
+                        .color(TEXT_DISABLED),
                 )
                 .show(ui, |ui| {
                     ui.label("Red Channel");
@@ -166,21 +142,22 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("Spectral Sensitivity")
                         .strong()
                         .size(12.0)
-                        .color(egui::Color32::from_rgb(90, 90, 100)),
+                        .color(TEXT_DISABLED),
                 )
                 .show(ui, |ui| {
                     let params = &mut app.studio_stock.spectral_params;
 
                     ui.label("Red Sensitivity");
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Peak Wavelength (nm)",
                         &mut params.r_peak,
                         580.0..=680.0,
+                        false,
                     ) {
                         changed = true;
                     }
-                    if studio_slider(ui, "Width (nm)", &mut params.r_width, 10.0..=100.0) {
+                    if labeled_slider(ui, "Width (nm)", &mut params.r_width, 10.0..=100.0, false) {
                         changed = true;
                     }
 
@@ -189,15 +166,16 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     ui.add_space(8.0);
 
                     ui.label("Green Sensitivity");
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Peak Wavelength (nm)",
                         &mut params.g_peak,
                         500.0..=580.0,
+                        false,
                     ) {
                         changed = true;
                     }
-                    if studio_slider(ui, "Width (nm)", &mut params.g_width, 10.0..=100.0) {
+                    if labeled_slider(ui, "Width (nm)", &mut params.g_width, 10.0..=100.0, false) {
                         changed = true;
                     }
 
@@ -206,15 +184,16 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     ui.add_space(8.0);
 
                     ui.label("Blue Sensitivity");
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Peak Wavelength (nm)",
                         &mut params.b_peak,
                         400.0..=500.0,
+                        false,
                     ) {
                         changed = true;
                     }
-                    if studio_slider(ui, "Width (nm)", &mut params.b_width, 10.0..=100.0) {
+                    if labeled_slider(ui, "Width (nm)", &mut params.b_width, 10.0..=100.0, false) {
                         changed = true;
                     }
 
@@ -265,7 +244,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("Color Matrix")
                         .strong()
                         .size(12.0)
-                        .color(egui::Color32::from_rgb(90, 90, 100)),
+                        .color(TEXT_DISABLED),
                 )
                 .show(ui, |ui| {
                     ui.label("Color Correction Matrix");
@@ -297,20 +276,26 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("Grain Model")
                         .strong()
                         .size(12.0)
-                        .color(egui::Color32::from_rgb(90, 90, 100)),
+                        .color(TEXT_DISABLED),
                 )
                 .show(ui, |ui| {
                     let grain = &mut app.studio_stock.grain_model;
-                    if studio_slider(ui, "Alpha (Strength)", &mut grain.alpha, 0.0..=1.0) {
+                    if labeled_slider(ui, "Alpha (Strength)", &mut grain.alpha, 0.0..=1.0, false) {
                         changed = true;
                     }
-                    if studio_slider(ui, "Sigma Read (Base)", &mut grain.sigma_read, 0.0..=0.1) {
+                    if labeled_slider(
+                        ui,
+                        "Sigma Read (Base)",
+                        &mut grain.sigma_read,
+                        0.0..=0.1,
+                        false,
+                    ) {
                         changed = true;
                     }
-                    if studio_slider(ui, "Roughness", &mut grain.roughness, 0.0..=1.0) {
+                    if labeled_slider(ui, "Roughness", &mut grain.roughness, 0.0..=1.0, false) {
                         changed = true;
                     }
-                    if studio_slider(ui, "Blur Radius", &mut grain.blur_radius, 0.0..=5.0) {
+                    if labeled_slider(ui, "Blur Radius", &mut grain.blur_radius, 0.0..=5.0, false) {
                         changed = true;
                     }
                 });
@@ -323,30 +308,33 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     egui::RichText::new("Halation")
                         .strong()
                         .size(12.0)
-                        .color(egui::Color32::from_rgb(90, 90, 100)),
+                        .color(TEXT_DISABLED),
                 )
                 .show(ui, |ui| {
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Strength",
                         &mut app.studio_stock.halation_strength,
                         0.0..=1.0,
+                        false,
                     ) {
                         changed = true;
                     }
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Threshold",
                         &mut app.studio_stock.halation_threshold,
                         0.0..=1.0,
+                        false,
                     ) {
                         changed = true;
                     }
-                    if studio_slider(
+                    if labeled_slider(
                         ui,
                         "Sigma (Spread)",
                         &mut app.studio_stock.halation_sigma,
                         0.0..=10.0,
+                        false,
                     ) {
                         changed = true;
                     }
@@ -402,20 +390,21 @@ fn render_curve_editor(ui: &mut Ui, curve: &mut SegmentedCurve, id_salt: &str) -
         .allow_scroll(false)
         .show(ui, |plot_ui| plot_ui.line(line));
 
-    if studio_slider(ui, "D Min", &mut curve.d_min, 0.0..=1.0) {
+    if labeled_slider(ui, "D Min", &mut curve.d_min, 0.0..=1.0, false) {
         changed = true;
     }
-    if studio_slider(ui, "D Max", &mut curve.d_max, 0.0..=4.0) {
+    if labeled_slider(ui, "D Max", &mut curve.d_max, 0.0..=4.0, false) {
         changed = true;
     }
-    if studio_slider(ui, "Gamma", &mut curve.gamma, 0.1..=5.0) {
+    if labeled_slider(ui, "Gamma", &mut curve.gamma, 0.1..=5.0, false) {
         changed = true;
     }
-    if studio_slider(
+    if labeled_slider(
         ui,
         "Exposure Offset (Speed)",
         &mut curve.exposure_offset,
         0.001..=1.0,
+        false,
     ) {
         changed = true;
     }

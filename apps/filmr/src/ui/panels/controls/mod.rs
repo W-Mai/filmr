@@ -8,6 +8,9 @@ use egui_taffy::{taffy, tui, TuiBuilderLogic};
 
 use crate::config::UxMode;
 use crate::ui::app::{FilmrApp, RightTab};
+use crate::ui::components::{
+    labeled_slider, section_divider, section_header, ACCENT, BG_MEDIUM, TEXT_DARK, TEXT_SECONDARY,
+};
 
 pub use shutter_speed::ShutterSpeed;
 
@@ -35,59 +38,6 @@ fn centered_horizontal(ui: &mut egui::Ui, id_salt: &str, add_contents: impl FnOn
                     add_contents(ui);
                 });
         });
-}
-
-/// Section header — mockup: text-xs font-bold uppercase tracking-wider text-disabled mb-3
-pub(super) fn section_header(ui: &mut egui::Ui, label: &str) {
-    ui.label(
-        RichText::new(label)
-            .strong()
-            .size(12.0)
-            .color(egui::Color32::from_rgb(90, 90, 100)),
-    );
-    ui.add_space(8.0);
-}
-
-/// Spacious divider between sections.
-pub(super) fn section_divider(ui: &mut egui::Ui) {
-    ui.add_space(8.0);
-    ui.separator();
-    ui.add_space(8.0);
-}
-
-/// Custom slider: label+value on top row (justify-between), slider full-width below.
-/// Matches mockup: `<span class="text-txt-secondary">Label</span><span>value</span>` + `<input slider w-full>`
-pub(super) fn labeled_slider(
-    ui: &mut egui::Ui,
-    label: &str,
-    value: &mut f32,
-    range: std::ops::RangeInclusive<f32>,
-    logarithmic: bool,
-) -> bool {
-    let secondary = egui::Color32::from_rgb(150, 150, 160);
-    let primary = egui::Color32::from_rgb(220, 220, 225);
-
-    // Top row: label left, value right
-    ui.horizontal(|ui| {
-        ui.label(RichText::new(label).size(12.0).color(secondary));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.label(
-                RichText::new(format!("{:.2}", *value))
-                    .size(12.0)
-                    .color(primary),
-            );
-        });
-    });
-
-    // Slider full width, no text
-    let mut slider = egui::Slider::new(value, range).show_value(false);
-    if logarithmic {
-        slider = slider.logarithmic(true);
-    }
-    ui.spacing_mut().slider_width = ui.available_width();
-    let changed = ui.add(slider).changed();
-    ui.add_space(4.0);
-    changed
 }
 
 /// Render left panel (film list + style) and right panel (adjustment tabs).
@@ -124,10 +74,10 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
             .max_width(360.0)
             .show(ctx, |ui| {
                 // Mode switch — two centered buttons
-                let accent = egui::Color32::from_rgb(230, 155, 50);
-                let bg_medium = egui::Color32::from_rgb(42, 42, 48);
-                let text_dark = egui::Color32::from_rgb(24, 24, 28);
-                let text_secondary = egui::Color32::from_rgb(150, 150, 160);
+                let accent = ACCENT;
+                let bg_medium = BG_MEDIUM;
+                let text_dark = TEXT_DARK;
+                let text_secondary = TEXT_SECONDARY;
 
                 {
                     let prev_mode = app.ux_mode;
@@ -166,8 +116,8 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 // Tab bar (Professional only) — flex-1 equal width tabs
                 if app.ux_mode == UxMode::Professional {
                     use taffy::prelude::*;
-                    let accent_c = egui::Color32::from_rgb(230, 155, 50);
-                    let text_secondary_c = egui::Color32::from_rgb(150, 150, 160);
+                    let accent_c = ACCENT;
+                    let text_secondary_c = TEXT_SECONDARY;
                     let tabs = [
                         (RightTab::Adjust, "Adjust"),
                         (RightTab::Effects, "Effects"),
@@ -258,7 +208,7 @@ fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, chan
     section_header(ui, "EXPOSURE");
     if app.ux_mode == UxMode::Professional {
         // Label + value row, then full-width slider
-        let secondary = egui::Color32::from_rgb(150, 150, 160);
+        let secondary = TEXT_SECONDARY;
         let primary = egui::Color32::from_rgb(220, 220, 225);
         ui.horizontal(|ui| {
             ui.label(RichText::new("Exposure Time").size(12.0).color(secondary));
@@ -316,9 +266,9 @@ fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, chan
                 egui::Button::new(
                     egui::RichText::new("✨ Auto Enhance")
                         .size(11.0)
-                        .color(egui::Color32::from_rgb(150, 150, 160)),
+                        .color(TEXT_SECONDARY),
                 )
-                .fill(egui::Color32::from_rgb(42, 42, 48))
+                .fill(BG_MEDIUM)
                 .stroke(egui::Stroke::NONE)
                 .corner_radius(4.0),
             )
