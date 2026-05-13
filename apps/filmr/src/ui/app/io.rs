@@ -37,50 +37,91 @@ impl FilmrApp {
             return;
         };
 
-        // Encode image to bytes
-        let mut bytes: Vec<u8> = Vec::new();
-        let mut cursor = std::io::Cursor::new(&mut bytes);
-        if let Err(e) = img.write_to(&mut cursor, image::ImageFormat::Jpeg) {
-            self.status_msg = format!("Failed to encode image: {}", e);
-            return;
-        }
-
-        // Write EXIF metadata with sRGB color space tag
-        let mut metadata = self.build_exif_metadata();
-        metadata.set_tag(little_exif::exif_tag::ExifTag::ColorSpace(vec![1u16])); // 1 = sRGB
-        let file_ext = if default_name.ends_with(".png") {
-            little_exif::filetype::FileExtension::PNG {
-                as_zTXt_chunk: false,
-            }
-        } else {
-            little_exif::filetype::FileExtension::JPEG
-        };
-        if let Err(e) = metadata.write_to_vec(&mut bytes, file_ext) {
-            tracing::warn!("Failed to write EXIF metadata: {}", e);
-        }
-
-        // Write bytes to file/download
         #[cfg(not(target_arch = "wasm32"))]
         {
-            if let Some(path) = rfd::FileDialog::new()
+            let Some(path) = rfd::FileDialog::new()
                 .set_file_name(&default_name)
                 .add_filter("JPEG Image", &["jpg", "jpeg"])
                 .add_filter("PNG Image", &["png"])
+                .add_filter("TIFF Image (16-bit)", &["tiff", "tif"])
                 .save_file()
-            {
-                if let Err(e) = std::fs::write(&path, &bytes) {
-                    self.status_msg = format!("Failed to save image: {}", e);
-                } else {
-                    self.status_msg = format!("Saved to {:?}", path);
+            else {
+                return;
+            };
+
+            let ext = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("jpg")
+                .to_lowercase();
+
+            let result = match ext.as_str() {
+                "png" => {
+                    // PNG 8-bit with sRGB
+                    let mut bytes = Vec::new();
+                    let mut cursor = std::io::Cursor::new(&mut bytes);
+                    img.write_to(&mut cursor, image::ImageFormat::Png)
+                        .map(|_| bytes)
+                }
+                "tiff" | "tif" => {
+                    // TIFF 16-bit: convert 8-bit RGB to 16-bit
+                    let rgb8 = img.to_rgb8();
+                    let (w, h) = (rgb8.width(), rgb8.height());
+                    let pixels_16: Vec<u16> =
+                        rgb8.as_raw().iter().map(|&v| (v as u16) * 257).collect();
+                    let bytes_16: Vec<u8> =
+                        pixels_16.iter().flat_map(|v| v.to_ne_bytes()).collect();
+                    let mut bytes = Vec::new();
+                    let mut cursor = std::io::Cursor::new(&mut bytes);
+                    let encoder = image::codecs::tiff::TiffEncoder::new(&mut cursor);
+                    encoder
+                        .encode(&bytes_16, w, h, image::ExtendedColorType::Rgb16)
+                        .map(|_| bytes)
+                }
+                _ => {
+                    // JPEG (default)
+                    let mut bytes = Vec::new();
+                    let mut cursor = std::io::Cursor::new(&mut bytes);
+                    img.write_to(&mut cursor, image::ImageFormat::Jpeg)
+                        .map(|_| {
+                            // Embed EXIF with sRGB tag
+                            let mut metadata = self.build_exif_metadata();
+                            metadata
+                                .set_tag(little_exif::exif_tag::ExifTag::ColorSpace(vec![1u16]));
+                            let _ = metadata.write_to_vec(
+                                &mut bytes,
+                                little_exif::filetype::FileExtension::JPEG,
+                            );
+                            bytes
+                        })
+                }
+            };
+
+            match result {
+                Ok(bytes) => {
+                    if let Err(e) = std::fs::write(&path, &bytes) {
+                        self.status_msg = format!("Failed to save: {}", e);
+                    } else {
+                        self.status_msg = format!("Saved to {:?}", path);
+                    }
+                }
+                Err(e) => {
+                    self.status_msg = format!("Failed to encode: {}", e);
                 }
             }
         }
         #[cfg(target_arch = "wasm32")]
         {
+            // WASM: always JPEG
+            let mut bytes: Vec<u8> = Vec::new();
+            let mut cursor = std::io::Cursor::new(&mut bytes);
+            if let Err(e) = img.write_to(&mut cursor, image::ImageFormat::Jpeg) {
+                self.status_msg = format!("Failed to encode: {}", e);
+                return;
+            }
             let task = rfd::AsyncFileDialog::new()
                 .set_file_name(&default_name)
                 .save_file();
-
             wasm_bindgen_futures::spawn_local(async move {
                 if let Some(handle) = task.await {
                     let _ = handle.write(&bytes).await;
