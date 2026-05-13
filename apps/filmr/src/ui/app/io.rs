@@ -45,8 +45,9 @@ impl FilmrApp {
             return;
         }
 
-        // Write EXIF metadata to bytes
-        let metadata = self.build_exif_metadata();
+        // Write EXIF metadata with sRGB color space tag
+        let mut metadata = self.build_exif_metadata();
+        metadata.set_tag(little_exif::exif_tag::ExifTag::ColorSpace(vec![1u16])); // 1 = sRGB
         let file_ext = if default_name.ends_with(".png") {
             little_exif::filetype::FileExtension::PNG {
                 as_zTXt_chunk: false,
