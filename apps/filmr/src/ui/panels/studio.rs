@@ -21,7 +21,7 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                     if ui
                         .add(
                             egui::Button::new(
-                                egui::RichText::new("✓ Done")
+                                egui::RichText::new("Done")
                                     .size(12.0)
                                     .strong()
                                     .color(TEXT_DARK),
@@ -33,6 +33,47 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                         .clicked()
                     {
                         app.mode = crate::config::AppMode::Develop;
+                    }
+
+                    // A/B Compare — hold to show original
+                    app.show_original = ui
+                        .add(
+                            egui::Button::new(
+                                egui::RichText::new("A/B")
+                                    .size(11.0)
+                                    .color(crate::ui::components::TEXT_SECONDARY),
+                            )
+                            .fill(crate::ui::components::BG_MEDIUM)
+                            .stroke(egui::Stroke::NONE)
+                            .corner_radius(4.0),
+                        )
+                        .on_hover_text("Hold to compare with original")
+                        .is_pointer_button_down_on();
+
+                    // Duplicate current stock
+                    if ui
+                        .add(
+                            egui::Button::new(
+                                egui::RichText::new("+ Dup")
+                                    .size(11.0)
+                                    .color(crate::ui::components::TEXT_SECONDARY),
+                            )
+                            .fill(crate::ui::components::BG_MEDIUM)
+                            .stroke(egui::Stroke::NONE)
+                            .corner_radius(4.0),
+                        )
+                        .on_hover_text("Duplicate this stock as a new copy")
+                        .clicked()
+                    {
+                        if let Some(idx) = app.studio_stock_idx {
+                            let mut dup = app.stocks[idx].as_ref().clone();
+                            dup.name = format!("{} (Copy)", dup.name);
+                            app.stocks.push(std::rc::Rc::from(dup.clone()));
+                            let new_idx = app.stocks.len() - 1;
+                            app.selected_stock_idx = new_idx;
+                            app.studio_stock = dup;
+                            app.studio_stock_idx = Some(new_idx);
+                        }
                     }
                 });
             });

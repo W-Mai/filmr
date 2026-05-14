@@ -256,29 +256,27 @@ fn render_adjust_tab(app: &mut FilmrApp, ui: &mut egui::Ui, _ctx: &Context, chan
     }
     section_divider(ui);
 
-    // Auto — same row
-    ui.horizontal(|ui| {
-        if ui.checkbox(&mut app.auto_levels, "🎚 Auto Levels").changed() {
-            *changed = true;
-        }
-        if ui
-            .add(
-                egui::Button::new(
-                    egui::RichText::new("✨ Auto Enhance")
-                        .size(11.0)
-                        .color(TEXT_SECONDARY),
-                )
-                .fill(BG_MEDIUM)
-                .stroke(egui::Stroke::NONE)
-                .corner_radius(4.0),
-            )
-            .clicked()
-        {
-            app.white_balance_mode = filmr::WhiteBalanceMode::Auto;
-            app.white_balance_strength = 1.0;
-            *changed = true;
-        }
-    });
+    // Auto corrections
+    section_header(ui, "AUTO");
+    // One-click enhance: enables auto levels + auto WB
+    if ui
+        .add(crate::ui::components::action_button("Auto Enhance"))
+        .on_hover_text("Auto Levels + Auto White Balance")
+        .clicked()
+    {
+        app.auto_levels = true;
+        app.white_balance_mode = filmr::WhiteBalanceMode::Auto;
+        app.white_balance_strength = 1.0;
+        *changed = true;
+    }
+    // Individual toggle
+    if ui
+        .checkbox(&mut app.auto_levels, "Auto Levels")
+        .on_hover_text("Stretch black/white points (scanner-style)")
+        .changed()
+    {
+        *changed = true;
+    }
     section_divider(ui);
 
     // Professional-only: WB + Output

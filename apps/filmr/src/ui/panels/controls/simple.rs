@@ -13,6 +13,7 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
     ui.separator();
 
     let mut preset_changed = false;
+    let mut enter_studio_idx: Option<usize> = None;
     egui::Frame::default()
         .fill(ui.visuals().faint_bg_color)
         .corner_radius(4.0)
@@ -119,6 +120,13 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
                                 preset_changed = true;
                             }
 
+                            // Double-click → enter Stock Studio
+                            if response.double_clicked() {
+                                app.selected_stock_idx = idx;
+                                preset_changed = true;
+                                enter_studio_idx = Some(idx);
+                            }
+
                             ui.add_space(2.0);
                         }
                     });
@@ -129,6 +137,27 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
     if preset_changed {
         app.load_preset_values();
         *changed = true;
+    }
+
+    // Enter Stock Studio on double-click
+    if let Some(idx) = enter_studio_idx {
+        use crate::config::AppMode;
+        if idx < app.builtin_stock_count {
+            // Fork builtin → create custom copy → edit
+            let mut forked = app.stocks[idx].as_ref().clone();
+            forked.name = format!("{} (Custom)", forked.name);
+            app.stocks.push(std::rc::Rc::from(forked.clone()));
+            let new_idx = app.stocks.len() - 1;
+            app.selected_stock_idx = new_idx;
+            app.studio_stock = app.stocks[new_idx].as_ref().clone();
+            app.studio_stock_idx = Some(new_idx);
+        } else {
+            // Custom stock → edit directly
+            app.studio_stock = app.stocks[idx].as_ref().clone();
+            app.studio_stock_idx = Some(idx);
+        }
+        app.mode = AppMode::StockStudio;
+        app.has_unsaved_changes = true;
     }
 }
 
