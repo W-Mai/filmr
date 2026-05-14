@@ -11,12 +11,23 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
         .max_width(380.0)
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new("STOCK STUDIO")
-                        .strong()
-                        .size(14.0)
-                        .color(ACCENT),
-                );
+                ui.vertical(|ui| {
+                    ui.label(
+                        egui::RichText::new("STOCK STUDIO")
+                            .strong()
+                            .size(14.0)
+                            .color(ACCENT),
+                    );
+                    // Show base stock name
+                    if let Some(idx) = app.studio_stock_idx {
+                        let name = &app.stocks[idx].name;
+                        ui.label(
+                            egui::RichText::new(format!("Editing: {}", name))
+                                .size(11.0)
+                                .color(crate::ui::components::TEXT_SECONDARY),
+                        );
+                    }
+                });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui
                         .add(
@@ -73,6 +84,28 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
                             app.selected_stock_idx = new_idx;
                             app.studio_stock = dup;
                             app.studio_stock_idx = Some(new_idx);
+                        }
+                    }
+
+                    // Reset to original
+                    if ui
+                        .add(
+                            egui::Button::new(
+                                egui::RichText::new("Reset")
+                                    .size(11.0)
+                                    .color(crate::ui::components::TEXT_SECONDARY),
+                            )
+                            .fill(crate::ui::components::BG_MEDIUM)
+                            .stroke(egui::Stroke::NONE)
+                            .corner_radius(4.0),
+                        )
+                        .on_hover_text("Reset all parameters to original values")
+                        .clicked()
+                    {
+                        if let Some(idx) = app.studio_stock_idx {
+                            if idx < app.stocks.len() {
+                                app.studio_stock = app.stocks[idx].as_ref().clone();
+                            }
                         }
                     }
                 });
