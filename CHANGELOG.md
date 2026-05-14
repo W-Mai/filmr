@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2026-05-14
+
+### ✨ Features
+
+- **Stock Studio UX overhaul**:
+  - Double-click film list to enter Studio (builtin → fork, custom → edit)
+  - Dup button to duplicate current stock
+  - A/B compare (hold to show original)
+  - Reset button to restore original parameters
+  - Shows "Editing: XXX" stock name in header
+- **Auto section redesign**: "Auto Enhance" one-click (levels + WB), separate checkbox
+
+### 🐛 Bug Fixes
+
+- Fixed emoji display (ark-pixel font compat)
+
 ## [0.12.0] - 2026-05-13
 
 ### ✨ Features
