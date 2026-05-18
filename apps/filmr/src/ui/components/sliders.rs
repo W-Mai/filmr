@@ -12,7 +12,9 @@ pub fn labeled_slider(
     range: std::ops::RangeInclusive<f32>,
     logarithmic: bool,
 ) -> bool {
-    // Top row: label left, value right
+    let mut changed = false;
+
+    // Top row: label left, editable value right
     ui.horizontal(|ui| {
         ui.label(
             RichText::new(label)
@@ -20,11 +22,17 @@ pub fn labeled_slider(
                 .color(TEXT_SECONDARY),
         );
         ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.label(
-                RichText::new(format!("{:.2}", *value))
-                    .size(BODY_FONT_SIZE)
-                    .color(TEXT_PRIMARY),
-            );
+            if ui
+                .add(
+                    egui::DragValue::new(value)
+                        .range(range.clone())
+                        .speed(0.01)
+                        .max_decimals(2),
+                )
+                .changed()
+            {
+                changed = true;
+            }
         });
     });
 
@@ -34,7 +42,9 @@ pub fn labeled_slider(
         slider = slider.logarithmic(true);
     }
     ui.spacing_mut().slider_width = ui.available_width();
-    let changed = ui.add(slider).changed();
+    if ui.add(slider).changed() {
+        changed = true;
+    }
     ui.add_space(4.0);
     changed
 }
