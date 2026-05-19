@@ -190,3 +190,131 @@ pub fn render_style_selector(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mu
             .color(TEXT_DISABLED),
     );
 }
+
+/// Render 2D film map — X=saturation, Y=contrast, each film as thumbnail+name.
+pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
+    let rect = ui.available_rect_before_wrap();
+    let size = egui::vec2(rect.width(), rect.height().max(300.0));
+    let (map_rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
+
+    let painter = ui.painter_at(map_rect);
+
+    // Background
+    painter.rect_filled(map_rect, 4.0, egui::Color32::from_rgb(28, 28, 32));
+
+    // Grid lines
+    let grid_color = egui::Color32::from_rgb(40, 40, 46);
+    for i in 1..4 {
+        let t = i as f32 / 4.0;
+        let x = map_rect.left() + t * map_rect.width();
+        let y = map_rect.top() + t * map_rect.height();
+        painter.line_segment(
+            [
+                egui::pos2(x, map_rect.top()),
+                egui::pos2(x, map_rect.bottom()),
+            ],
+            egui::Stroke::new(0.5, grid_color),
+        );
+        painter.line_segment(
+            [
+                egui::pos2(map_rect.left(), y),
+                egui::pos2(map_rect.right(), y),
+            ],
+            egui::Stroke::new(0.5, grid_color),
+        );
+    }
+
+    // Axis labels
+    let label_color = egui::Color32::from_rgb(90, 90, 100);
+    painter.text(
+        egui::pos2(map_rect.center().x, map_rect.bottom() - 4.0),
+        egui::Align2::CENTER_BOTTOM,
+        "Saturation \u{2192}",
+        egui::FontId::proportional(10.0),
+        label_color,
+    );
+    painter.text(
+        egui::pos2(map_rect.left() + 4.0, map_rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        "Contrast \u{2191}",
+        egui::FontId::proportional(10.0),
+        label_color,
+    );
+
+    // Plot each film stock
+    let accent = ACCENT;
+    let text_color = egui::Color32::from_rgb(150, 150, 160);
+    let margin = 20.0;
+    let inner = map_rect.shrink(margin);
+
+    for (idx, stock) in app.stocks.iter().enumerate() {
+        let sat = stock.saturation_score();
+        let con = stock.contrast_score();
+        let x = inner.left() + sat * inner.width();
+        let y = inner.bottom() - con * inner.height();
+        let is_selected = app.selected_stock_idx == idx;
+
+        // Thumbnail size
+        let thumb_w = 40.0f32;
+        let thumb_h = 30.0f32;
+        let item_rect =
+            egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(thumb_w, thumb_h));
+
+        // Draw thumbnail or placeholder
+        let full_name = stock.full_name();
+        if let Some(thumb) = app.preset_thumbnails.get(&full_name) {
+            let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
+            painter.image(thumb.id(), item_rect, uv, egui::Color32::WHITE);
+        } else {
+            painter.rect_filled(item_rect, 3.0, egui::Color32::from_rgb(50, 50, 56));
+        }
+
+        // Selected border
+        if is_selected {
+            painter.rect(
+                item_rect,
+                3.0,
+                egui::Color32::TRANSPARENT,
+                egui::Stroke::new(2.0, accent),
+                egui::StrokeKind::Outside,
+            );
+        }
+
+        // Name below thumbnail
+        painter.text(
+            egui::pos2(x, item_rect.bottom() + 2.0),
+            egui::Align2::CENTER_TOP,
+            &stock.name,
+            egui::FontId::proportional(9.0),
+            if is_selected { accent } else { text_color },
+        );
+    }
+
+    // Handle click — find nearest stock
+    if response.clicked() {
+        if let Some(pointer) = response.interact_pointer_pos() {
+            let mut best_idx = app.selected_stock_idx;
+            let mut best_dist = f32::MAX;
+            for (idx, stock) in app.stocks.iter().enumerate() {
+                let sat = stock.saturation_score();
+                let con = stock.contrast_score();
+                let x = inner.left() + sat * inner.width();
+                let y = inner.bottom() - con * inner.height();
+                let center = egui::pos2(x, y);
+                let item_rect = egui::Rect::from_center_size(center, egui::vec2(40.0, 30.0));
+                if item_rect.expand(5.0).contains(pointer) {
+                    let dist = (pointer - center).length();
+                    if dist < best_dist {
+                        best_dist = dist;
+                        best_idx = idx;
+                    }
+                }
+            }
+            if best_dist < f32::MAX && best_idx != app.selected_stock_idx {
+                app.selected_stock_idx = best_idx;
+                app.load_preset_values();
+                *changed = true;
+            }
+        }
+    }
+}

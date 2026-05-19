@@ -286,6 +286,21 @@ impl FilmStock {
     }
 
     /// Get the full display name of the film stock (e.g., "Kodak Portra 400")
+    /// Saturation score [0,1] — narrower spectral bands = more saturated colors.
+    pub fn saturation_score(&self) -> f32 {
+        let avg_width = (self.spectral_params.r_width
+            + self.spectral_params.g_width
+            + self.spectral_params.b_width)
+            / 3.0;
+        ((80.0 - avg_width) / 50.0).clamp(0.0, 1.0)
+    }
+
+    /// Contrast score [0,1] — higher gamma = more contrast.
+    pub fn contrast_score(&self) -> f32 {
+        let avg_gamma = (self.r_curve.gamma + self.g_curve.gamma + self.b_curve.gamma) / 3.0;
+        ((avg_gamma - 0.5) / 1.5).clamp(0.0, 1.0)
+    }
+
     pub fn full_name(&self) -> String {
         if self.manufacturer.is_empty() {
             self.name.clone()

@@ -64,6 +64,7 @@ pub struct FilmrApp {
     pub offset: Vec2,
     pub show_original: bool,
     pub show_metrics: bool,
+    pub film_view_map: bool,
     pub split_view: bool,
     pub split_pos: f32,
 
@@ -216,6 +217,7 @@ impl FilmrApp {
             offset: Vec2::ZERO,
             show_original: false,
             show_metrics: false,
+            film_view_map: false,
             split_view: false,
             split_pos: 0.5,
             exposure_time: 1.0,

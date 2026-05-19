@@ -45,10 +45,18 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
     let mut changed = false;
 
     // ── Left Panel: Film List + Style ──
+    let left_width = if app.film_view_map {
+        let window_width = {
+            #[allow(deprecated)]
+            ctx.input(|i| i.screen_rect().width())
+        };
+        (window_width * 0.4).max(300.0)
+    } else {
+        224.0
+    };
     egui::SidePanel::left("film_list_panel")
-        .default_width(224.0)
-        .min_width(200.0)
-        .max_width(300.0)
+        .resizable(true)
+        .exact_width(left_width)
         .show(ctx, |ui| {
             // Style fixed at bottom (mockup: border-top separated)
             egui::TopBottomPanel::bottom("style_panel").show_inside(ui, |ui| {
@@ -58,12 +66,28 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 ui.add_space(4.0);
             });
 
-            // Film list scrollable above
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.add_space(4.0);
-                simple::render_film_list(app, ui, &mut changed);
-                ui.add_space(8.0);
+            // View toggle: List | Map
+            ui.horizontal(|ui| {
+                if ui.selectable_label(!app.film_view_map, "List").clicked() {
+                    app.film_view_map = false;
+                }
+                if ui.selectable_label(app.film_view_map, "Map").clicked() {
+                    app.film_view_map = true;
+                }
             });
+            ui.separator();
+
+            if app.film_view_map {
+                // 2D map view
+                simple::render_film_map(app, ui, &mut changed);
+            } else {
+                // List view
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.add_space(4.0);
+                    simple::render_film_list(app, ui, &mut changed);
+                    ui.add_space(8.0);
+                });
+            }
         });
 
     // ── Right Panel: Adjustments (skip in StockStudio mode — studio panel takes over) ──
