@@ -254,6 +254,16 @@ pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool
         let y = inner.bottom() - con * inner.height();
         let is_selected = app.selected_stock_idx == idx;
 
+        // Brand color for placeholder bg and name label
+        let brand_color = match stock.manufacturer.as_str() {
+            "Kodak" => egui::Color32::from_rgb(255, 210, 0), // Kodak yellow
+            "Fujifilm" => egui::Color32::from_rgb(0, 160, 80), // Fujifilm green
+            "Ilford" => egui::Color32::from_rgb(180, 180, 180), // Ilford silver
+            "Agfa" => egui::Color32::from_rgb(220, 60, 60),  // Agfa red
+            "Polaroid" => egui::Color32::from_rgb(100, 160, 220), // Polaroid blue
+            _ => text_color,
+        };
+
         // Thumbnail size
         let thumb_w = 40.0f32;
         let thumb_h = 30.0f32;
@@ -266,7 +276,17 @@ pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool
             let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
             painter.image(thumb.id(), item_rect, uv, egui::Color32::WHITE);
         } else {
-            painter.rect_filled(item_rect, 3.0, egui::Color32::from_rgb(50, 50, 56));
+            // Brand-colored placeholder with subtle bg
+            let bg = egui::Color32::from_rgba_unmultiplied(
+                brand_color.r() / 4,
+                brand_color.g() / 4,
+                brand_color.b() / 4,
+                255,
+            );
+            painter.rect_filled(item_rect, 3.0, bg);
+            // Brand color top bar
+            let bar = egui::Rect::from_min_size(item_rect.min, egui::vec2(item_rect.width(), 3.0));
+            painter.rect_filled(bar, egui::CornerRadius::ZERO, brand_color);
         }
 
         // Selected border
@@ -280,13 +300,13 @@ pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool
             );
         }
 
-        // Name below thumbnail
+        // Name below thumbnail — brand color when not selected
         painter.text(
             egui::pos2(x, item_rect.bottom() + 2.0),
             egui::Align2::CENTER_TOP,
             &stock.name,
             egui::FontId::proportional(9.0),
-            if is_selected { accent } else { text_color },
+            if is_selected { accent } else { brand_color },
         );
     }
 
