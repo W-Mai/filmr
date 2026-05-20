@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-05-20
+
+### ✨ Features
+
+- **Per-channel gamma calibration** based on measured density data (cacreeks.com):
+  - Kodak Portra 400/160/800, Gold 200, Ektar 100: r < g < b (blue-biased, typical color negative)
+  - Kodak Ektachrome 100/100VS: blue-biased slide film
+  - Kodak Kodachrome 25/64: r > g > b (iconic warm/red bias)
+  - Fujifilm Superia 400/200/100, Provia 100F, Astia 100F, Velvia 50: per-channel calibrated
+
 ## [0.13.0] - 2026-05-20
 
 ### ✨ Features
