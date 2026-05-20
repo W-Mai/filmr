@@ -1331,21 +1331,21 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.14,
             d_max: 2.6,
-            gamma: 0.65,
+            gamma: 0.60, // red: lowest contrast (max density 2.0)
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         g_curve: SegmentedCurve {
             d_min: 0.16,
             d_max: 2.6,
-            gamma: 0.65,
+            gamma: 0.68, // green: mid contrast (max density 2.5)
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         b_curve: SegmentedCurve {
             d_min: 0.19,
             d_max: 2.6,
-            gamma: 0.65,
+            gamma: 0.75, // blue: highest contrast (max density 3.1)
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },

@@ -23,21 +23,21 @@ pub fn SUPERIA_400() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.13,
             d_max: 2.8,
-            gamma: 0.65,
+            gamma: 0.60, // red: max density 2.4
             shoulder_point: 0.8,
             exposure_offset: 0.05,
         },
         g_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 2.8,
-            gamma: 0.65,
+            gamma: 0.65, // green: max density 2.7
             shoulder_point: 0.8,
             exposure_offset: 0.05,
         },
         b_curve: SegmentedCurve {
             d_min: 0.17,
             d_max: 2.8,
-            gamma: 0.65,
+            gamma: 0.72, // blue: max density 3.1
             shoulder_point: 0.8,
             exposure_offset: 0.05,
         },
@@ -800,21 +800,21 @@ pub fn VELVIA_50() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 3.6,
-            gamma: 1.4,
+            gamma: 1.35, // red: max density 3.4
             shoulder_point: 0.8,
             exposure_offset: 49.22617,
         },
         g_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 3.6,
-            gamma: 1.4,
+            gamma: 1.45, // green: max density 3.8 (highest)
             shoulder_point: 0.8,
             exposure_offset: 49.22617,
         },
         b_curve: SegmentedCurve {
             d_min: 0.15,
             d_max: 3.6,
-            gamma: 1.4,
+            gamma: 1.40, // blue: max density 3.7
             shoulder_point: 0.8,
             exposure_offset: 49.22617,
         },
