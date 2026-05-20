@@ -47,7 +47,7 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
             [-0.03, 1.07, -0.04],
             [-0.04, -0.03, 1.07],
         ],
-        spectral_params: FilmSpectralParams::new_color_negative_standard(),
+        spectral_params: FilmSpectralParams::new_portra(),
         grain_model: GrainModel {
             alpha: 0.000125,
             sigma_read: 0.005,
@@ -256,7 +256,7 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
             [-0.04, 1.09, -0.05],
             [-0.05, -0.04, 1.09],
         ],
-        spectral_params: FilmSpectralParams::new_color_negative_standard(),
+        spectral_params: FilmSpectralParams::new_portra(),
         grain_model: GrainModel {
             alpha: 0.000066,
             sigma_read: 0.004,
@@ -403,7 +403,7 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
             [-0.02, 1.05, -0.03],
             [-0.03, -0.02, 1.05],
         ],
-        spectral_params: FilmSpectralParams::new_color_negative_standard(),
+        spectral_params: FilmSpectralParams::new_portra(),
         grain_model: GrainModel {
             alpha: 0.000286,
             sigma_read: 0.007,
@@ -793,7 +793,7 @@ pub fn KODAK_EKTACHROME_100() -> FilmStock {
             [-0.06, 1.13, -0.07],
             [-0.07, -0.06, 1.13],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_provia(),
         grain_model: GrainModel {
             alpha: 0.000041,
             sigma_read: 0.004,
@@ -931,7 +931,7 @@ pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
             [-0.09, 1.18, -0.09],
             [-0.09, -0.09, 1.18],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_velvia(),
         grain_model: GrainModel {
             alpha: 0.000041,
             sigma_read: 0.004,
@@ -1069,7 +1069,7 @@ pub fn KODAK_KODACHROME_64() -> FilmStock {
             [-0.12, 1.25, -0.13],
             [-0.13, -0.12, 1.25],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_velvia(),
         grain_model: GrainModel {
             alpha: 0.000024,
             sigma_read: 0.003,
@@ -1354,7 +1354,7 @@ pub fn KODAK_EKTAR_100() -> FilmStock {
             [-0.05, 1.10, -0.05],
             [-0.05, -0.05, 1.10],
         ],
-        spectral_params: FilmSpectralParams::new_color_negative_standard(),
+        spectral_params: FilmSpectralParams::new_ektar(),
         grain_model: GrainModel {
             alpha: 0.000041,
             sigma_read: 0.004,
@@ -1501,7 +1501,7 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
             [-0.15, 1.30, -0.15],
             [-0.15, -0.15, 1.30],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_velvia(),
         grain_model: GrainModel {
             alpha: 0.000025,
             sigma_read: 0.002,

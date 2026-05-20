@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Features
+
+- **2D film map selector**: List/Map toggle in left panel; scatter plot positions films by saturation×contrast
+  - Map mode auto-expands panel to 40% window width
+  - Thumbnails + names rendered at each film's position
+- **Film spectral calibration**: differentiated `spectral_params` per film family
+  - Velvia/Kodachrome: narrow bands (high saturation)
+  - Ektar: medium-narrow bands (vivid)
+  - Provia/Ektachrome: medium bands (natural)
+  - Portra: wide bands (skin-tone, low saturation)
+- **Improved saturation/contrast scores**: multi-factor formula (spectral width + halation penalty + gamma mismatch); contrast range expanded to [0.6, 1.5]
+
 ## [0.12.1] - 2026-05-14
 
 ### ✨ Features

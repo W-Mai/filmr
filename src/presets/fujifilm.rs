@@ -685,7 +685,7 @@ pub fn PROVIA_100F() -> FilmStock {
             [-0.07, 1.15, -0.08],
             [-0.08, -0.07, 1.15],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_provia(),
         grain_model: GrainModel {
             alpha: 0.000041,
             sigma_read: 0.004,
@@ -823,7 +823,7 @@ pub fn VELVIA_50() -> FilmStock {
             [-0.15, 1.30, -0.15],
             [-0.15, -0.15, 1.30],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_velvia(),
         grain_model: GrainModel {
             alpha: 0.000081,
             sigma_read: 0.003,
@@ -990,7 +990,7 @@ pub fn ASTIA_100F() -> FilmStock {
             [-0.02, 1.05, -0.03],
             [-0.03, -0.02, 1.05],
         ],
-        spectral_params: FilmSpectralParams::new_panchromatic(),
+        spectral_params: FilmSpectralParams::new_provia(),
         grain_model: GrainModel {
             alpha: 0.000041,
             sigma_read: 0.004,

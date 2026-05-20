@@ -285,20 +285,29 @@ impl FilmStock {
         }
     }
 
-    /// Get the full display name of the film stock (e.g., "Kodak Portra 400")
-    /// Saturation score [0,1] — narrower spectral bands = more saturated colors.
+    /// Saturation score [0,1].
+    /// Narrower spectral bands = purer colors = higher saturation.
+    /// Also penalizes halation (light bleed desaturates) and cross-channel gamma mismatch.
     pub fn saturation_score(&self) -> f32 {
         let avg_width = (self.spectral_params.r_width
             + self.spectral_params.g_width
             + self.spectral_params.b_width)
             / 3.0;
-        ((80.0 - avg_width) / 50.0).clamp(0.0, 1.0)
+        // Narrow width [20,60] → high saturation; map to [0,1]
+        let width_score = ((60.0 - avg_width) / 40.0).clamp(0.0, 1.0);
+        // Halation desaturates: strength [0,0.3] → penalty [0,0.3]
+        let halation_penalty = (self.halation_strength * 1.0).clamp(0.0, 0.3);
+        // Cross-channel gamma mismatch desaturates
+        let gamma_spread = (self.r_curve.gamma - self.b_curve.gamma).abs();
+        let mismatch_penalty = (gamma_spread * 0.5).clamp(0.0, 0.2);
+        (width_score - halation_penalty - mismatch_penalty).clamp(0.0, 1.0)
     }
 
     /// Contrast score [0,1] — higher gamma = more contrast.
     pub fn contrast_score(&self) -> f32 {
         let avg_gamma = (self.r_curve.gamma + self.g_curve.gamma + self.b_curve.gamma) / 3.0;
-        ((avg_gamma - 0.5) / 1.5).clamp(0.0, 1.0)
+        // gamma range [0.6, 1.5] → [0, 1]
+        ((avg_gamma - 0.6) / 0.9).clamp(0.0, 1.0)
     }
 
     pub fn full_name(&self) -> String {

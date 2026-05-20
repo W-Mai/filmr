@@ -457,6 +457,54 @@ impl FilmSpectralParams {
             b_width: 40.0,
         }
     }
+
+    /// Velvia-style: very narrow bands, high saturation
+    pub const fn new_velvia() -> Self {
+        Self {
+            r_peak: 630.0,
+            r_width: 25.0,
+            g_peak: 545.0,
+            g_width: 22.0,
+            b_peak: 455.0,
+            b_width: 25.0,
+        }
+    }
+
+    /// Ektar-style: narrow-medium bands, vivid
+    pub const fn new_ektar() -> Self {
+        Self {
+            r_peak: 635.0,
+            r_width: 30.0,
+            g_peak: 548.0,
+            g_width: 28.0,
+            b_peak: 452.0,
+            b_width: 30.0,
+        }
+    }
+
+    /// Provia/Astia-style: medium bands, natural
+    pub const fn new_provia() -> Self {
+        Self {
+            r_peak: 638.0,
+            r_width: 38.0,
+            g_peak: 550.0,
+            g_width: 35.0,
+            b_peak: 450.0,
+            b_width: 38.0,
+        }
+    }
+
+    /// Portra-style: wide bands, low saturation, skin-tone friendly
+    pub const fn new_portra() -> Self {
+        Self {
+            r_peak: 640.0,
+            r_width: 55.0,
+            g_peak: 550.0,
+            g_width: 50.0,
+            b_peak: 450.0,
+            b_width: 55.0,
+        }
+    }
 }
 
 impl FilmSensitivities {
