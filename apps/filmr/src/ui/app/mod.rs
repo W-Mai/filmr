@@ -65,6 +65,8 @@ pub struct FilmrApp {
     pub show_original: bool,
     pub show_metrics: bool,
     pub film_view_map: bool,
+    pub film_map_zoom: f32,
+    pub film_map_pan: egui::Vec2,
     pub split_view: bool,
     pub split_pos: f32,
 
@@ -218,6 +220,8 @@ impl FilmrApp {
             show_original: false,
             show_metrics: false,
             film_view_map: false,
+            film_map_zoom: 1.0,
+            film_map_pan: egui::Vec2::ZERO,
             split_view: false,
             split_pos: 0.5,
             exposure_time: 1.0,

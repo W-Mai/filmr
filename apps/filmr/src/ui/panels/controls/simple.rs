@@ -195,7 +195,45 @@ pub fn render_style_selector(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mu
 pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool) {
     let rect = ui.available_rect_before_wrap();
     let size = egui::vec2(rect.width(), rect.height().max(300.0));
-    let (map_rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
+    let (map_rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
+
+    // Pan via drag (mouse) or two-finger scroll (trackpad)
+    if response.dragged() {
+        app.film_map_pan += response.drag_delta();
+    }
+
+    // Zoom: scroll wheel or trackpad pinch — zoom toward cursor position
+    let (scroll_delta, zoom_delta) = ui.input(|i| (i.smooth_scroll_delta, i.zoom_delta()));
+    let cursor_pos = ui.input(|i| i.pointer.hover_pos());
+    if response.hovered() {
+        let mut zoom_factor = 1.0f32;
+        if zoom_delta != 1.0 {
+            zoom_factor = zoom_delta;
+        } else if scroll_delta.y != 0.0 && ui.input(|i| i.modifiers.command) {
+            zoom_factor = 1.0 + scroll_delta.y * 0.002;
+        }
+        if zoom_factor != 1.0 {
+            let old_zoom = app.film_map_zoom;
+            let new_zoom = (old_zoom * zoom_factor).clamp(0.5, 5.0);
+            // Zoom toward cursor: adjust pan so the point under cursor stays fixed
+            if let Some(cursor) = cursor_pos {
+                let cursor_in_map = cursor - map_rect.center();
+                app.film_map_pan =
+                    cursor_in_map + (app.film_map_pan - cursor_in_map) * (new_zoom / old_zoom);
+            }
+            app.film_map_zoom = new_zoom;
+        }
+        // Two-finger swipe = pan (no modifier)
+        if scroll_delta != egui::Vec2::ZERO && !ui.input(|i| i.modifiers.command) {
+            app.film_map_pan += scroll_delta;
+        }
+    }
+
+    // Double-click resets view
+    if response.double_clicked() {
+        app.film_map_zoom = 1.0;
+        app.film_map_pan = egui::Vec2::ZERO;
+    }
 
     let painter = ui.painter_at(map_rect);
 
@@ -245,7 +283,14 @@ pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool
     let accent = ACCENT;
     let text_color = egui::Color32::from_rgb(150, 150, 160);
     let margin = 20.0;
-    let inner = map_rect.shrink(margin);
+    // Apply zoom and pan: expand inner rect and offset by pan
+    let zoom = app.film_map_zoom;
+    let pan = app.film_map_pan;
+    let base_inner = map_rect.shrink(margin);
+    let zoomed_w = base_inner.width() * zoom;
+    let zoomed_h = base_inner.height() * zoom;
+    let center = base_inner.center() + pan;
+    let inner = egui::Rect::from_center_size(center, egui::vec2(zoomed_w, zoomed_h));
 
     for (idx, stock) in app.stocks.iter().enumerate() {
         let sat = stock.saturation_score();
