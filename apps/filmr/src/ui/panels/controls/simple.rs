@@ -309,14 +309,22 @@ pub fn render_film_map(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut bool
             _ => text_color,
         };
 
-        // Thumbnail size
+        // Thumbnail size — preserve aspect ratio, fit within 40×30
         let thumb_w = 40.0f32;
         let thumb_h = 30.0f32;
-        let item_rect =
-            egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(thumb_w, thumb_h));
-
-        // Draw thumbnail or placeholder
         let full_name = stock.full_name();
+        let item_rect = if let Some(thumb) = app.preset_thumbnails.get(&full_name) {
+            let [tw, th] = thumb.size();
+            let aspect = tw as f32 / th as f32;
+            let (w, h) = if aspect > thumb_w / thumb_h {
+                (thumb_w, thumb_w / aspect)
+            } else {
+                (thumb_h * aspect, thumb_h)
+            };
+            egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(w, h))
+        } else {
+            egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(thumb_w, thumb_h))
+        };
         if let Some(thumb) = app.preset_thumbnails.get(&full_name) {
             let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
             painter.image(thumb.id(), item_rect, uv, egui::Color32::WHITE);
