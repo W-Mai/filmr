@@ -170,7 +170,7 @@ pub fn SUPERIA_200() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.13,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.58,
             shoulder_point: 0.8,
             exposure_offset: 0.10,
         },
@@ -184,7 +184,7 @@ pub fn SUPERIA_200() -> FilmStock {
         b_curve: SegmentedCurve {
             d_min: 0.17,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 0.10,
         },
@@ -317,7 +317,7 @@ pub fn SUPERIA_100() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.13,
             d_max: 2.6,
-            gamma: 0.65,
+            gamma: 0.60,
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
@@ -331,7 +331,7 @@ pub fn SUPERIA_100() -> FilmStock {
         b_curve: SegmentedCurve {
             d_min: 0.17,
             d_max: 2.6,
-            gamma: 0.65,
+            gamma: 0.72,
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
@@ -662,21 +662,21 @@ pub fn PROVIA_100F() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.3,
+            gamma: 1.27, // red: max density 3.3
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         g_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.3,
+            gamma: 1.30, // green: max density 3.4
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         b_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.3,
+            gamma: 1.35, // blue: max density 3.6
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
@@ -967,21 +967,21 @@ pub fn ASTIA_100F() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.4,
-            gamma: 1.2,
+            gamma: 1.18, // red: max density 3.3
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         g_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.4,
-            gamma: 1.2,
+            gamma: 1.22, // green: max density 3.5
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         b_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.4,
-            gamma: 1.2,
+            gamma: 1.22, // blue: max density 3.5
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },

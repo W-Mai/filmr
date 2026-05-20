@@ -24,21 +24,21 @@ pub fn KODAK_PORTRA_400() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.14, // Orange mask residual: R most transparent
             d_max: 2.9,
-            gamma: 0.65,
+            gamma: 0.58, // red: max density ~2.0 (skin-tone friendly)
             shoulder_point: 0.8,
             exposure_offset: 625.046_9,
         },
         g_curve: SegmentedCurve {
             d_min: 0.16,
             d_max: 2.9,
-            gamma: 0.65,
+            gamma: 0.65, // green: max density ~2.4
             shoulder_point: 0.8,
             exposure_offset: 625.046_9,
         },
         b_curve: SegmentedCurve {
             d_min: 0.19, // Orange mask residual: B most opaque
             d_max: 2.9,
-            gamma: 0.65,
+            gamma: 0.72, // blue: max density ~3.0
             shoulder_point: 0.8,
             exposure_offset: 625.046_9,
         },
@@ -233,7 +233,7 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.14,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.58,
             shoulder_point: 0.8,
             exposure_offset: 0.13,
         },
@@ -247,7 +247,7 @@ pub fn KODAK_PORTRA_160() -> FilmStock {
         b_curve: SegmentedCurve {
             d_min: 0.19,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.72,
             shoulder_point: 0.8,
             exposure_offset: 0.13,
         },
@@ -380,7 +380,7 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.14,
             d_max: 2.9,
-            gamma: 0.65,
+            gamma: 0.58,
             shoulder_point: 0.8,
             exposure_offset: 0.03,
         },
@@ -394,7 +394,7 @@ pub fn KODAK_PORTRA_800() -> FilmStock {
         b_curve: SegmentedCurve {
             d_min: 0.19,
             d_max: 2.9,
-            gamma: 0.65,
+            gamma: 0.74,
             shoulder_point: 0.8,
             exposure_offset: 0.03,
         },
@@ -770,21 +770,21 @@ pub fn KODAK_EKTACHROME_100() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.3,
+            gamma: 1.25, // red: max density 3.1
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         g_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.3,
+            gamma: 1.30, // green: max density 3.4
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         b_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.3,
+            gamma: 1.38, // blue: max density 3.7
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
@@ -908,21 +908,21 @@ pub fn KODAK_EKTACHROME_100VS() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.35,
+            gamma: 1.28, // red: max density 3.2
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         g_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.35,
+            gamma: 1.33, // green: max density 3.5
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
         b_curve: SegmentedCurve {
             d_min: 0.12,
             d_max: 3.5,
-            gamma: 1.35,
+            gamma: 1.40, // blue: max density 3.7
             shoulder_point: 0.8,
             exposure_offset: 0.20,
         },
@@ -1046,21 +1046,21 @@ pub fn KODAK_KODACHROME_64() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.10,
             d_max: 3.6,
-            gamma: 1.4,
+            gamma: 1.42, // red: max density 3.7 (highest — warm bias)
             shoulder_point: 0.8,
             exposure_offset: 0.31,
         },
         g_curve: SegmentedCurve {
             d_min: 0.10,
             d_max: 3.6,
-            gamma: 1.4,
+            gamma: 1.38, // green: max density 3.5
             shoulder_point: 0.8,
             exposure_offset: 0.31,
         },
         b_curve: SegmentedCurve {
             d_min: 0.10,
             d_max: 3.6,
-            gamma: 1.4,
+            gamma: 1.32, // blue: max density 3.4
             shoulder_point: 0.8,
             exposure_offset: 0.31,
         },
@@ -1184,21 +1184,21 @@ pub fn KODAK_GOLD_200() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.14,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.56,
             shoulder_point: 0.8,
             exposure_offset: 0.10,
         },
         g_curve: SegmentedCurve {
             d_min: 0.16,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.63,
             shoulder_point: 0.8,
             exposure_offset: 0.10,
         },
         b_curve: SegmentedCurve {
             d_min: 0.19,
             d_max: 2.7,
-            gamma: 0.65,
+            gamma: 0.70,
             shoulder_point: 0.8,
             exposure_offset: 0.10,
         },
@@ -1478,21 +1478,21 @@ pub fn KODAK_KODACHROME_25() -> FilmStock {
         r_curve: SegmentedCurve {
             d_min: 0.08,
             d_max: 3.8,
-            gamma: 1.5,
+            gamma: 1.50, // red: max density 3.8 (highest — iconic warm/red bias)
             shoulder_point: 0.8,
             exposure_offset: 0.60,
         },
         g_curve: SegmentedCurve {
             d_min: 0.08,
             d_max: 3.8,
-            gamma: 1.5,
+            gamma: 1.43, // green: max density 3.6
             shoulder_point: 0.8,
             exposure_offset: 0.60,
         },
         b_curve: SegmentedCurve {
             d_min: 0.08,
             d_max: 3.8,
-            gamma: 1.5,
+            gamma: 1.35, // blue: max density 3.5
             shoulder_point: 0.8,
             exposure_offset: 0.60,
         },
