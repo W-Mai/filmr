@@ -9,7 +9,8 @@ use egui_taffy::{taffy, tui, TuiBuilderLogic};
 use crate::config::UxMode;
 use crate::ui::app::{FilmrApp, RightTab};
 use crate::ui::components::{
-    labeled_slider, section_divider, section_header, ACCENT, BG_MEDIUM, TEXT_DARK, TEXT_SECONDARY,
+    labeled_slider, pill_selector, section_divider, section_header, ACCENT, BG_MEDIUM, TEXT_DARK,
+    TEXT_SECONDARY,
 };
 
 pub use shutter_speed::ShutterSpeed;
@@ -66,15 +67,27 @@ pub fn render_controls(app: &mut FilmrApp, ctx: &Context) {
                 ui.add_space(4.0);
             });
 
-            // View toggle: List | Map
+            // View toggle: List | Map — pill selector, capped at list-mode panel width, centered
+            let pill_width = ui.available_width().min(224.0);
+            let mut view_changed = false;
             ui.horizontal(|ui| {
-                if ui.selectable_label(!app.film_view_map, "List").clicked() {
-                    app.film_view_map = false;
-                }
-                if ui.selectable_label(app.film_view_map, "Map").clicked() {
-                    app.film_view_map = true;
-                }
+                let padding = (ui.available_width() - pill_width).max(0.0) / 2.0;
+                ui.add_space(padding);
+                ui.allocate_ui(egui::vec2(pill_width, 0.0), |ui| {
+                    if pill_selector(
+                        ui,
+                        "film_view",
+                        &mut app.film_view_map,
+                        &[(false, "List"), (true, "Map")],
+                    ) {
+                        view_changed = true;
+                    }
+                });
             });
+            if view_changed && app.film_view_map {
+                app.film_map_zoom = 1.0;
+                app.film_map_pan = egui::Vec2::ZERO;
+            }
             ui.separator();
 
             if app.film_view_map {
