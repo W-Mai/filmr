@@ -117,6 +117,10 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
             let mut changed = false;
 
             egui::ScrollArea::vertical().show(ui, |ui| {
+                // Mini film map — show current stock position
+                render_mini_map(ui, app);
+                ui.add_space(8.0);
+
                 egui::CollapsingHeader::new(
                     egui::RichText::new("Basic Properties")
                         .strong()
@@ -484,4 +488,98 @@ fn render_curve_editor(ui: &mut Ui, curve: &mut SegmentedCurve, id_salt: &str) -
     }
 
     changed
+}
+
+/// Mini film map — shows all stocks as small dots, current edit position highlighted in accent.
+fn render_mini_map(ui: &mut Ui, app: &FilmrApp) {
+    let height = 110.0;
+    let size = egui::vec2(ui.available_width(), height);
+    let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+    let painter = ui.painter_at(rect);
+
+    // Background
+    painter.rect_filled(rect, 4.0, Color32::from_rgb(28, 28, 32));
+
+    // Grid lines (3x3)
+    let grid = Color32::from_rgb(40, 40, 46);
+    for i in 1..3 {
+        let t = i as f32 / 3.0;
+        let x = rect.left() + t * rect.width();
+        let y = rect.top() + t * rect.height();
+        painter.line_segment(
+            [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
+            egui::Stroke::new(1.0, grid),
+        );
+        painter.line_segment(
+            [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
+            egui::Stroke::new(1.0, grid),
+        );
+    }
+
+    // Axis labels
+    let label_color = Color32::from_rgb(110, 110, 120);
+    let label_font = egui::FontId::proportional(8.0);
+    painter.text(
+        egui::pos2(rect.left() + 4.0, rect.bottom() - 4.0),
+        egui::Align2::LEFT_BOTTOM,
+        "← saturation →",
+        label_font.clone(),
+        label_color,
+    );
+    painter.text(
+        egui::pos2(rect.left() + 4.0, rect.top() + 4.0),
+        egui::Align2::LEFT_TOP,
+        "↑ contrast",
+        label_font,
+        label_color,
+    );
+
+    let margin = 8.0;
+    let inner = rect.shrink(margin);
+
+    // All other stocks as small brand-colored dots
+    for (idx, stock) in app.stocks.iter().enumerate() {
+        if Some(idx) == app.studio_stock_idx {
+            continue; // Draw current as bigger highlight below
+        }
+        let sat = stock.saturation_score();
+        let con = stock.contrast_score();
+        let x = inner.left() + sat * inner.width();
+        let y = inner.bottom() - con * inner.height();
+        let brand_color = match stock.manufacturer.as_str() {
+            "Kodak" => Color32::from_rgb(255, 210, 0),
+            "Fujifilm" => Color32::from_rgb(0, 160, 80),
+            "Ilford" => Color32::from_rgb(180, 180, 180),
+            "Agfa" => Color32::from_rgb(220, 60, 60),
+            "Polaroid" => Color32::from_rgb(100, 160, 220),
+            _ => Color32::from_rgb(120, 120, 130),
+        };
+        // Dim the dots so the highlight stands out
+        let dim =
+            Color32::from_rgba_unmultiplied(brand_color.r(), brand_color.g(), brand_color.b(), 120);
+        painter.circle_filled(egui::pos2(x, y), 2.5, dim);
+    }
+
+    // Current edited stock — large accent dot using LIVE values from studio_stock
+    let sat = app.studio_stock.saturation_score();
+    let con = app.studio_stock.contrast_score();
+    let x = inner.left() + sat * inner.width();
+    let y = inner.bottom() - con * inner.height();
+    // Outer glow ring
+    painter.circle_stroke(
+        egui::pos2(x, y),
+        7.0,
+        egui::Stroke::new(1.5, Color32::from_rgba_unmultiplied(230, 155, 50, 100)),
+    );
+    // Solid accent dot
+    painter.circle_filled(egui::pos2(x, y), 5.0, ACCENT);
+    // Crosshair for clarity
+    painter.line_segment(
+        [egui::pos2(x - 8.0, y), egui::pos2(x + 8.0, y)],
+        egui::Stroke::new(1.0, ACCENT),
+    );
+    painter.line_segment(
+        [egui::pos2(x, y - 8.0), egui::pos2(x, y + 8.0)],
+        egui::Stroke::new(1.0, ACCENT),
+    );
 }
