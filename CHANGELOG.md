@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-05-25
+
+### ✨ Features
+
+- **Mini film map in Stock Studio**: live preview of where the edited stock sits in the saturation×contrast distribution, drag the highlight to directly modify spectral width and curve gamma
+- **Undo/Redo**: Cmd+Z / Cmd+Shift+Z / Cmd+Y, plus toolbar buttons. Independent histories for Develop and Stock Studio modes. Slider drags collapse into single entries via 350ms debounce
+- **Film list thumbnails 1.5x larger** (32×24 → 48×36) for better visibility
+
+### 🐛 Bug Fixes
+
+- Central preview no longer hijacks pinch-zoom events from the mini map / film map panels (now only responds when pointer hovers the canvas)
+
 ## [0.13.1] - 2026-05-20
 
 ### ✨ Features
