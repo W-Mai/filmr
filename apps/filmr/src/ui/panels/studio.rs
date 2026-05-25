@@ -117,8 +117,10 @@ pub fn render_studio_panel(app: &mut FilmrApp, ctx: &egui::Context) {
             let mut changed = false;
 
             egui::ScrollArea::vertical().show(ui, |ui| {
-                // Mini film map — show current stock position
-                render_mini_map(ui, app);
+                // Mini film map — show current stock position, drag to edit
+                if render_mini_map(ui, app) {
+                    changed = true;
+                }
                 ui.add_space(8.0);
 
                 egui::CollapsingHeader::new(
@@ -490,11 +492,13 @@ fn render_curve_editor(ui: &mut Ui, curve: &mut SegmentedCurve, id_salt: &str) -
     changed
 }
 
-/// Mini film map — shows all stocks as small dots, current edit position highlighted in accent.
-fn render_mini_map(ui: &mut Ui, app: &FilmrApp) {
+/// Mini film map — shows all stocks as small dots, current edit position highlighted.
+/// Supports dragging the highlight to directly modify spectral width + curve gamma.
+fn render_mini_map(ui: &mut Ui, app: &mut FilmrApp) -> bool {
+    let mut changed = false;
     let height = 110.0;
     let size = egui::vec2(ui.available_width(), height);
-    let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+    let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
     let painter = ui.painter_at(rect);
 
     // Background
@@ -582,4 +586,60 @@ fn render_mini_map(ui: &mut Ui, app: &FilmrApp) {
         [egui::pos2(x, y - 8.0), egui::pos2(x, y + 8.0)],
         egui::Stroke::new(1.0, ACCENT),
     );
+
+    // Drag handling — translate cursor pos to target sat/con, then back-solve params
+    if response.dragged() || response.clicked() {
+        if let Some(pos) = response.interact_pointer_pos() {
+            let target_sat = ((pos.x - inner.left()) / inner.width()).clamp(0.0, 1.0);
+            let target_con = ((inner.bottom() - pos.y) / inner.height()).clamp(0.0, 1.0);
+
+            // Back-solve saturation: width_score = sat + halation_penalty + gamma_mismatch_penalty
+            // Then avg_width = 60 - width_score * 40
+            let halation_penalty = (app.studio_stock.halation_strength * 1.0).clamp(0.0, 0.3);
+            let gamma_spread =
+                (app.studio_stock.r_curve.gamma - app.studio_stock.b_curve.gamma).abs();
+            let mismatch_penalty = (gamma_spread * 0.5).clamp(0.0, 0.2);
+            let target_width_score =
+                (target_sat + halation_penalty + mismatch_penalty).clamp(0.0, 1.0);
+            let target_avg_width = 60.0 - target_width_score * 40.0;
+            let cur_avg_width = (app.studio_stock.spectral_params.r_width
+                + app.studio_stock.spectral_params.g_width
+                + app.studio_stock.spectral_params.b_width)
+                / 3.0;
+            if cur_avg_width > 1.0 {
+                let scale = (target_avg_width / cur_avg_width).clamp(0.3, 3.0);
+                app.studio_stock.spectral_params.r_width =
+                    (app.studio_stock.spectral_params.r_width * scale).clamp(15.0, 80.0);
+                app.studio_stock.spectral_params.g_width =
+                    (app.studio_stock.spectral_params.g_width * scale).clamp(15.0, 80.0);
+                app.studio_stock.spectral_params.b_width =
+                    (app.studio_stock.spectral_params.b_width * scale).clamp(15.0, 80.0);
+            }
+
+            // Back-solve contrast: avg_gamma = 0.6 + con * 0.9
+            let target_avg_gamma = 0.6 + target_con * 0.9;
+            let cur_avg_gamma = (app.studio_stock.r_curve.gamma
+                + app.studio_stock.g_curve.gamma
+                + app.studio_stock.b_curve.gamma)
+                / 3.0;
+            if cur_avg_gamma > 0.1 {
+                let gscale = (target_avg_gamma / cur_avg_gamma).clamp(0.3, 3.0);
+                app.studio_stock.r_curve.gamma =
+                    (app.studio_stock.r_curve.gamma * gscale).clamp(0.3, 2.0);
+                app.studio_stock.g_curve.gamma =
+                    (app.studio_stock.g_curve.gamma * gscale).clamp(0.3, 2.0);
+                app.studio_stock.b_curve.gamma =
+                    (app.studio_stock.b_curve.gamma * gscale).clamp(0.3, 2.0);
+            }
+
+            changed = true;
+        }
+    }
+
+    // Hover hint
+    if response.hovered() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+    }
+
+    changed
 }
