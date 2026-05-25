@@ -43,8 +43,8 @@ pub fn render_film_list(app: &mut FilmrApp, ui: &mut egui::Ui, changed: &mut boo
                             let is_selected = app.selected_stock_idx == idx;
 
                             let padding = 6.0f32;
-                            let thumb_w = 32.0f32;
-                            let thumb_h = 24.0f32;
+                            let thumb_w = 48.0f32;
+                            let thumb_h = 36.0f32;
                             let row_height = thumb_h + padding * 2.0;
                             let corner_radius = 4.0f32;
                             let inner_radius = 3.0f32;
