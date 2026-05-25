@@ -1,5 +1,6 @@
 pub mod app;
 pub mod components;
+pub mod history;
 pub mod panels;
 pub mod theme;
 

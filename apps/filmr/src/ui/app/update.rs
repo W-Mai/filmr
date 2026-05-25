@@ -25,6 +25,78 @@ impl App for FilmrApp {
             crate::ui::theme::apply_dark_pro_theme(ctx);
         }
 
+        // Undo/Redo keyboard shortcuts (Cmd+Z / Cmd+Shift+Z on macOS, Ctrl+Z elsewhere).
+        // We read key+modifiers manually instead of consume_shortcut to avoid
+        // exact-match quirks across platforms (Cmd+Shift+Z vs Cmd+Z).
+        let (undo_pressed, redo_pressed) = ctx.input_mut(|i| {
+            let z_pressed = i.key_pressed(egui::Key::Z);
+            let y_pressed = i.key_pressed(egui::Key::Y);
+            let m = i.modifiers;
+            let cmd = m.command;
+            let shift = m.shift;
+            let undo = z_pressed && cmd && !shift;
+            #[allow(clippy::nonminimal_bool)]
+            let redo = (z_pressed && cmd && shift) || (y_pressed && cmd && !shift);
+            // Consume so other handlers don't see them
+            if undo {
+                i.events.retain(|e| {
+                    !matches!(
+                        e,
+                        egui::Event::Key {
+                            key: egui::Key::Z,
+                            pressed: true,
+                            ..
+                        }
+                    )
+                });
+            } else if redo {
+                i.events.retain(|e| {
+                    !matches!(
+                        e,
+                        egui::Event::Key {
+                            key: egui::Key::Z | egui::Key::Y,
+                            pressed: true,
+                            ..
+                        }
+                    )
+                });
+            }
+            (undo, redo)
+        });
+        if undo_pressed || redo_pressed {
+            let mut applied = false;
+            match self.mode {
+                crate::config::AppMode::StockStudio => {
+                    let mut stock = self.studio_stock.clone();
+                    let changed = if undo_pressed {
+                        self.studio_history.undo(&mut stock)
+                    } else {
+                        self.studio_history.redo(&mut stock)
+                    };
+                    if changed {
+                        self.studio_stock = stock;
+                        self.has_unsaved_changes = true;
+                        applied = true;
+                    }
+                }
+                _ => {
+                    let mut snap = self.develop_snapshot();
+                    let changed = if undo_pressed {
+                        self.develop_history.undo(&mut snap)
+                    } else {
+                        self.develop_history.redo(&mut snap)
+                    };
+                    if changed {
+                        self.apply_develop_snapshot(&snap);
+                        applied = true;
+                    }
+                }
+            }
+            if applied {
+                self.process_and_update_texture(ctx);
+            }
+        }
+
         // Poll model download progress
         #[cfg(feature = "depth")]
         while let Ok(msg) = self.rx_model_dl.try_recv() {
@@ -378,6 +450,74 @@ impl App for FilmrApp {
                             self.show_metrics = !self.show_metrics;
                         }
 
+                        ui.add_space(6.0);
+
+                        // ── Undo/Redo ──
+                        let (can_undo, can_redo) = match self.mode {
+                            crate::config::AppMode::StockStudio => (
+                                self.studio_history.can_undo(),
+                                self.studio_history.can_redo(),
+                            ),
+                            _ => (
+                                self.develop_history.can_undo(),
+                                self.develop_history.can_redo(),
+                            ),
+                        };
+                        if ui
+                            .add_enabled(can_redo, tb_btn("↷", false))
+                            .on_hover_text("Redo (Cmd+Shift+Z)")
+                            .clicked()
+                        {
+                            let mut applied = false;
+                            match self.mode {
+                                crate::config::AppMode::StockStudio => {
+                                    let mut stock = self.studio_stock.clone();
+                                    if self.studio_history.redo(&mut stock) {
+                                        self.studio_stock = stock;
+                                        self.has_unsaved_changes = true;
+                                        applied = true;
+                                    }
+                                }
+                                _ => {
+                                    let mut snap = self.develop_snapshot();
+                                    if self.develop_history.redo(&mut snap) {
+                                        self.apply_develop_snapshot(&snap);
+                                        applied = true;
+                                    }
+                                }
+                            }
+                            if applied {
+                                self.process_and_update_texture(ctx);
+                            }
+                        }
+                        if ui
+                            .add_enabled(can_undo, tb_btn("↶", false))
+                            .on_hover_text("Undo (Cmd+Z)")
+                            .clicked()
+                        {
+                            let mut applied = false;
+                            match self.mode {
+                                crate::config::AppMode::StockStudio => {
+                                    let mut stock = self.studio_stock.clone();
+                                    if self.studio_history.undo(&mut stock) {
+                                        self.studio_stock = stock;
+                                        self.has_unsaved_changes = true;
+                                        applied = true;
+                                    }
+                                }
+                                _ => {
+                                    let mut snap = self.develop_snapshot();
+                                    if self.develop_history.undo(&mut snap) {
+                                        self.apply_develop_snapshot(&snap);
+                                        applied = true;
+                                    }
+                                }
+                            }
+                            if applied {
+                                self.process_and_update_texture(ctx);
+                            }
+                        }
+
                         // Separator
                         ui.add_space(6.0);
                         let (r, _) =
@@ -475,5 +615,23 @@ impl App for FilmrApp {
 
         // Central panel (image canvas only, toolbar moved to top)
         panels::central::render_central_panel(self, ctx);
+
+        // Record history snapshots (debounced — slider drags become single entries).
+        // If pending, request repaint so the commit eventually fires.
+        let has_pending = match self.mode {
+            crate::config::AppMode::StockStudio => {
+                let stock = self.studio_stock.clone();
+                self.studio_history.record(&stock);
+                self.studio_history.has_pending()
+            }
+            _ => {
+                let snap = self.develop_snapshot();
+                self.develop_history.record(&snap);
+                self.develop_history.has_pending()
+            }
+        };
+        if has_pending {
+            ctx.request_repaint_after(std::time::Duration::from_millis(400));
+        }
     }
 }

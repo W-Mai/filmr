@@ -2,10 +2,12 @@
 
 mod io;
 mod processing;
+pub mod snapshot;
 mod update;
 pub mod workers;
 
 pub use crate::config::{AppMode, ConfigManager, UxMode};
+pub use snapshot::DevelopSnapshot;
 
 /// Right panel tab selection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -149,6 +151,10 @@ pub struct FilmrApp {
     /// Model download progress channel
     pub rx_model_dl: Receiver<Result<(u64, u64), String>>,
     tx_model_dl: Sender<Result<(u64, u64), String>>,
+
+    // Undo/Redo History
+    pub develop_history: crate::ui::history::History<DevelopSnapshot>,
+    pub studio_history: crate::ui::history::History<FilmStock>,
 }
 
 impl FilmrApp {
@@ -286,6 +292,9 @@ impl FilmrApp {
             rx_preset,
             rx_model_dl,
             tx_model_dl,
+
+            develop_history: crate::ui::history::History::default(),
+            studio_history: crate::ui::history::History::default(),
         }
     }
 
@@ -531,5 +540,65 @@ impl FilmrApp {
                 ctx.request_repaint();
             }
         });
+    }
+
+    /// Capture current develop state as a snapshot.
+    pub fn develop_snapshot(&self) -> DevelopSnapshot {
+        DevelopSnapshot {
+            exposure_time: self.exposure_time,
+            gamma_boost: self.gamma_boost,
+            warmth: self.warmth,
+            saturation: self.saturation,
+            halation_strength: self.halation_strength,
+            halation_threshold: self.halation_threshold,
+            halation_sigma: self.halation_sigma,
+            grain_alpha: self.grain_alpha,
+            grain_sigma: self.grain_sigma,
+            grain_roughness: self.grain_roughness,
+            grain_blur_radius: self.grain_blur_radius,
+            motion_blur_amount: self.motion_blur_amount,
+            motion_blur_seed: self.motion_blur_seed,
+            object_motion_amount: self.object_motion_amount,
+            auto_levels: self.auto_levels,
+            dof_amount: self.dof_amount,
+            dof_focus: self.dof_focus,
+            dof_swirl: self.dof_swirl,
+            rotational_blur_amount: self.rotational_blur_amount,
+            light_leak_config: self.light_leak_config.clone(),
+            selected_stock_idx: self.selected_stock_idx,
+            film_style: self.film_style,
+            output_mode: self.output_mode,
+            white_balance_mode: self.white_balance_mode,
+            white_balance_strength: self.white_balance_strength,
+        }
+    }
+
+    /// Apply a snapshot, restoring develop state.
+    pub fn apply_develop_snapshot(&mut self, s: &DevelopSnapshot) {
+        self.exposure_time = s.exposure_time;
+        self.gamma_boost = s.gamma_boost;
+        self.warmth = s.warmth;
+        self.saturation = s.saturation;
+        self.halation_strength = s.halation_strength;
+        self.halation_threshold = s.halation_threshold;
+        self.halation_sigma = s.halation_sigma;
+        self.grain_alpha = s.grain_alpha;
+        self.grain_sigma = s.grain_sigma;
+        self.grain_roughness = s.grain_roughness;
+        self.grain_blur_radius = s.grain_blur_radius;
+        self.motion_blur_amount = s.motion_blur_amount;
+        self.motion_blur_seed = s.motion_blur_seed;
+        self.object_motion_amount = s.object_motion_amount;
+        self.auto_levels = s.auto_levels;
+        self.dof_amount = s.dof_amount;
+        self.dof_focus = s.dof_focus;
+        self.dof_swirl = s.dof_swirl;
+        self.rotational_blur_amount = s.rotational_blur_amount;
+        self.light_leak_config = s.light_leak_config.clone();
+        self.selected_stock_idx = s.selected_stock_idx;
+        self.film_style = s.film_style;
+        self.output_mode = s.output_mode;
+        self.white_balance_mode = s.white_balance_mode;
+        self.white_balance_strength = s.white_balance_strength;
     }
 }
