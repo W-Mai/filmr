@@ -18,21 +18,23 @@ fn render_image_canvas(app: &mut FilmrApp, ui: &mut egui::Ui, ctx: &Context) {
     let rect = ui.available_rect_before_wrap();
     let response = ui.interact(rect, ui.id().with("image_area"), Sense::click_and_drag());
 
-    // Handle Zoom & Pan
-    let zoom_delta = ctx.input(|i| i.zoom_delta());
-    if zoom_delta != 1.0 {
-        if let Some(pointer_pos) = ctx.input(|i| i.pointer.hover_pos()) {
-            let center = rect.center();
-            let pointer_in_layer = pointer_pos - center;
-            let offset_to_pointer = pointer_in_layer - app.offset;
-            app.offset -= offset_to_pointer * (zoom_delta - 1.0);
-            app.zoom *= zoom_delta;
-        } else {
-            app.zoom *= zoom_delta;
-        }
-    }
-    // Two-finger scroll = pan (macOS trackpad)
+    // Handle Zoom & Pan — only when pointer is over the canvas, otherwise we
+    // steal events from other panels (mini map, film map) that handle their
+    // own zoom.
     if response.hovered() {
+        let zoom_delta = ctx.input(|i| i.zoom_delta());
+        if zoom_delta != 1.0 {
+            if let Some(pointer_pos) = ctx.input(|i| i.pointer.hover_pos()) {
+                let center = rect.center();
+                let pointer_in_layer = pointer_pos - center;
+                let offset_to_pointer = pointer_in_layer - app.offset;
+                app.offset -= offset_to_pointer * (zoom_delta - 1.0);
+                app.zoom *= zoom_delta;
+            } else {
+                app.zoom *= zoom_delta;
+            }
+        }
+        // Two-finger scroll = pan (macOS trackpad)
         let scroll = ctx.input(|i| i.smooth_scroll_delta);
         if scroll != Vec2::ZERO {
             app.offset += scroll;
