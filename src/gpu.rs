@@ -1,5 +1,7 @@
 #[cfg(feature = "compute-gpu")]
 use tracing::info;
+#[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
+use tracing::warn;
 
 #[cfg(feature = "compute-gpu")]
 use std::sync::OnceLock;
@@ -19,18 +21,22 @@ pub struct GpuBuffer {
 }
 
 #[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
-static GPU_CONTEXT: OnceLock<GpuContext> = OnceLock::new();
+static GPU_CONTEXT: OnceLock<Option<GpuContext>> = OnceLock::new();
 
 #[cfg(all(feature = "compute-gpu", not(target_arch = "wasm32")))]
 pub fn get_gpu_context() -> Option<&'static GpuContext> {
-    if let Some(ctx) = GPU_CONTEXT.get() {
-        return Some(ctx);
-    }
-
-    // Initialize if not present
-    let ctx = block_on(GpuContext::new())?;
-    let _ = GPU_CONTEXT.set(ctx);
-    GPU_CONTEXT.get()
+    // Initialize lazily, caching both success and failure so we don't retry
+    // (and re-panic) on every frame. If GPU init panics inside a driver
+    // backend, fall back to CPU instead of taking down the worker thread.
+    GPU_CONTEXT
+        .get_or_init(|| {
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| block_on(GpuContext::new())))
+                .unwrap_or_else(|_| {
+                    warn!("GPU initialization panicked; falling back to CPU");
+                    None
+                })
+        })
+        .as_ref()
 }
 
 // WASM Implementation using Unsafe Wrapper to bypass Send/Sync check
@@ -61,8 +67,17 @@ pub fn get_gpu_context() -> Option<&'static GpuContext> {
 impl GpuContext {
     pub async fn new() -> Option<Self> {
         info!("Initializing WGPU context");
+        // On native, avoid the GLES/EGL backend: wgpu may try to create an
+        // EGL context on a worker thread, where `eglMakeCurrent` fails and
+        // khronos-egl panics. Vulkan/Metal/DX12 are thread-safe. On WASM we
+        // still need the browser/GL backends.
+        let backends = if cfg!(target_arch = "wasm32") {
+            wgpu::Backends::all()
+        } else {
+            wgpu::Backends::PRIMARY
+        };
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
+            backends,
             ..Default::default()
         });
 

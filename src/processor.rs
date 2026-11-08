@@ -16,8 +16,7 @@ use tracing::{info, instrument};
 use crate::gpu::get_gpu_context;
 #[cfg(feature = "compute-gpu")]
 use crate::gpu_pipelines::{
-    get_gaussian_pipeline, get_halation_pipeline, get_light_leak_pipeline, get_linearize_pipeline,
-    read_gpu_buffer,
+    get_halation_pipeline, get_light_leak_pipeline, get_linearize_pipeline, read_gpu_buffer,
 };
 
 /// Simulation fidelity mode.
@@ -169,7 +168,15 @@ pub fn process_image_with_depth(
 
     #[cfg(feature = "compute-gpu")]
     let gpu_result = if config.use_gpu {
-        process_gpu_pipeline(&context, input, film, config)
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            process_gpu_pipeline(&context, input, film, config)
+        })) {
+            Ok(result) => result,
+            Err(_) => {
+                tracing::warn!("GPU pipeline panicked; falling back to CPU");
+                None
+            }
+        }
     } else {
         None
     };
@@ -548,24 +555,10 @@ fn process_gpu_pipeline(
         }
     }
 
-    // MTF
-    if let Some(buffer) = gpu_buffer.take() {
-        let pixels_per_mm = buffer.width as f32 / 36.0;
-        let mtf_sigma = (0.5 / film.resolution_lp_mm) * pixels_per_mm;
-
-        if mtf_sigma > 0.5 {
-            let _span = tracing::info_span!("GPU MTF Blur").entered();
-            info!("Applying MTF Blur on GPU (sigma: {:.2})", mtf_sigma);
-            let pipeline = get_gaussian_pipeline(gpu_ctx);
-            if let Some(out_buffer) = pipeline.process(gpu_ctx, &buffer, mtf_sigma) {
-                gpu_buffer = Some(out_buffer);
-            } else {
-                gpu_buffer = Some(buffer);
-            }
-        } else {
-            gpu_buffer = Some(buffer);
-        }
-    }
+    // MTF is intentionally left to the CPU `MtfStage` below. The GPU stage
+    // used a global Gaussian blur, while `MtfStage` keeps the center sharp and
+    // only softens toward the edges. Running both blurred the image twice and
+    // destroyed the sharp center, so the GPU path must not apply MTF itself.
 
     // Readback
     if let Some(ref buffer) = gpu_buffer {
