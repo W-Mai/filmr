@@ -1,0 +1,276 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js oranda-light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Full-Spectrum Engine - Filmr Knowledge Base</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="oranda-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "oranda-light" : "oranda-light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('orandamdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('orandamdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('orandamdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('oranda-light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="photochemistry.html"><strong aria-hidden="true">2.</strong> Photochemistry Core</a></li><li class="chapter-item expanded "><a href="film_characteristics.html"><strong aria-hidden="true">3.</strong> Film Characteristics</a></li><li class="chapter-item expanded "><a href="reference_data.html"><strong aria-hidden="true">4.</strong> Reference Data</a></li><li class="chapter-item expanded "><a href="spectral_sensitivity.html"><strong aria-hidden="true">5.</strong> Spectral Sensitivity</a></li><li class="chapter-item expanded "><a href="spectral_engine.html" class="active"><strong aria-hidden="true">6.</strong> Full-Spectrum Engine</a></li><li class="chapter-item expanded "><a href="rendering_pipeline.html"><strong aria-hidden="true">7.</strong> Rendering Pipeline</a></li><li class="chapter-item expanded "><a href="validation.html"><strong aria-hidden="true">8.</strong> Validation Framework</a></li><li class="chapter-item expanded "><a href="metrics.html"><strong aria-hidden="true">9.</strong> Metrics & Diagnosis</a></li><li class="chapter-item expanded "><a href="dynamic_range.html"><strong aria-hidden="true">10.</strong> Dynamic Range & Highlights</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="oranda-light">Cupcake</button></li>
+
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Filmr Knowledge Base</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="full-spectrum-simulation-engine"><a class="header" href="#full-spectrum-simulation-engine">Full-Spectrum Simulation Engine</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>filmr 0.7.0 introduces a physics-based full-spectrum simulation engine that propagates light wavelength-by-wavelength through the film's multi-layer structure. This replaces the 3×3 matrix approximation used in Fast mode with a physically accurate model.</p>
+<h2 id="dual-simulation-modes"><a class="header" href="#dual-simulation-modes">Dual Simulation Modes</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Mode</th><th>Method</th><th>Use Case</th></tr></thead><tbody>
+<tr><td><strong>Fast</strong></td><td>3×3 spectral matrix</td><td>Real-time preview</td></tr>
+<tr><td><strong>Accurate</strong></td><td>Per-wavelength per-layer propagation</td><td>Final develop (Develop button)</td></tr>
+</tbody></table>
+</div>
+<h2 id="physical-model"><a class="header" href="#physical-model">Physical Model</a></h2>
+<h3 id="light-propagation"><a class="header" href="#light-propagation">Light Propagation</a></h3>
+<p>Light enters the film from the top and traverses each layer sequentially:</p>
+<ol>
+<li><strong>Fresnel reflection</strong> at each interface: $R = \left(\frac{n_1 - n_2}{n_1 + n_2}\right)^2$</li>
+<li><strong>Beer-Lambert absorption</strong> within each layer: $I_{out} = I_{in} \cdot e^{-\alpha \cdot d}$</li>
+<li><strong>Scattering loss</strong>: modeled as additional attenuation coefficient</li>
+<li><strong>Emulsion exposure</strong>: absorbed energy (not scattered) is recorded per channel</li>
+</ol>
+<h3 id="backward-pass-halation"><a class="header" href="#backward-pass-halation">Backward Pass (Halation)</a></h3>
+<p>After traversing all layers, light reflects off the film base (Fresnel at base/air interface) and propagates back up through the stack. This physically models halation — the reddish glow around highlights caused by base reflection.</p>
+<h3 id="layer-structure"><a class="header" href="#layer-structure">Layer Structure</a></h3>
+<p>A typical colour negative film stack:</p>
+<pre><code>Incident light →
+  [Overcoat]           n=1.50, transparent
+  [Blue Emulsion]      n=1.53, absorbs ~450nm → Yellow dye
+  [Yellow Filter]      n=1.52, blocks blue from lower layers
+  [Green Emulsion]     n=1.53, absorbs ~545nm → Magenta dye
+  [Interlayer]         n=1.50, spacer
+  [Red Emulsion]       n=1.53, absorbs ~640nm → Cyan dye
+  [Anti-Halation]      n=1.50, absorbs residual light
+  [Base (PET)]         n=1.65, 125µm substrate
+</code></pre>
+<p>Each layer has:</p>
+<ul>
+<li><strong>Thickness</strong> (µm)</li>
+<li><strong>Refractive index</strong> (for Fresnel calculation)</li>
+<li><strong>Spectral absorption</strong> (81 bins, 380–780nm, 5nm steps)</li>
+<li><strong>Scattering coefficient</strong> (Mie/Rayleigh in emulsion)</li>
+</ul>
+<h3 id="interlayer-interimage-effect"><a class="header" href="#interlayer-interimage-effect">Interlayer Interimage Effect</a></h3>
+<p>During development, one layer's chemical byproducts inhibit adjacent layers (DIR coupler effect). This is modeled as a 3×3 inhibition matrix applied after H-D curve density calculation:</p>
+<p>$$D_i' = D_i + \sum_j \text{inhibition}[i][j] \cdot D_j$$</p>
+<p>Off-diagonal values are negative (suppression), improving colour separation.</p>
+<h2 id="spectral-data"><a class="header" href="#spectral-data">Spectral Data</a></h2>
+<ul>
+<li><strong>CIE 1931 2° Standard Observer</strong> (x̄, ȳ, z̄) — ISO 11664-1</li>
+<li><strong>CIE Standard Illuminant D65</strong> — ISO 11664-2</li>
+<li><strong>sRGB camera sensitivities</strong> derived from XYZ CMF × XYZ→sRGB matrix, D65-balanced</li>
+</ul>
+<p>All data: 380–780nm, 5nm steps, 81 bins.</p>
+<h2 id="pipeline-accurate-mode"><a class="header" href="#pipeline-accurate-mode">Pipeline (Accurate Mode)</a></h2>
+<pre><code>sRGB input
+  → Linearize
+  → Light Leak (additive)
+  → Halation (threshold + blur)
+  → Per-pixel spectral propagation:
+      uplift(R,G,B) → spectrum × D65 → propagate(layer_stack)
+      → integrate → normalize → × exposure_time
+  → Scattering spatial diffusion (Gaussian blur from layer scatter)
+  → White balance + warmth
+  → log₁₀ → H-D curves + colour matrix
+  → Interlayer inhibition
+  → MTF blur
+  → Grain
+  → Density → Transmission → sRGB output
+</code></pre>
+<h2 id="verification"><a class="header" href="#verification">Verification</a></h2>
+<p>69 tests verify the engine:</p>
+<ul>
+<li>8 physical property tests (linearity, energy conservation, layer order, etc.)</li>
+<li>6 strict physics tests (exact Beer-Lambert, Fresnel, scattering, energy budget)</li>
+<li>17 per-stage model correctness tests</li>
+<li>4 end-to-end integration tests</li>
+<li>1 Fast/Accurate consistency test</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="spectral_sensitivity.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="rendering_pipeline.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="spectral_sensitivity.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="rendering_pipeline.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

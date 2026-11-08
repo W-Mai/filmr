@@ -1,0 +1,452 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js oranda-light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rendering Pipeline - Filmr Knowledge Base</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="oranda-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "oranda-light" : "oranda-light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('orandamdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('orandamdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('orandamdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('oranda-light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="photochemistry.html"><strong aria-hidden="true">2.</strong> Photochemistry Core</a></li><li class="chapter-item expanded "><a href="film_characteristics.html"><strong aria-hidden="true">3.</strong> Film Characteristics</a></li><li class="chapter-item expanded "><a href="reference_data.html"><strong aria-hidden="true">4.</strong> Reference Data</a></li><li class="chapter-item expanded "><a href="spectral_sensitivity.html"><strong aria-hidden="true">5.</strong> Spectral Sensitivity</a></li><li class="chapter-item expanded "><a href="spectral_engine.html"><strong aria-hidden="true">6.</strong> Full-Spectrum Engine</a></li><li class="chapter-item expanded "><a href="rendering_pipeline.html" class="active"><strong aria-hidden="true">7.</strong> Rendering Pipeline</a></li><li class="chapter-item expanded "><a href="validation.html"><strong aria-hidden="true">8.</strong> Validation Framework</a></li><li class="chapter-item expanded "><a href="metrics.html"><strong aria-hidden="true">9.</strong> Metrics & Diagnosis</a></li><li class="chapter-item expanded "><a href="dynamic_range.html"><strong aria-hidden="true">10.</strong> Dynamic Range & Highlights</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="oranda-light">Cupcake</button></li>
+
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Filmr Knowledge Base</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rendering-pipeline"><a class="header" href="#rendering-pipeline">Rendering Pipeline</a></h1>
+<blockquote>
+<p>Complete technical reference for filmr's physics-based film simulation.
+Every formula is verified against source code.</p>
+</blockquote>
+<h2 id="pipeline-overview"><a class="header" href="#pipeline-overview">Pipeline Overview</a></h2>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│  Input: sRGB u8 image                                   │
+├─────────────────────────────────────────────────────────┤
+│  Stage 0: Linearize          sRGB → Linear f32          │
+│  Stage 1: Light Leak + Halation                         │
+│  Stage 2: Full-Spectrum Develop                          │
+│    ├ Pass 1: Per-pixel spectral propagation              │
+│    ├ Pass 2: Scattering diffusion                        │
+│    ├ Pass 2.5: White balance + warmth                    │
+│    └ Pass 3: H-D curves + color matrix + inhibition      │
+│  Stage 3: MTF blur                                       │
+│  Stage 4: Grain                                          │
+│  Stage 5: Output conversion   Density → sRGB u8         │
+├─────────────────────────────────────────────────────────┤
+│  Output: sRGB u8 image                                  │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="stage-0-linearize"><a class="header" href="#stage-0-linearize">Stage 0: Linearize</a></h2>
+<p>Digital images are stored in sRGB gamma encoding. The first step converts each pixel to linear light, which represents actual physical irradiance.</p>
+<p>\[
+\text{linear} = \begin{cases}
+\dfrac{v}{12.92} &amp; v \le 0.04045 \\[6pt]
+\left(\dfrac{v + 0.055}{1.055}\right)^{2.4} &amp; v &gt; 0.04045
+\end{cases}
+\]</p>
+<p>A 256-entry lookup table is precomputed for speed.</p>
+<hr />
+<h2 id="stage-1-light-leak--halation"><a class="header" href="#stage-1-light-leak--halation">Stage 1: Light Leak + Halation</a></h2>
+<h3 id="halation"><a class="header" href="#halation">Halation</a></h3>
+<p>In real film, light passes through the emulsion layers, reflects off the film base, and scatters back into the emulsion. This creates a warm glow around bright highlights.</p>
+<ol>
+<li>Compute luminance: \( L = 0.2126R + 0.7152G + 0.0722B \)</li>
+<li>Extract highlights above threshold \( T \)</li>
+<li>Gaussian blur with \( \sigma = W \times \text{halation_sigma} \)</li>
+<li>Blend back: \( \text{pixel} \mathrel{+}= \text{blurred} \times \text{tint} \times \text{strength} \)</li>
+</ol>
+<p>The tint is typically warm orange <code>[1.0, 0.6, 0.3]</code>, matching the reddish glow seen in real film scans.</p>
+<hr />
+<h2 id="stage-2-full-spectrum-develop"><a class="header" href="#stage-2-full-spectrum-develop">Stage 2: Full-Spectrum Develop</a></h2>
+<p>This is the core of the simulation. Light is propagated wavelength-by-wavelength through the film's physical layer structure — modelling how real photons interact with silver halide crystals, dye layers, and the film base.</p>
+<h3 id="the-film-layer-stack"><a class="header" href="#the-film-layer-stack">The Film Layer Stack</a></h3>
+<p>A colour negative film is a sandwich of thin layers:</p>
+<div class="table-wrapper"><table><thead><tr><th>Layer</th><th>Purpose</th><th style="text-align: center">Typical thickness</th></tr></thead><tbody>
+<tr><td>Overcoat</td><td>Scratch protection</td><td style="text-align: center">1 µm</td></tr>
+<tr><td><strong>Blue Emulsion</strong></td><td>Captures blue light → Yellow dye</td><td style="text-align: center">3–6 µm</td></tr>
+<tr><td><strong>Yellow Filter</strong></td><td>Blocks blue from reaching lower layers</td><td style="text-align: center">1 µm</td></tr>
+<tr><td><strong>Green Emulsion</strong></td><td>Captures green light → Magenta dye</td><td style="text-align: center">3–5 µm</td></tr>
+<tr><td>Interlayer</td><td>Spacer</td><td style="text-align: center">1 µm</td></tr>
+<tr><td><strong>Red Emulsion</strong></td><td>Captures red light → Cyan dye</td><td style="text-align: center">3–5 µm</td></tr>
+<tr><td>Anti-Halation</td><td>Absorbs residual light</td><td style="text-align: center">2 µm</td></tr>
+<tr><td>Base (PET)</td><td>Transparent substrate</td><td style="text-align: center">125 µm</td></tr>
+</tbody></table>
+</div>
+<p>Each layer has:</p>
+<ul>
+<li><strong>Refractive index</strong> \( n \) (~1.50–1.65)</li>
+<li><strong>Spectral absorption</strong> \( \alpha(\lambda) \) — 81 values from 380–780 nm</li>
+<li><strong>Scattering coefficient</strong> \( s \) — Mie/Rayleigh scattering in emulsion</li>
+<li><strong>Thickness</strong> \( d \) in micrometers</li>
+</ul>
+<h3 id="precomputation"><a class="header" href="#precomputation">Precomputation</a></h3>
+<p>Before processing pixels, the engine precomputes per-layer coefficients for all 81 wavelength bins:</p>
+<p><strong>Fresnel reflection</strong> at each interface (how much light bounces back when entering a new medium):</p>
+<p>\[
+R = \left(\frac{n_1 - n_2}{n_1 + n_2}\right)^2, \quad t = 1 - R
+\]</p>
+<p><strong>Beer-Lambert transmission</strong> (how much light survives passing through a layer):</p>
+<p>\[
+\tau_i = \exp\bigl(-(\alpha_i + s) \cdot d\bigr)
+\]</p>
+<p><strong>Absorption deposit</strong> (fraction of light captured by an emulsion layer):</p>
+<p>\[
+\delta_i = (1 - \tau_i) \times \frac{\alpha_i}{\alpha_i + s}
+\]</p>
+<p>This separates absorption (which exposes the film) from scattering (which just removes light from the beam).</p>
+<h3 id="pass-1-per-pixel-spectral-propagation"><a class="header" href="#pass-1-per-pixel-spectral-propagation">Pass 1: Per-Pixel Spectral Propagation</a></h3>
+<h4 id="spectral-reconstruction"><a class="header" href="#spectral-reconstruction">Spectral Reconstruction</a></h4>
+<p>Each pixel's RGB values are expanded into a full 81-wavelength spectrum using precomputed sRGB spectral sensitivities and the D65 daylight illuminant:</p>
+<p>\[
+P(\lambda_i) = R \cdot m_{R,i} + G \cdot m_{G,i} + B \cdot m_{B,i}
+\]</p>
+<p>where \( m_{ch,i} = S_{ch}(\lambda_i) \times D_{65}(\lambda_i) \).</p>
+<h4 id="forward-pass-light-entering-the-film"><a class="header" href="#forward-pass-light-entering-the-film">Forward Pass (Light Entering the Film)</a></h4>
+<p>For each layer, top to bottom:</p>
+<ol>
+<li><strong>Fresnel</strong>: \( P_i \mathrel{\times}= t \) — some light reflects at the interface</li>
+<li><strong>Absorb</strong> (emulsion only): \( E_{ch,i} \mathrel{+}= P_i \times \delta_i \) — film captures energy</li>
+<li><strong>Attenuate</strong>: \( P_i \mathrel{\times}= \tau_i \) — remaining light continues downward</li>
+</ol>
+<p>What happens to different colours:</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th style="text-align: center">Blue (450 nm)</th><th style="text-align: center">Green (545 nm)</th><th style="text-align: center">Red (640 nm)</th></tr></thead><tbody>
+<tr><td>Blue Emulsion</td><td style="text-align: center"><strong>absorbed</strong></td><td style="text-align: center">passes</td><td style="text-align: center">passes</td></tr>
+<tr><td>Yellow Filter</td><td style="text-align: center"><strong>blocked</strong></td><td style="text-align: center">passes</td><td style="text-align: center">passes</td></tr>
+<tr><td>Green Emulsion</td><td style="text-align: center">—</td><td style="text-align: center"><strong>absorbed</strong></td><td style="text-align: center">passes</td></tr>
+<tr><td>Red Emulsion</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center"><strong>absorbed</strong></td></tr>
+</tbody></table>
+</div>
+<h4 id="backward-pass-base-reflection"><a class="header" href="#backward-pass-base-reflection">Backward Pass (Base Reflection)</a></h4>
+<p>Light that reaches the base partially reflects back:</p>
+<p>\[
+P_{\text{back},i} = P_{\text{residual},i} \times \left(\frac{n_{\text{base}} - 1}{n_{\text{base}} + 1}\right)^2
+\]</p>
+<p>This reflected light travels back up through all layers, depositing additional exposure in each emulsion. This is the physical origin of halation — the red emulsion (closest to the base) receives the most reflected light.</p>
+<h4 id="integration"><a class="header" href="#integration">Integration</a></h4>
+<p>The per-wavelength exposure is integrated into three scalar values using the trapezoidal rule:</p>
+<p>\[
+E_{ch} = \left[\sum_{i=1}^{79} e_i + \frac{1}{2}(e_0 + e_{80})\right] \times 5\text{ nm}
+\]</p>
+<p>Finally, exposure is scaled by a normalization factor and the user's exposure time setting.</p>
+<h3 id="pass-2-scattering-diffusion"><a class="header" href="#pass-2-scattering-diffusion">Pass 2: Scattering Diffusion</a></h3>
+<p>Scattering within emulsion layers causes light to spread laterally, slightly blurring the image:</p>
+<p>\[
+\sigma_{\text{px}} = \frac{\sum_l d_l \cdot s_l}{36000} \times W
+\]</p>
+<p>In practice this is sub-pixel for most film stocks and has negligible visual effect.</p>
+<h3 id="pass-25-white-balance"><a class="header" href="#pass-25-white-balance">Pass 2.5: White Balance</a></h3>
+<p>Optionally equalizes the average colour of the image:</p>
+<p>\[
+\text{gain}<em>{ch} = 1 + \left(\frac{\bar{L}}{\bar{C}</em>{ch}} - 1\right) \times \text{strength}
+\]</p>
+<p>Warmth shifts the red/blue balance: \( R \mathrel{\times}= (1 + w \cdot 0.1) \), \( B \mathrel{\times}= (1 - w \cdot 0.1) \).</p>
+<h3 id="pass-3-h-d-curves--color-matrix--inhibition"><a class="header" href="#pass-3-h-d-curves--color-matrix--inhibition">Pass 3: H-D Curves + Color Matrix + Inhibition</a></h3>
+<h4 id="the-characteristic-curve"><a class="header" href="#the-characteristic-curve">The Characteristic Curve</a></h4>
+<p>The Hurter-Driffield (H-D) curve is the fundamental relationship between exposure and density in photographic film. It's the S-shaped curve that gives film its distinctive tonal response.</p>
+<p>\[
+D = D_{\min} + (D_{\max} - D_{\min}) \cdot \frac{1}{1 + e^{-k \cdot x}}
+\]</p>
+<p>where:</p>
+<p>\[
+x = \log_{10} E - \log_{10} E_0, \quad k = \frac{4\gamma}{D_{\max} - D_{\min}}
+\]</p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Meaning</th><th style="text-align: center">Typical range</th></tr></thead><tbody>
+<tr><td>\( D_{\min} \)</td><td>Base fog density</td><td style="text-align: center">0.04–0.15</td></tr>
+<tr><td>\( D_{\max} \)</td><td>Maximum density</td><td style="text-align: center">2.5–3.3</td></tr>
+<tr><td>\( \gamma \)</td><td>Contrast (slope at midpoint)</td><td style="text-align: center">0.6–2.2</td></tr>
+<tr><td>\( E_0 \)</td><td>Speed point</td><td style="text-align: center">varies</td></tr>
+</tbody></table>
+</div>
+<ul>
+<li><strong>Toe</strong> (low exposure): gentle roll-off, shadow detail</li>
+<li><strong>Linear region</strong>: proportional response, midtones</li>
+<li><strong>Shoulder</strong> (high exposure): compression, highlight roll-off</li>
+</ul>
+<h4 id="shoulder-softening"><a class="header" href="#shoulder-softening">Shoulder Softening</a></h4>
+<p>At very high densities, silver halide crystals saturate:</p>
+<p>\[
+D &gt; D_s: \quad D' = D - \frac{(D - D_s)^2}{D_s + (D - D_s)}
+\]</p>
+<h4 id="color-matrix"><a class="header" href="#color-matrix">Color Matrix</a></h4>
+<p>Models inter-layer dye coupling. Each channel's net density is mixed:</p>
+<p>\[
+\begin{pmatrix} D_R' \\ D_G' \\ D_B' \end{pmatrix} =
+\mathbf{M} \begin{pmatrix} D_R - D_{\min,R} \\ D_G - D_{\min,G} \\ D_B - D_{\min,B} \end{pmatrix} +
+\begin{pmatrix} D_{\min,R} \\ D_{\min,G} \\ D_{\min,B} \end{pmatrix}
+\]</p>
+<h4 id="interlayer-inhibition"><a class="header" href="#interlayer-inhibition">Interlayer Inhibition</a></h4>
+<p>During development, chemical byproducts from one layer suppress development in adjacent layers (DIR coupler effect). This enhances colour separation.</p>
+<p>The inhibition operates on density <strong>deviation</strong> from the mean, so neutral grays are unaffected:</p>
+<p>\[
+\bar{D} = \frac{D_R + D_G + D_B}{3}, \quad \Delta D_i = D_i - \bar{D}
+\]</p>
+<p>\[
+D_i^{,\text{final}} = D_i + \sum_j \text{inh}_{i,j} \cdot \Delta D_j
+\]</p>
+<p>Off-diagonal values are negative (suppression), increasing the spread between channels.</p>
+<hr />
+<h2 id="stage-3-mtf-blur"><a class="header" href="#stage-3-mtf-blur">Stage 3: MTF Blur</a></h2>
+<p>Every film has a finite resolving power. This is modelled as a Gaussian blur:</p>
+<p>\[
+\sigma = \frac{0.5}{\text{resolution_lp_mm}} \times \frac{W}{36}
+\]</p>
+<p>where \( W \) is image width in pixels and 36 mm is the standard 35mm film width.</p>
+<hr />
+<h2 id="stage-4-grain"><a class="header" href="#stage-4-grain">Stage 4: Grain</a></h2>
+<p>Film grain arises from the random distribution of silver halide crystals. The noise variance depends on density:</p>
+<p>\[
+\sigma^2 = \bigl(\alpha \cdot D^{1.5} + \sigma_{\text{read}}^2 + \sigma_{\text{shot}}^2\bigr) \times \bigl(1 + r \cdot \sin(\pi D)\bigr)
+\]</p>
+<ul>
+<li>\( \alpha \cdot D^{1.5} \): grain increases with density (more developed crystals)</li>
+<li>\( \sigma_{\text{read}}^2 \): base fog noise</li>
+<li>\( \sigma_{\text{shot}}^2 = s \cdot e^{-2D} \): photon shot noise (strongest in shadows)</li>
+<li>Roughness \( r \): frequency modulation in midtones</li>
+</ul>
+<p>Two grain layers are blended: fine crystals everywhere, plus coarse clumps that appear in highlights (silver halide aggregation at high density).</p>
+<hr />
+<h2 id="stage-5-output-conversion"><a class="header" href="#stage-5-output-conversion">Stage 5: Output Conversion</a></h2>
+<p>Converts the density image to a viewable photograph.</p>
+<h3 id="density--transmission"><a class="header" href="#density--transmission">Density → Transmission</a></h3>
+<p>\[
+T = 10^{-(D - D_{\min})}
+\]</p>
+<p>High density = low transmission = dark on the negative.</p>
+<h3 id="dye-self-absorption"><a class="header" href="#dye-self-absorption">Dye Self-Absorption</a></h3>
+<p>At high densities, Beer's Law deviates slightly:</p>
+<p>\[
+D &gt; 1.5: \quad T' = T \times \text{clamp}\bigl(1 + 0.02(D - 1.5),; 0.97,; 1.03\bigr)
+\]</p>
+<h3 id="print-simulation"><a class="header" href="#print-simulation">Print Simulation</a></h3>
+<p>The negative is &quot;printed&quot; onto paper with its own gamma:</p>
+<p>\[
+n = \frac{T_{\max} - T}{T_{\max} - T_{\min}}, \quad \text{output} = n^{\gamma_{\text{paper}}}
+\]</p>
+<div class="table-wrapper"><table><thead><tr><th>Film type</th><th style="text-align: center">Paper gamma</th></tr></thead><tbody>
+<tr><td>Colour negative</td><td style="text-align: center">2.0</td></tr>
+<tr><td>Colour slide</td><td style="text-align: center">1.5</td></tr>
+</tbody></table>
+</div>
+<h3 id="srgb-encoding"><a class="header" href="#srgb-encoding">sRGB Encoding</a></h3>
+<p>\[
+\text{sRGB} = \begin{cases}
+12.92 \cdot v &amp; v \le 0.0031308 \\[4pt]
+1.055 \cdot v^{1/2.4} - 0.055 &amp; v &gt; 0.0031308
+\end{cases}
+\]</p>
+<hr />
+<h2 id="spectral-data"><a class="header" href="#spectral-data">Spectral Data</a></h2>
+<p>All spectral computations use standard reference data:</p>
+<ul>
+<li><strong>CIE 1931 2° Standard Observer</strong> — colour matching functions \( \bar{x}, \bar{y}, \bar{z} \)</li>
+<li><strong>CIE Standard Illuminant D65</strong> — daylight spectrum</li>
+<li><strong>sRGB primaries</strong> — derived from XYZ CMF × IEC 61966-2-1 matrix</li>
+</ul>
+<p>Wavelength range: 380–780 nm, 5 nm steps, 81 bins.</p>
+<hr />
+<h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: center">Resolution</th><th style="text-align: center">Time</th></tr></thead><tbody>
+<tr><td style="text-align: center">256²</td><td style="text-align: center">6.5 ms</td></tr>
+<tr><td style="text-align: center">512²</td><td style="text-align: center">20 ms</td></tr>
+<tr><td style="text-align: center">1024²</td><td style="text-align: center">63 ms</td></tr>
+</tbody></table>
+</div>
+<p>Key optimization: layer coefficients (Fresnel, Beer-Lambert, deposit) are precomputed once per frame, eliminating ~1782 <code>exp()</code> calls per pixel.</p>
+<hr />
+<h2 id="verification"><a class="header" href="#verification">Verification</a></h2>
+<p>72 tests ensure physical correctness:</p>
+<div class="table-wrapper"><table><thead><tr><th>Category</th><th style="text-align: center">Count</th><th>What's verified</th></tr></thead><tbody>
+<tr><td>Physical properties</td><td style="text-align: center">8</td><td>Energy conservation, linearity, layer ordering</td></tr>
+<tr><td>Exact physics</td><td style="text-align: center">6</td><td>Beer-Lambert, Fresnel, scattering vs absorption</td></tr>
+<tr><td>Inhibition</td><td style="text-align: center">3</td><td>Neutral unaffected, colour separation enhanced</td></tr>
+<tr><td>Per-stage</td><td style="text-align: center">17</td><td>Each pipeline stage independently</td></tr>
+<tr><td>End-to-end</td><td style="text-align: center">4</td><td>Gray gradient, 6-colour hue card</td></tr>
+<tr><td>Histogram</td><td style="text-align: center">2</td><td>Full RGB distribution comparison</td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="spectral_engine.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="validation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="spectral_engine.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="validation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
