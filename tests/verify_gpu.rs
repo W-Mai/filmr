@@ -36,6 +36,84 @@ fn test_gpu_full_pipeline() {
 }
 
 #[test]
+fn test_gpu_matches_cpu_without_duplicate_blur() {
+    // Wide enough that the MTF stage is active (width > 36 * resolution_lp_mm).
+    // A high-frequency pattern makes a duplicated blur obvious: if the GPU path
+    // applies its own global Gaussian on top of the CPU radial MTF, contrast
+    // collapses and the difference against the CPU render is large.
+    let width = 3072;
+    let height = 32;
+    let input = RgbImage::from_fn(width, height, |x, y| {
+        let bar = if (x / 4) % 2 == 0 { 240 } else { 16 };
+        Rgb([bar, bar, ((y * 7) % 255) as u8])
+    });
+
+    let film = STANDARD_DAYLIGHT();
+    let base_config = SimulationConfig {
+        enable_grain: false,
+        motion_blur_amount: 0.0,
+        object_motion_amount: 0.0,
+        dof_amount: 0.0,
+        rotational_blur_amount: 0.0,
+        auto_levels: false,
+        white_balance_mode: WhiteBalanceMode::Off,
+        ..Default::default()
+    };
+
+    let cpu = process_image(
+        &input,
+        &film,
+        &SimulationConfig {
+            use_gpu: false,
+            ..base_config.clone()
+        },
+    );
+    let gpu = process_image(
+        &input,
+        &film,
+        &SimulationConfig {
+            use_gpu: true,
+            ..base_config
+        },
+    );
+
+    assert_eq!(cpu.dimensions(), gpu.dimensions());
+
+    let mut total_diff = 0u64;
+    let mut large_diff = 0u64;
+    for (c, g) in cpu.pixels().zip(gpu.pixels()) {
+        for ch in 0..3 {
+            let diff = c[ch].abs_diff(g[ch]) as u64;
+            total_diff += diff;
+            if diff > 8 {
+                large_diff += 1;
+            }
+        }
+    }
+
+    let channels = (width * height * 3) as u64;
+    let mean_diff = total_diff as f64 / channels as f64;
+    let large_fraction = large_diff as f64 / channels as f64;
+
+    println!(
+        "CPU/GPU parity: mean abs diff = {:.4}, pixels with diff > 8 = {:.4}%",
+        mean_diff,
+        large_fraction * 100.0
+    );
+
+    assert!(
+        mean_diff < 1.5,
+        "GPU output deviates from CPU too much (mean diff {:.4}); duplicate GPU blur?",
+        mean_diff
+    );
+    assert!(
+        large_fraction < 0.001,
+        "Too many pixels differ by more than 8 levels ({:.3}%); duplicate GPU blur?",
+        large_fraction * 100.0
+    );
+}
+
+#[test]
 fn test_gpu_halation_effect() {
     let width = 64;
     let height = 64;
